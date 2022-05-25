@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project 
+	xmlns="http://maven.apache.org/POM/4.0.0" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+>
+	<modelVersion>4.0.0</modelVersion>
+	
+    <parent>
+  		<artifactId>open-health-manager</artifactId>
+  		<groupId>org.mitre.healthmanager</groupId>
+  		<version>0.0.1-SNAPSHOT</version>
+	</parent>
+	
+	<artifactId>open-health-manager-fhir</artifactId>
+	<name>Open Health Manager FHIR</name>
+	<description>Open Health Manager FHIR</description>
+	
+	<properties>
+        <!-- Build properties -->
+        <hapi.fhir.version>5.7.0</hapi.fhir.version>
+    </properties>
+    
+	<dependencies>	
+        <dependency>
+            <groupId>ca.uhn.hapi.fhir</groupId>
+            <artifactId>hapi-fhir-jpaserver-starter</artifactId>
+            <version>${hapi.fhir.version}</version>
+            <exclusions>
+        		<exclusion>  <!-- declare the exclusion here -->
+	          		<groupId>org.springdoc</groupId>
+	          		<artifactId>springdoc-openapi-ui</artifactId>
+        		</exclusion>
+      		</exclusions> 
+        </dependency> 
+		<dependency>
+			<groupId>ca.uhn.hapi.fhir</groupId>
+			<artifactId>hapi-fhir-validation-resources-r4</artifactId>
+			<version>${hapi.fhir.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>ca.uhn.hapi.fhir</groupId>
+			<artifactId>hapi-fhir-structures-r4</artifactId>
+			<version>${hapi.fhir.version}</version>
+		</dependency>	
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-webmvc-core</artifactId>
+            <version>1.6.6</version>
+        </dependency>		
+	</dependencies>
+</project>

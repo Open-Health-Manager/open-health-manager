@@ -16,6 +16,7 @@
     </properties>
 
     <modules>
+        <module>open-health-manager-fhir</module>
         <module>open-health-manager-app</module>        
   </modules>
 </project>
