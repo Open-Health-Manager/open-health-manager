@@ -30,14 +30,6 @@ spring:
   jackson:
     serialization:
       indent-output: true
-  datasource:
-    type: com.zaxxer.hikari.HikariDataSource
-    url: jdbc:h2:file:./target/h2db/db/openhealthmanagerapp;DB_CLOSE_DELAY=-1
-    username: OpenHealthManagerApp
-    password:
-    hikari:
-      poolName: Hikari
-      auto-commit: false
   h2:
     console:
       # disable spring boot built-in h2-console since we start it manually with correct configuration
@@ -122,4 +114,37 @@ jhipster:
 # https://www.jhipster.tech/common-application-properties/
 # ===================================================================
 
-# application:
+application:
+  hapi:
+    datasource:
+      primary: true
+      type: com.zaxxer.hikari.HikariDataSource
+      url: jdbc:h2:file:./target/h2db/db/openhealthmanagerapp;DB_CLOSE_DELAY=-1
+      username: OpenHealthManagerApp
+      password:
+      hikari:
+        poolName: Hikari
+        auto-commit: false
+  jhipster:
+    datasource:
+      type: com.zaxxer.hikari.HikariDataSource
+      url: jdbc:h2:file:./target/h2db/db/openhealthmanagerapp;DB_CLOSE_DELAY=-1
+      username: OpenHealthManagerApp
+      password:
+      hikari:
+        poolName: HikariOHM
+        auto-commit: false  
+      
+hapi:
+  fhir:
+    tester:
+      home:
+        name: Local Tester
+        server_address: 'http://localhost:8080/fhir'
+        refuse_to_fetch_third_party_urls: false
+        fhir_version: R4
+      global:
+        name: Global Tester
+        server_address: "http://hapi.fhir.org/baseR4"
+        refuse_to_fetch_third_party_urls: false
+        fhir_version: R4    

@@ -30,7 +30,7 @@ public class DomainUserDetailsService implements UserDetailsService {
     }
 
     @Override
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     public UserDetails loadUserByUsername(final String login) {
         log.debug("Authenticating {}", login);
 
