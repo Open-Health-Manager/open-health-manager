@@ -20,6 +20,8 @@ logging:
     org.hibernate.SQL: DEBUG
     org.mitre.healthmanager: DEBUG
 
+management.endpoints.web.exposure.include: '*'
+
 spring:
   devtools:
     restart:
