@@ -11,3 +11,9 @@ mvn install:install-file -Dfile=target/ROOT-classes.jar -DgroupId=ca.uhn.hapi.fh
 cd ..
 mvn install -DskipTests
 ```
+
+### running
+```shell
+cd [base directory]/open-health-manager-app/
+mvn
+```
