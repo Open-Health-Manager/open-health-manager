@@ -4,10 +4,15 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import javax.inject.Inject;
+
 import org.mitre.healthmanager.config.Constants;
 import org.mitre.healthmanager.domain.Authority;
+import org.mitre.healthmanager.domain.FHIRPatient;
 import org.mitre.healthmanager.domain.User;
 import org.mitre.healthmanager.repository.AuthorityRepository;
+import org.mitre.healthmanager.repository.FHIRPatientRepository;
 import org.mitre.healthmanager.repository.UserRepository;
 import org.mitre.healthmanager.security.AuthoritiesConstants;
 import org.mitre.healthmanager.security.SecurityUtils;
@@ -23,6 +28,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tech.jhipster.security.RandomUtil;
+
+import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.rest.api.MethodOutcome;
+import ca.uhn.fhir.rest.client.api.IGenericClient;
+import org.hl7.fhir.r4.model.Patient;
 
 /**
  * Service class for managing users.
@@ -40,6 +50,9 @@ public class UserService {
     private final AuthorityRepository authorityRepository;
 
     private final CacheManager cacheManager;
+
+    @Inject
+    private FHIRPatientRepository fhirPatientRepository;
 
     public UserService(
         UserRepository userRepository,
@@ -177,6 +190,32 @@ public class UserService {
         userRepository.save(user);
         this.clearUserCaches(user);
         log.debug("Created Information for User: {}", user);
+
+        Patient patientFHIR = new Patient();
+        patientFHIR.addIdentifier()
+            .setSystem("urn:mitre:healthmanager:account:username")
+            .setValue(user.getLogin());
+        patientFHIR.addName()
+            .setFamily(userDTO.getLastName())
+            .addGiven(userDTO.getFirstName());
+
+        // Create a client and create the patient
+        FhirContext ctx = FhirContext.forR4();
+        IGenericClient client = ctx.newRestfulGenericClient("http://localhost:8080/fhir/");
+        MethodOutcome resp = client
+            .create()
+            .resource(patientFHIR)
+            .prettyPrint()
+            .encodedJson()
+            .execute();
+
+        FHIRPatient patient = new FHIRPatient();
+        patient.fhirId(resp.getId().getIdPart());
+        patient.user(user);
+        fhirPatientRepository.save(patient);
+
+        log.debug("linked to FHIR patient id: {}", patient.getFhirId());
+
         return user;
     }
 
