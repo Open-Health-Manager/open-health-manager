@@ -1,0 +1,25 @@
+{
+  "openHealthManagerApp": {
+    "fHIRPatient": {
+      "home": {
+        "title": "FHIR Patients",
+        "refreshListLabel": "Refresh list",
+        "createLabel": "Create a new FHIR Patient",
+        "createOrEditLabel": "Create or edit a FHIR Patient",
+        "notFound": "No FHIR Patients found"
+      },
+      "created": "A new FHIR Patient is created with identifier {{ param }}",
+      "updated": "A FHIR Patient is updated with identifier {{ param }}",
+      "deleted": "A FHIR Patient is deleted with identifier {{ param }}",
+      "delete": {
+        "question": "Are you sure you want to delete FHIR Patient {{ id }}?"
+      },
+      "detail": {
+        "title": "FHIR Patient"
+      },
+      "id": "ID",
+      "fhirId": "Fhir Id",
+      "user": "User"
+    }
+  }
+}

@@ -48,6 +48,7 @@ public class CacheConfiguration {
             createCache(cm, org.mitre.healthmanager.domain.User.class.getName());
             createCache(cm, org.mitre.healthmanager.domain.Authority.class.getName());
             createCache(cm, org.mitre.healthmanager.domain.User.class.getName() + ".authorities");
+            createCache(cm, org.mitre.healthmanager.domain.FHIRPatient.class.getName());
             // jhipster-needle-ehcache-add-entry
         };
     }

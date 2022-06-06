@@ -1,0 +1,26 @@
+{
+  "changelogDate": "20220603163044",
+  "fields": [
+    {
+      "fieldName": "fhirId",
+      "fieldType": "String",
+      "fieldValidateRules": []
+    }
+  ],
+  "name": "FHIRPatient",
+  "pagination": "no",
+  "readOnly": false,
+  "relationships": [
+    {
+      "id": false,
+      "otherEntityField": "login",
+      "otherEntityName": "user",
+      "otherEntityRelationshipName": "fHIRPatient",
+      "ownerSide": true,
+      "relationshipName": "user",
+      "relationshipType": "one-to-one",
+      "relationshipValidateRules": ["required"]
+    }
+  ],
+  "service": "no"
+}
