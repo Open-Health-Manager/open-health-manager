@@ -20,6 +20,7 @@ import org.mitre.healthmanager.service.dto.AdminUserDTO;
 import org.mitre.healthmanager.service.dto.UserDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.CacheManager;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -29,9 +30,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tech.jhipster.security.RandomUtil;
 
-import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.rest.api.MethodOutcome;
-import ca.uhn.fhir.rest.client.api.IGenericClient;
+import ca.uhn.fhir.rest.api.server.RequestDetails;
+import ca.uhn.fhir.jpa.api.dao.DaoRegistry;
+import ca.uhn.fhir.jpa.api.dao.IFhirResourceDao;
+import ca.uhn.fhir.jpa.api.model.DaoMethodOutcome;
+import ca.uhn.fhir.jpa.partition.SystemRequestDetails;
+import ca.uhn.fhir.jpa.provider.r4.JpaResourceProviderR4;
 import org.hl7.fhir.r4.model.Patient;
 
 /**
@@ -53,6 +58,9 @@ public class UserService {
 
     @Inject
     private FHIRPatientRepository fhirPatientRepository;
+    
+    @Autowired
+	private DaoRegistry myDaoRegistry;
 
     public UserService(
         UserRepository userRepository,
@@ -199,15 +207,13 @@ public class UserService {
             .setFamily(userDTO.getLastName())
             .addGiven(userDTO.getFirstName());
 
-        // Create a client and create the patient
-        FhirContext ctx = FhirContext.forR4();
-        IGenericClient client = ctx.newRestfulGenericClient("http://localhost:8080/fhir/");
-        MethodOutcome resp = client
-            .create()
-            .resource(patientFHIR)
-            .prettyPrint()
-            .encodedJson()
-            .execute();
+        // create the patient
+        IFhirResourceDao<Patient> patientDAO = myDaoRegistry.getResourceDao(Patient.class);
+        // DaoMethodOutcome resp = patientDAO.create(patientFHIR); //does not fire interceptors
+        RequestDetails requestDetails = SystemRequestDetails.forAllPartition();
+        DaoMethodOutcome resp = patientDAO.create(patientFHIR, requestDetails); //fires interceptors
+        // JpaResourceProviderR4<Patient> patientProvider = new JpaResourceProviderR4<Patient>(patientDAO); 
+        // MethodOutcome resp = patientProvider.create(null, patientFHIR, null, requestDetails); //fires interceptors
 
         FHIRPatient patient = new FHIRPatient();
         patient.fhirId(resp.getId().getIdPart());
