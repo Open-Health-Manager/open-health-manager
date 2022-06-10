@@ -2,6 +2,7 @@ package org.mitre.healthmanager.web.rest;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -146,9 +147,21 @@ public class FHIRPatientResource {
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and the list of fHIRPatients in body.
      */
     @GetMapping("/fhir-patients")
-    public List<FHIRPatient> getAllFHIRPatients(@RequestParam(required = false, defaultValue = "false") boolean eagerload) {
-        log.debug("REST request to get all FHIRPatients");
-        return fHIRPatientRepository.findAllWithEagerRelationships();
+    public List<FHIRPatient> getAllFHIRPatients(@RequestParam(required = false) Long userId, @RequestParam(required = false, defaultValue = "false") boolean eagerload) {
+        if (userId == null) {
+
+            log.debug("REST request to get all FHIRPatients");
+            return fHIRPatientRepository.findAllWithEagerRelationships();
+        }
+        else {
+            log.debug("REST request to FHIRPatient with userId '" + userId + "' ");
+            List<FHIRPatient> toReturn = new LinkedList<FHIRPatient>();
+            Optional<FHIRPatient> linkedFHIRPatient = fHIRPatientRepository.findOneWithToOneRelationships(userId);
+            if (linkedFHIRPatient.isPresent()) {
+                toReturn.add(linkedFHIRPatient.get());
+            }
+            return toReturn;
+        }
     }
 
     /**
