@@ -17,10 +17,13 @@ export const Home = () => {
       </Col>
       <Col md="9">
         <h2>
-          <Translate contentKey="home.title">Welcome, Java Hipster!</Translate>
+          <Translate contentKey="home.title">Welcome to the Open Health Manager™!</Translate>
         </h2>
         <p className="lead">
-          <Translate contentKey="home.subtitle">This is your homepage</Translate>
+          <Translate contentKey="home.subtitle">The Open Health Manager™ 
+          is the reference implementation for the MITRE Health Manager Lab under the Living Health Lab initiative. 
+          This project aims to radically flip the locus of health data from organizations to individuals, 
+          promoting individual agency in personal health through primary self-care and engagement with their care team.</Translate>
         </p>
         {account?.login ? (
           <div>
@@ -54,43 +57,38 @@ export const Home = () => {
           </div>
         )}
         <p>
-          <Translate contentKey="home.question">If you have any question on JHipster:</Translate>
+          <Translate contentKey="home.linkinfo">
+            To access the Open Health Manager™ HAPI FHIR server, visit the following links:
+          </Translate>
         </p>
-
         <ul>
-          <li>
-            <a href="https://www.jhipster.tech/" target="_blank" rel="noopener noreferrer">
-              <Translate contentKey="home.link.homepage">JHipster homepage</Translate>
-            </a>
-          </li>
-          <li>
-            <a href="https://stackoverflow.com/tags/jhipster/info" target="_blank" rel="noopener noreferrer">
-              <Translate contentKey="home.link.stackoverflow">JHipster on Stack Overflow</Translate>
-            </a>
-          </li>
-          <li>
-            <a href="https://github.com/jhipster/generator-jhipster/issues?state=open" target="_blank" rel="noopener noreferrer">
-              <Translate contentKey="home.link.bugtracker">JHipster bug tracker</Translate>
-            </a>
-          </li>
-          <li>
-            <a href="https://gitter.im/jhipster/generator-jhipster" target="_blank" rel="noopener noreferrer">
-              <Translate contentKey="home.link.chat">JHipster public chat room</Translate>
-            </a>
-          </li>
-          <li>
-            <a href="https://twitter.com/jhipster" target="_blank" rel="noopener noreferrer">
-              <Translate contentKey="home.link.follow">follow @jhipster on Twitter</Translate>
-            </a>
-          </li>
-        </ul>
-
+            <li>
+                <a href="http://localhost:8080" target="_blank" rel="noopener noreferrer">
+                  <Translate contentKey="home.link.testoverlay">HAPI FHIR Server Test Overlay</Translate>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:8080/fhir/swagger-ui/" target="_blank" rel="noopener noreferrer">
+                  <Translate contentKey="home.link.swaggerui">HAPI FHIR Server Swagger UI</Translate>
+                </a>
+            </li>
+        </ul>       
         <p>
-          <Translate contentKey="home.like">If you like JHipster, do not forget to give us a star on</Translate>{' '}
-          <a href="https://github.com/jhipster/generator-jhipster" target="_blank" rel="noopener noreferrer">
-            GitHub
+          <Translate contentKey="home.question">If you have any questions about the Open Health Manager™, visit our </Translate>
+          <a href="https://github.com/Open-Health-Manager/open-health-manager" target="_blank" rel="noopener noreferrer">
+              <Translate contentKey="home.link.github">GitHub repository</Translate>
           </a>
-          !
+        </p>
+        <p>
+          <Translate contentKey="home.additional.info">
+            This project is built on the HAPI FHIR Starter Project that is used to deploy a FHIR server using HAPI FHIR JPA. It&apos;s GitHub repository
+            can be found 
+          </Translate>
+          <a href = "https://github.com/hapifhir/hapi-fhir-jpaserver-starter">
+            <Translate contentKey="home.link.hapifhirserver">
+              here
+            </Translate>
+          </a>
         </p>
       </Col>
     </Row>

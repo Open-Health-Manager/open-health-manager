@@ -1,19 +1,20 @@
 {
   "home": {
-    "title": "Welcome, Java Hipster!",
-    "subtitle": "This is your homepage",
+    "title": "Welcome to the Open Health Manager™!",
+    "subtitle": "The Open Health Manager™ is the reference implementation for the MITRE Health Manager Lab under the Living Health Lab initiative. This project aims to radically flip the locus of health data from organizations to individuals, promoting individual agency in personal health through primary self-care and engagement with their care team.",
     "logged": {
       "message": "You are logged in as user \"{{username}}\"."
     },
-    "question": "If you have any question on JHipster:",
+    "question": "If you have any questions about the Open Health Manager™, visit our ",
     "link": {
-      "homepage": "JHipster homepage",
-      "stackoverflow": "JHipster on Stack Overflow",
-      "bugtracker": "JHipster bug tracker",
-      "chat": "JHipster public chat room",
-      "follow": "follow @jhipster on Twitter"
+      "github": "GitHub repository",
+      "hapifhirserver": "here",
+      "testoverlay": "HAPI FHIR Server Test Overlay",
+      "swaggerui": "HAPI FHIR Server Swagger UI"
     },
-    "like": "If you like JHipster, don't forget to give us a star on",
-    "github": "GitHub"
+    "linkinfo": "To access the Open Health Manager™ HAPI FHIR server, visit the following links:",
+    "additional" : {
+      "info": "This project is built on the HAPI FHIR Starter Project that is used to deploy a FHIR server using HAPI FHIR JPA. It's GitHub repository can be found "
+    }
   }
 }
