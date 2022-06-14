@@ -63,12 +63,12 @@ export const Home = () => {
         </p>
         <ul>
             <li>
-                <a href="http://localhost:8080" target="_blank" rel="noopener noreferrer">
+                <a href="tester/home" target="_blank" rel="noopener noreferrer">
                   <Translate contentKey="home.link.testoverlay">HAPI FHIR Server Test Overlay</Translate>
                 </a>
             </li>
             <li>
-                <a href="http://localhost:8080/fhir/swagger-ui/" target="_blank" rel="noopener noreferrer">
+                <a href="fhir/swagger-ui/" target="_blank" rel="noopener noreferrer">
                   <Translate contentKey="home.link.swaggerui">HAPI FHIR Server Swagger UI</Translate>
                 </a>
             </li>
