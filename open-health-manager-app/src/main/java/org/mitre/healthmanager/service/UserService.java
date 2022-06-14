@@ -84,6 +84,11 @@ public class UserService {
                 user.setActivationKey(null);
                 this.clearUserCaches(user);
                 log.debug("Activated user: {}", user);
+
+                /// create FHIR patient if it doesn't already exist
+                if (fhirPatientRepository.findOneForUser(user.getId()).isEmpty()) {
+                    createFHIRPatient(user);
+                }
                 return user;
             });
     }
@@ -199,14 +204,21 @@ public class UserService {
         this.clearUserCaches(user);
         log.debug("Created Information for User: {}", user);
 
+        createFHIRPatient(user);
+
+        return user;
+    }
+
+    private FHIRPatient createFHIRPatient(User user) {
+        
         Patient patientFHIR = new Patient();
         patientFHIR.addIdentifier()
             .setSystem("urn:mitre:healthmanager:account:username")
             .setValue(user.getLogin());
         patientFHIR.addName()
-            .setFamily(userDTO.getLastName())
-            .addGiven(userDTO.getFirstName());
-
+            .setFamily(user.getLastName())
+            .addGiven(user.getFirstName());
+        
         // create the patient
         IFhirResourceDao<Patient> patientDAO = myDaoRegistry.getResourceDao(Patient.class);
         // DaoMethodOutcome resp = patientDAO.create(patientFHIR); //does not fire interceptors
@@ -222,7 +234,8 @@ public class UserService {
 
         log.debug("linked to FHIR patient id: {}", patient.getFhirId());
 
-        return user;
+        return patient;
+
     }
 
     /**
@@ -258,6 +271,12 @@ public class UserService {
                     .forEach(managedAuthorities::add);
                 this.clearUserCaches(user);
                 log.debug("Changed Information for User: {}", user);
+
+                /// create FHIR patient if it doesn't already exist
+                if (userDTO.isActivated() && fhirPatientRepository.findOneForUser(user.getId()).isEmpty()) {
+                    createFHIRPatient(user);
+                }
+
                 return user;
             })
             .map(AdminUserDTO::new);
