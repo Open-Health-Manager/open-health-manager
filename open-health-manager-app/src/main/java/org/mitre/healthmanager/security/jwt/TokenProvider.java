@@ -8,7 +8,13 @@ import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import javax.inject.Inject;
+
+import org.mitre.healthmanager.domain.FHIRPatient;
 import org.mitre.healthmanager.management.SecurityMetersService;
+import org.mitre.healthmanager.repository.FHIRPatientRepository;
+import org.mitre.healthmanager.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -27,6 +33,8 @@ public class TokenProvider {
 
     private static final String AUTHORITIES_KEY = "auth";
 
+    private static final String PATIENT_KEY = "patient";
+
     private static final String INVALID_JWT_TOKEN = "Invalid JWT token.";
 
     private final Key key;
@@ -38,6 +46,12 @@ public class TokenProvider {
     private final long tokenValidityInMillisecondsForRememberMe;
 
     private final SecurityMetersService securityMetersService;
+
+    @Inject
+    private FHIRPatientRepository fhirPatientRepository;
+   
+    @Inject
+    private UserRepository userRepository;
 
     public TokenProvider(JHipsterProperties jHipsterProperties, SecurityMetersService securityMetersService) {
         byte[] keyBytes;
@@ -73,10 +87,21 @@ public class TokenProvider {
             validity = new Date(now + this.tokenValidityInMilliseconds);
         }
 
+        String patientClaim = null;
+        String username = authentication.getName();
+        Optional<org.mitre.healthmanager.domain.User> theUser = userRepository.findOneByLogin(username);
+        if (theUser.isPresent()) {
+            Optional<FHIRPatient> FHIRPatientLink = fhirPatientRepository.findOneForUser(theUser.get().getId());
+            if (FHIRPatientLink.isPresent()) {
+                patientClaim = FHIRPatientLink.get().getFhirId();
+            }
+        }   
+
         return Jwts
             .builder()
             .setSubject(authentication.getName())
             .claim(AUTHORITIES_KEY, authorities)
+            .claim(PATIENT_KEY, patientClaim)
             .signWith(key, SignatureAlgorithm.HS512)
             .setExpiration(validity)
             .compact();

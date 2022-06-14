@@ -37,4 +37,7 @@ public interface FHIRPatientRepository extends JpaRepository<FHIRPatient, Long> 
 
     @Query("select fHIRPatient from FHIRPatient fHIRPatient left join fetch fHIRPatient.user where fHIRPatient.id =:id")
     Optional<FHIRPatient> findOneWithToOneRelationships(@Param("id") Long id);
+
+    @Query("select fHIRPatient from FHIRPatient fHIRPatient where user_id =:id")
+    Optional<FHIRPatient> findOneForUser(@Param("id") Long id);
 }
