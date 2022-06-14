@@ -12,9 +12,6 @@ import ca.uhn.fhir.jpa.starter.BaseJpaRestfulServer;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.MessageHeader;
 import org.hl7.fhir.r4.model.Patient;
-import org.mitre.healthmanager.lib.dataMgr.AccountInterceptor;
-import org.mitre.healthmanager.lib.dataMgr.AccountProvider;
-import org.mitre.healthmanager.lib.sphr.RequestInterceptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Import;
@@ -42,10 +39,6 @@ public class OHMJpaRestfulServer extends BaseJpaRestfulServer {
   	@Override
   	protected void initialize() throws ServletException {
 		super.initialize();
-
-		registerProvider(new AccountProvider(myPatientDao, myBundleDao, myMessageHeaderDao, myTransactionProcessor, myDaoRegistry));
-		registerInterceptor(new AccountInterceptor());
-		registerInterceptor(new RequestInterceptor(myPatientDao, myBundleDao, myMessageHeaderDao, myTransactionProcessor, myDaoRegistry));
   }
 
 }
