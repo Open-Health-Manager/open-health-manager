@@ -84,7 +84,7 @@ export const Home = () => {
             This project is built on the HAPI FHIR Starter Project that is used to deploy a FHIR server using HAPI FHIR JPA. It&apos;s GitHub repository
             can be found 
           </Translate>
-          <a href = "https://github.com/hapifhir/hapi-fhir-jpaserver-starter">
+          <a href = "https://github.com/hapifhir/hapi-fhir-jpaserver-starter" target="_blank" rel="noopener noreferrer">
             <Translate contentKey="home.link.hapifhirserver">
               here
             </Translate>

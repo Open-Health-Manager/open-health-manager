@@ -38,12 +38,28 @@ const databaseItem = () => (
   </DropdownItem>
 );
 
+const openTestUIItem = () => (
+  <DropdownItem tag="a" href="tester/home" target="_tab">
+    <FontAwesomeIcon icon="window-restore" fixedWidth /> <Translate contentKey="global.menu.admin.testui">HAPI Testpage Overlay</Translate>
+  </DropdownItem>
+);
+
+const openSwaggerUIItem = () => (
+  <DropdownItem tag="a" href="fhir/swagger-ui/" target="_tab">
+    <FontAwesomeIcon icon="fire" fixedWidth /> <Translate contentKey="global.menu.admin.swaggerui">HAPI Swagger UI</Translate>
+  </DropdownItem>
+);
+
 export const AdminMenu = ({ showOpenAPI, showDatabase }) => (
   <NavDropdown icon="users-cog" name={translate('global.menu.admin.main')} id="admin-menu" data-cy="adminMenu">
     {adminMenuItems()}
     {showOpenAPI && openAPIItem()}
 
     {showDatabase && databaseItem()}
+
+    {openTestUIItem()}
+
+    {openSwaggerUIItem()}
   </NavDropdown>
 );
 
