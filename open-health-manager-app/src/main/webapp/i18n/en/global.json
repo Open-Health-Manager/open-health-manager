@@ -28,7 +28,9 @@
         "logs": "Logs",
         "apidocs": "API",
         "database": "Database",
-        "jhipster-needle-menu-add-admin-element": "JHipster will add additional menu entries here (do not translate!)"
+        "jhipster-needle-menu-add-admin-element": "JHipster will add additional menu entries here (do not translate!)",
+        "testui": "HAPI Testpage Overlay",
+        "swaggerui": "HAPI Swagger UI"
       },
       "language": "Language"
     },
@@ -137,5 +139,5 @@
       "not.image": "File was expected to be an image but was found to be \"{{ fileType }}\""
     }
   },
-  "footer": "This is your footer"
+  "footer": "Copyright 2022 The MITRE Corporation"
 }

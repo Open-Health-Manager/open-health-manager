@@ -97,7 +97,7 @@ module.exports = async options =>
       ),
       new WebpackNotifierPlugin({
         title: 'Open Health Manager App',
-        contentImage: path.join(__dirname, 'logo-jhipster.png'),
+        contentImage: path.join(__dirname, 'rosie-logo.png'),
       }),
     ].filter(Boolean),
   });
