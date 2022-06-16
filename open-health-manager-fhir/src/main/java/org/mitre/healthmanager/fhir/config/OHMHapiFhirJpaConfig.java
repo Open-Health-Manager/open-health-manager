@@ -40,6 +40,8 @@ import ca.uhn.fhir.to.util.WebUtil;
 @Configuration
 @ComponentScan(basePackages="ca.uhn.fhir.jpa.starter", excludeFilters={
 		@ComponentScan.Filter(type = org.springframework.context.annotation.FilterType.ASPECTJ, pattern = "ca.uhn.fhir.jpa.starter.Application"),
+		@ComponentScan.Filter(type = org.springframework.context.annotation.FilterType.ASPECTJ, pattern = "ca.uhn.fhir.jpa.starter.FhirServerConfigR4"),
+		@ComponentScan.Filter(type = org.springframework.context.annotation.FilterType.ASPECTJ, pattern = "ca.uhn.fhir.jpa.starter.BaseR4Config"),
 		@ComponentScan.Filter(type = org.springframework.context.annotation.FilterType.ASPECTJ, pattern = "ca.uhn.fhir.jpa.starter.FhirTesterConfig"),
 		@ComponentScan.Filter(type = org.springframework.context.annotation.FilterType.ASPECTJ, pattern = "ca.uhn.fhir.to.*")})
 @EnableAutoConfiguration(exclude= { ElasticsearchRestClientAutoConfiguration.class })
