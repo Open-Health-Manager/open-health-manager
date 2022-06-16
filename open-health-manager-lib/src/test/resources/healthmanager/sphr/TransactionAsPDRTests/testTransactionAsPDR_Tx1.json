@@ -1,0 +1,77 @@
+{
+  "resourceType": "Bundle",
+  "type": "transaction",
+  "meta": {
+    "source": "urn:mitre:healthmanager:test:source1"
+  },
+  "entry": [
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "id": "test-testTransactionAsPDR",
+        "identifier": [
+          {
+            "system": "urn:mitre:healthmanager:account:username",
+            "value": "testTransactionAsPDR"
+          }
+        ],
+        "name": [
+          {
+            "family": "testTransactionAsPDR",
+            "given": [
+              "theTest"
+            ]
+          }]
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Patient/test-testTransactionAsPDR"
+      }
+    },
+    {
+      "resource": {
+        "text": {
+          "status": "generated"
+        },
+        "status": "finished",
+        "class": {
+          "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+          "code": "HH",
+          "display": "home health"
+        },
+        "type": [
+          {
+            "coding": [
+              {
+                "system": "http://snomed.info/sct",
+                "code": "50357006",
+                "display": "Evaluation and management of patient at home (procedure)"
+              }
+            ]
+          },
+          {
+            "coding": [
+              {
+                "system": "http://snomed.info/sct",
+                "code": "185468001",
+                "display": "Home visit for chronic condition (procedure)"
+              }
+            ]
+          }
+        ],
+        "subject": {
+          "reference": "Patient/test-testTransactionAsPDR"
+        },
+        "period": {
+          "start": "2021-04-07T08:30:00",
+          "end": "2021-08-24T08:30:00"
+        },
+        "resourceType": "Encounter"
+      },
+      "request": {
+        "method": "POST",
+        "url": "Encounter"
+      }
+    }
+  ]
+}

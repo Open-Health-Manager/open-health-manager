@@ -1,0 +1,53 @@
+{
+  "type": "message",
+  "entry": [
+    {
+      "resource": {
+        "extension": [
+          {
+            "url": "https://github.com/Open-Health-Manager/patient-data-receipt-ig/StructureDefinition/AccountExtension",
+            "valueString": "testNoDeletionOfSharedResources"
+          }
+        ],
+        "eventUri": "urn:mitre:healthmanager:pdr",
+        "source": {
+          "endpoint": "urn:mitre:healthmanager:test:soruce2"
+        },
+        "resourceType": "MessageHeader"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "id": "test-NoDeletionOfSharedResources",
+        "identifier": [
+          {
+            "system": "urn:mitre:healthmanager:account:username",
+            "value": "testNoDeletionOfSharedResources"
+          }
+        ],
+        "generalPractitioner" : {
+          "reference" : "Practitioner/test-NoDeletionOfSharedResources-prov"
+        }
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Practitioner",
+        "id": "test-NoDeletionOfSharedResources-prov",
+        "name": [
+          {
+            "given": [
+              "Test"
+            ],
+            "family": "NoDeletionOfSharedResources"
+          }
+        ],
+        "active": true,
+        "gender": "male"
+      }
+
+    }
+  ],
+  "resourceType": "Bundle"
+}

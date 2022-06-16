@@ -64,7 +64,7 @@ fun Patient.doUpdate(id: String, username: String) : Bundle.BundleEntryComponent
 // fall back to the database
 fun Patient.findUsernameViaLinkedPatient(patientDao : IFhirResourceDaoPatient<Patient>) : String? {
 
-    return getUsernameFromPatient(this) ?: run {
+    return (getUsernameFromPatient(this) ?: run {
         if (this.id != null) {
             try {
                 getUsernameFromPatient(patientDao.read(this.idElement))
@@ -76,5 +76,18 @@ fun Patient.findUsernameViaLinkedPatient(patientDao : IFhirResourceDaoPatient<Pa
         else {
             null
         }
+    }) ?: run {
+        // find an identifier to use that has a system and a value
+        // todo: is this logic we want, or not (needed for connectathon followup)
+        if (this.hasIdentifier() && this.identifierFirstRep.hasSystem() && this.identifierFirstRep.hasValue()) {
+            val newId = this.identifierFirstRep.system + ":" + this.identifierFirstRep.value
+            // patient record needs this id as a username
+            addUsernameToPatient(this, newId)
+            newId
+        }
+        else {
+            null
+        }
+
     }
 }

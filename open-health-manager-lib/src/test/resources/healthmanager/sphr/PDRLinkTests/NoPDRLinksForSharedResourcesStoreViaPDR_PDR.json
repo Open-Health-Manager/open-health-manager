@@ -1,0 +1,53 @@
+{
+  "type": "message",
+  "entry": [
+    {
+      "resource": {
+        "extension": [
+          {
+            "url": "https://github.com/Open-Health-Manager/patient-data-receipt-ig/StructureDefinition/AccountExtension",
+            "valueString": "testNoPDRLinksForSharedResourcesStoreViaPDR"
+          }
+        ],
+        "eventUri": "urn:mitre:healthmanager:pdr",
+        "source": {
+          "endpoint": "urn:mitre:healthmanager:test:soruce2"
+        },
+        "resourceType": "MessageHeader"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "id": "test-NoPDRLinksForSharedResourcesStoreViaPDR",
+        "identifier": [
+          {
+            "system": "urn:mitre:healthmanager:account:username",
+            "value": "testNoPDRLinksForSharedResourcesStoreViaPDR"
+          }
+        ],
+        "generalPractitioner" : {
+          "reference" : "Practitioner/test-NoPDRLinksForSharedResourcesStoreViaPDR-prov"
+        }
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Practitioner",
+        "id": "test-NoPDRLinksForSharedResourcesStoreViaPDR-prov",
+        "name": [
+          {
+            "given": [
+              "Test"
+            ],
+            "family": "NoPDRLinksForSharedResourcesStoreViaPDR"
+          }
+        ],
+        "active": true,
+        "gender": "male"
+      }
+
+    }
+  ],
+  "resourceType": "Bundle"
+}

@@ -1,6 +1,7 @@
 package org.mitre.healthmanager.lib.sphr
 
 import ca.uhn.fhir.context.FhirContext
+import ca.uhn.fhir.i18n.Msg
 import ca.uhn.fhir.interceptor.api.Hook
 import ca.uhn.fhir.interceptor.api.Interceptor
 import ca.uhn.fhir.interceptor.api.Pointcut
@@ -9,9 +10,11 @@ import ca.uhn.fhir.jpa.api.dao.IFhirResourceDao
 import ca.uhn.fhir.jpa.api.dao.IFhirResourceDaoPatient
 import ca.uhn.fhir.jpa.dao.TransactionProcessor
 import ca.uhn.fhir.model.primitive.IdDt
+import ca.uhn.fhir.rest.api.Constants.HEADER_CONTENT_TYPE
 import ca.uhn.fhir.rest.api.RequestTypeEnum
 import ca.uhn.fhir.rest.api.RestOperationTypeEnum
 import ca.uhn.fhir.rest.api.server.RequestDetails
+import ca.uhn.fhir.rest.server.RestfulServer
 import ca.uhn.fhir.rest.server.RestfulServerUtils
 import ca.uhn.fhir.rest.server.exceptions.InternalErrorException
 import ca.uhn.fhir.rest.server.exceptions.UnprocessableEntityException
@@ -20,6 +23,7 @@ import org.hl7.fhir.instance.model.api.IBaseResource
 import org.hl7.fhir.r4.model.*
 import org.mitre.healthmanager.lib.dataMgr.*
 import org.mitre.healthmanager.lib.dataMgr.resourceTypes.isSharedResource
+import java.io.IOException
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
@@ -113,8 +117,9 @@ class RequestInterceptor(private val myPatientDaoR4: IFhirResourceDaoPatient<Pat
                 newPDRBundle.entry[1].link.add(Bundle.BundleLinkComponent().setUrl(createOutcome.resource.idElement.toString()))
                 updatePDRRawBundle(newPDRBundle, myBundleDaoR4) // links added
 
+                // todo: not returning the resource - figure out why....
                 // 6. Update the Response with the patient creation details
-                val response = requestDetails.response.streamResponseAsResource(
+                /*val response = requestDetails.response.streamResponseAsResource(
                     createOutcome.resource,
                     RestfulServerUtils.prettyPrintResponse(requestDetails.server, requestDetails),
                     RestfulServerUtils.determineSummaryMode(requestDetails),
@@ -122,8 +127,31 @@ class RequestInterceptor(private val myPatientDaoR4: IFhirResourceDaoPatient<Pat
                     null,
                     requestDetails.isRespondGzip,
                     true
-                )
-                // todo: not returning the resource - figure out why....
+                )*/
+
+                // This works, but doesn't have all of the headers normally sent by HAPI and doesn't support XML,
+                // so should be updated in the future
+                theResponse.contentType = "application/fhir+json"
+                theResponse.status = 201
+                theResponse.writer.append(ctx.newJsonParser().encodeResourceToString(createOutcome.resource))
+                theResponse.writer.close()
+
+                /*theResponse.status = 201
+                if (requestDetails.server is RestfulServer) {
+                    (requestDetails.server as RestfulServer).addHeadersToResponse(theResponse)
+                }
+
+                theResponse.addHeader(HEADER_CONTENT_TYPE, "application/fhir+json")
+
+                // Write the response
+                try {
+                    val writer = theResponse.outputStream.writer()
+                    ctx.newJsonParser().encodeResourceToWriter(createOutcome.resource, writer)
+                    writer.close()
+                } catch (e: IOException) {
+                    throw InternalErrorException(Msg.code(321) + e)
+                } */
+
 
                 return false
             }
@@ -478,7 +506,7 @@ class RequestInterceptor(private val myPatientDaoR4: IFhirResourceDaoPatient<Pat
             else {
                 newEntry.request.method = Bundle.HTTPVerb.POST
             }
-            addPDRLinkListExtension(theResource, newEntry, myDaoRegistry, pdrBundleId)
+                addPDRLinkListExtension(theResource, newEntry, myDaoRegistry, pdrBundleId)
             addPatientAccountExtension(theResource, username)
 
             // ready to file as normal - will update bundle link afterwards
@@ -556,17 +584,17 @@ class RequestInterceptor(private val myPatientDaoR4: IFhirResourceDaoPatient<Pat
 
             }
             val source = getSourceForRequest(serveletRequestDetails)
-            val messageHeader = MessageHeader()
-            val eventURI = UriType()
-            eventURI.value = pdrEvent
-            messageHeader.event = eventURI
-            messageHeader.source = MessageHeader.MessageSourceComponent().setEndpoint(source)
+            val messageHeader = generatePDRMessageHeaderObject(username, source)
             val headerEntry = Bundle.BundleEntryComponent()
             headerEntry.resource = messageHeader
             headerEntry.request = Bundle.BundleEntryRequestComponent().setMethod(Bundle.HTTPVerb.POST)
             theMessage.entry.add(0, headerEntry)
 
             val bundleInternalId = storePDRAsRawBundle(theMessage, myBundleDaoR4)
+            val messageHeaderId = storePDRMessageHeader(messageHeader.copy(), patientId, bundleInternalId, myMessageHeaderDaoR4)
+            theMessage.entryFirstRep.link.add(Bundle.BundleLinkComponent().setUrl("MessageHeader/$messageHeaderId"))
+            updatePDRRawBundle(theMessage, myBundleDaoR4) // link for MessageHeader added
+
             for (entry in theTx.entry) {
                 when (val theResource = entry.resource) {
                     is DomainResource -> {
@@ -575,8 +603,6 @@ class RequestInterceptor(private val myPatientDaoR4: IFhirResourceDaoPatient<Pat
                     }
                 }
             }
-
-            storePDRMessageHeader(messageHeader.copy(), patientId, bundleInternalId, myMessageHeaderDaoR4)
 
         }
         // if no username, assume it is just shared resources and file as normal
