@@ -9,7 +9,7 @@
     <parent>
   		<artifactId>open-health-manager</artifactId>
   		<groupId>org.mitre.healthmanager</groupId>
-  		<version>0.0.1-SNAPSHOT</version>
+  		<version>0.2-SNAPSHOT</version>
 	</parent>
 	
 	<artifactId>open-health-manager-fhir</artifactId>
@@ -18,7 +18,6 @@
 	
 	<properties>
         <!-- Build properties -->
-        <hapi.fhir.version>5.7.0</hapi.fhir.version>
     </properties>
     
 	<dependencies>	
@@ -47,6 +46,12 @@
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-webmvc-core</artifactId>
             <version>1.6.6</version>
-        </dependency>		
+        </dependency>
+		<dependency>
+		    <groupId>org.springframework.boot</groupId>
+		    <artifactId>spring-boot-configuration-processor</artifactId>
+		    <version>${spring-boot.version}</version>
+		    <optional>true</optional>
+		</dependency>        
 	</dependencies>
 </project>
