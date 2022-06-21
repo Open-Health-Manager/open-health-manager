@@ -404,6 +404,7 @@
 
     <build>
         <defaultGoal>spring-boot:run</defaultGoal>
+        <sourceDirectory>src/main/java/org/mitre/healthmanager</sourceDirectory>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -456,6 +457,21 @@
             <plugin>
                 <groupId>com.google.cloud.tools</groupId>
                 <artifactId>jib-maven-plugin</artifactId>
+                <configuration>
+                    <container>
+                        <mainClass>${start-class}</mainClass>
+                        <ports>
+                            <port>8080</port>
+                        </ports>
+                        <environment>
+                            <application.title>${project.name}</application.title>
+                            <application.version>${project.version}</application.version>
+                        </environment>
+                        <jvmFlags>
+                            <jvmFlag>-javaagent:/usr/local/newrelic/newrelic.jar</jvmFlag>
+                        </jvmFlags>
+                    </container>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
@@ -892,6 +908,9 @@
                             <goals>
                                 <goal>repackage</goal>
                             </goals>
+                            <configuration>
+                                <mainClass>org.mitre.healthmanager.OpenHealthManagerApp</mainClass>
+                             </configuration>
                         </execution>
                     </executions>
                     <configuration>
