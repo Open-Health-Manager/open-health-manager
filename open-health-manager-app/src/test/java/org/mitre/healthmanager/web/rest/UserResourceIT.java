@@ -2,7 +2,8 @@ package org.mitre.healthmanager.web.rest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
-import static org.hamcrest.Matchers.hasItems;
+import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -16,10 +17,10 @@ import org.junit.jupiter.api.Test;
 import org.mitre.healthmanager.IntegrationTest;
 import org.mitre.healthmanager.domain.Authority;
 import org.mitre.healthmanager.domain.User;
+import org.mitre.healthmanager.repository.FHIRPatientRepository;
 import org.mitre.healthmanager.repository.UserRepository;
 import org.mitre.healthmanager.security.AuthoritiesConstants;
 import org.mitre.healthmanager.service.dto.AdminUserDTO;
-import org.mitre.healthmanager.service.dto.UserDTO;
 import org.mitre.healthmanager.service.mapper.UserMapper;
 import org.mitre.healthmanager.web.rest.vm.ManagedUserVM;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,6 +64,9 @@ class UserResourceIT {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private FHIRPatientRepository fhirPatientRepository;
 
     @Autowired
     private UserMapper userMapper;
@@ -152,6 +156,11 @@ class UserResourceIT {
             assertThat(testUser.getImageUrl()).isEqualTo(DEFAULT_IMAGEURL);
             assertThat(testUser.getLangKey()).isEqualTo(DEFAULT_LANGKEY);
         });
+
+        // Validate the user has an associated FHIR Patient Id
+        User testUser = userRepository.findOneByLogin(DEFAULT_LOGIN).orElse(null);
+        assertNotNull(testUser);
+        assertNotNull(fhirPatientRepository.findOneForUser(testUser.getId()).orElse(null));
     }
 
     @Test
@@ -469,6 +478,9 @@ class UserResourceIT {
         // Initialize the database
         userRepository.saveAndFlush(user);
         int databaseSizeBeforeDelete = userRepository.findAll().size();
+        User testUser = userRepository.findOneByLogin(DEFAULT_LOGIN).orElse(null);
+        assertNotNull(testUser);
+        long testUserId = testUser.getId();
 
         // Delete the user
         restUserMockMvc
@@ -479,6 +491,10 @@ class UserResourceIT {
 
         // Validate the database is empty
         assertPersistedUsers(users -> assertThat(users).hasSize(databaseSizeBeforeDelete - 1));
+    
+        // Validate the associated FHIRPatient got removed as well
+        assertNull(fhirPatientRepository.findOneForUser(testUserId).orElse(null));
+    
     }
 
     @Test

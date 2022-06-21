@@ -13,12 +13,12 @@ import org.mitre.healthmanager.IntegrationTest;
 import org.mitre.healthmanager.config.Constants;
 import org.mitre.healthmanager.domain.User;
 import org.mitre.healthmanager.repository.AuthorityRepository;
+import org.mitre.healthmanager.repository.FHIRPatientRepository;
 import org.mitre.healthmanager.repository.UserRepository;
 import org.mitre.healthmanager.security.AuthoritiesConstants;
 import org.mitre.healthmanager.service.UserService;
 import org.mitre.healthmanager.service.dto.AdminUserDTO;
 import org.mitre.healthmanager.service.dto.PasswordChangeDTO;
-import org.mitre.healthmanager.service.dto.UserDTO;
 import org.mitre.healthmanager.web.rest.vm.KeyAndPasswordVM;
 import org.mitre.healthmanager.web.rest.vm.ManagedUserVM;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +41,9 @@ class AccountResourceIT {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private FHIRPatientRepository fhirPatientRepository;
 
     @Autowired
     private AuthorityRepository authorityRepository;
@@ -131,7 +134,10 @@ class AccountResourceIT {
             .perform(post("/api/register").contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(validUser)))
             .andExpect(status().isCreated());
 
-        assertThat(userRepository.findOneByLogin("test-register-valid")).isPresent();
+        Optional<User> findByLogin = userRepository.findOneByLogin("test-register-valid");
+        assertThat(findByLogin).isPresent();
+        // FHIR Patient not created on registration
+        assertThat(fhirPatientRepository.findOneForUser(findByLogin.get().getId())).isNotPresent();
     }
 
     @Test
@@ -392,6 +398,7 @@ class AccountResourceIT {
 
         user = userRepository.findOneByLogin(user.getLogin()).orElse(null);
         assertThat(user.isActivated()).isTrue();
+        assertThat(fhirPatientRepository.findOneForUser(user.getId())).isPresent();
     }
 
     @Test

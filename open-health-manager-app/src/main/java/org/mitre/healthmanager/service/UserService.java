@@ -5,8 +5,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import javax.inject.Inject;
-
 import org.mitre.healthmanager.config.Constants;
 import org.mitre.healthmanager.domain.Authority;
 import org.mitre.healthmanager.domain.FHIRPatient;
@@ -30,13 +28,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tech.jhipster.security.RandomUtil;
 
-import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
 import ca.uhn.fhir.jpa.api.dao.DaoRegistry;
 import ca.uhn.fhir.jpa.api.dao.IFhirResourceDao;
 import ca.uhn.fhir.jpa.api.model.DaoMethodOutcome;
 import ca.uhn.fhir.jpa.partition.SystemRequestDetails;
-import ca.uhn.fhir.jpa.provider.r4.JpaResourceProviderR4;
 import org.hl7.fhir.r4.model.Patient;
 
 /**
@@ -56,7 +52,7 @@ public class UserService {
 
     private final CacheManager cacheManager;
 
-    @Inject
+    @Autowired
     private FHIRPatientRepository fhirPatientRepository;
     
     @Autowired
@@ -238,6 +234,13 @@ public class UserService {
 
     }
 
+    private void deleteFHIRPatient(User user) {
+        Optional<FHIRPatient> linkedFHIRPatient = fhirPatientRepository.findOneForUser(user.getId());
+        if (linkedFHIRPatient.isPresent()) {
+            fhirPatientRepository.delete(linkedFHIRPatient.get());
+        }
+    }
+
     /**
      * Update all information for a specific user, and return the modified user.
      *
@@ -286,6 +289,7 @@ public class UserService {
         userRepository
             .findOneByLogin(login)
             .ifPresent(user -> {
+                deleteFHIRPatient(user);
                 userRepository.delete(user);
                 this.clearUserCaches(user);
                 log.debug("Deleted User: {}", user);
