@@ -27,12 +27,15 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tech.jhipster.security.RandomUtil;
-
+import ca.uhn.fhir.rest.api.server.IBundleProvider;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
+import ca.uhn.fhir.rest.param.TokenParam;
 import ca.uhn.fhir.jpa.api.dao.DaoRegistry;
 import ca.uhn.fhir.jpa.api.dao.IFhirResourceDao;
 import ca.uhn.fhir.jpa.api.model.DaoMethodOutcome;
 import ca.uhn.fhir.jpa.partition.SystemRequestDetails;
+import ca.uhn.fhir.jpa.searchparam.SearchParameterMap;
+
 import org.hl7.fhir.r4.model.Patient;
 
 /**
@@ -41,6 +44,8 @@ import org.hl7.fhir.r4.model.Patient;
 @Service
 @Transactional("jhipsterTransactionManager")
 public class UserService {
+
+    public static final String FHIR_LOGIN_SYSTEM = "urn:mitre:healthmanager:account:username";
 
     private final Logger log = LoggerFactory.getLogger(UserService.class);
 
@@ -206,22 +211,39 @@ public class UserService {
     }
 
     private FHIRPatient createFHIRPatient(User user) {
-        
+
+        IFhirResourceDao<Patient> patientDAO = myDaoRegistry.getResourceDao(Patient.class);
+        String targetUsername = user.getLogin();
+
+        // First check that the patient doesn't already exist
+        IBundleProvider searchResults = 
+            patientDAO.search(
+                new SearchParameterMap(
+                    "identifier", 
+                    new TokenParam(FHIR_LOGIN_SYSTEM, targetUsername)
+                )
+            );
+        if (!searchResults.isEmpty()) {
+            throw new RuntimeException("FHIR Patient with username '" + targetUsername + "' already exists");
+        }
+
+        // create the patient
         Patient patientFHIR = new Patient();
         patientFHIR.addIdentifier()
-            .setSystem("urn:mitre:healthmanager:account:username")
-            .setValue(user.getLogin());
+            .setSystem(FHIR_LOGIN_SYSTEM)
+            .setValue(targetUsername);
         patientFHIR.addName()
             .setFamily(user.getLastName())
             .addGiven(user.getFirstName());
         
-        // create the patient
-        IFhirResourceDao<Patient> patientDAO = myDaoRegistry.getResourceDao(Patient.class);
         // DaoMethodOutcome resp = patientDAO.create(patientFHIR); //does not fire interceptors
         RequestDetails requestDetails = SystemRequestDetails.forAllPartition();
         DaoMethodOutcome resp = patientDAO.create(patientFHIR, requestDetails); //fires interceptors
         // JpaResourceProviderR4<Patient> patientProvider = new JpaResourceProviderR4<Patient>(patientDAO); 
         // MethodOutcome resp = patientProvider.create(null, patientFHIR, null, requestDetails); //fires interceptors
+        if (!resp.getCreated()) {
+            throw new RuntimeException("FHIR Patient creation failed");
+        }
 
         FHIRPatient patient = new FHIRPatient();
         patient.fhirId(resp.getId().getIdPart());

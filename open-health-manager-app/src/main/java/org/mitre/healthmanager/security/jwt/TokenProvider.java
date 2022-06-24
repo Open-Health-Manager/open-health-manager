@@ -9,14 +9,13 @@ import java.security.Key;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import javax.inject.Inject;
-
 import org.mitre.healthmanager.domain.FHIRPatient;
 import org.mitre.healthmanager.management.SecurityMetersService;
 import org.mitre.healthmanager.repository.FHIRPatientRepository;
 import org.mitre.healthmanager.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -47,10 +46,10 @@ public class TokenProvider {
 
     private final SecurityMetersService securityMetersService;
 
-    @Inject
+    @Autowired
     private FHIRPatientRepository fhirPatientRepository;
    
-    @Inject
+    @Autowired
     private UserRepository userRepository;
 
     public TokenProvider(JHipsterProperties jHipsterProperties, SecurityMetersService securityMetersService) {
