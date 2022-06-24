@@ -161,6 +161,14 @@ class UserResourceIT {
         User testUser = userRepository.findOneByLogin(DEFAULT_LOGIN).orElse(null);
         assertNotNull(testUser);
         assertNotNull(fhirPatientRepository.findOneForUser(testUser.getId()).orElse(null));
+
+        restUserMockMvc
+            .perform(
+                get("/fhir/Patient?identifier=urn:mitre%3Ahealthmanager%3Aaccount%3Ausername%7C" + DEFAULT_LOGIN).contentType(MediaType.APPLICATION_JSON)
+            )
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(jsonPath("$.total").value("2"));
     }
 
     @Test
