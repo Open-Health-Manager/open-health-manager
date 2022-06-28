@@ -56,7 +56,7 @@ class PublicUserResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void getAllPublicUsers() throws Exception {
         // Initialize the database
         userRepository.saveAndFlush(user);
@@ -73,7 +73,7 @@ class PublicUserResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void getAllAuthorities() throws Exception {
         restUserMockMvc
             .perform(get("/api/authorities").accept(MediaType.APPLICATION_JSON).contentType(MediaType.APPLICATION_JSON))
@@ -84,7 +84,7 @@ class PublicUserResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void getAllUsersSortedByParameters() throws Exception {
         // Initialize the database
         userRepository.saveAndFlush(user);

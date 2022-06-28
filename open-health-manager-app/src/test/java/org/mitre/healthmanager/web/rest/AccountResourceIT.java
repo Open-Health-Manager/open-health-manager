@@ -114,7 +114,7 @@ class AccountResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void testRegisterValid() throws Exception {
         ManagedUserVM validUser = new ManagedUserVM();
         validUser.setLogin("test-register-valid");
@@ -135,7 +135,7 @@ class AccountResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void testRegisterInvalidLogin() throws Exception {
         ManagedUserVM invalidUser = new ManagedUserVM();
         invalidUser.setLogin("funky-log(n"); // <-- invalid
@@ -157,7 +157,7 @@ class AccountResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void testRegisterInvalidEmail() throws Exception {
         ManagedUserVM invalidUser = new ManagedUserVM();
         invalidUser.setLogin("bob");
@@ -179,7 +179,7 @@ class AccountResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void testRegisterInvalidPassword() throws Exception {
         ManagedUserVM invalidUser = new ManagedUserVM();
         invalidUser.setLogin("bob");
@@ -201,7 +201,7 @@ class AccountResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void testRegisterNullPassword() throws Exception {
         ManagedUserVM invalidUser = new ManagedUserVM();
         invalidUser.setLogin("bob");
@@ -223,7 +223,7 @@ class AccountResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void testRegisterDuplicateLogin() throws Exception {
         // First registration
         ManagedUserVM firstUser = new ManagedUserVM();
@@ -273,7 +273,7 @@ class AccountResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void testRegisterDuplicateEmail() throws Exception {
         // First user
         ManagedUserVM firstUser = new ManagedUserVM();
@@ -351,7 +351,7 @@ class AccountResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void testRegisterAdminIsIgnored() throws Exception {
         ManagedUserVM validUser = new ManagedUserVM();
         validUser.setLogin("badguy");
@@ -376,7 +376,7 @@ class AccountResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void testActivateAccount() throws Exception {
         final String activationKey = "some activation key";
         User user = new User();
@@ -395,13 +395,13 @@ class AccountResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void testActivateAccountWithWrongKey() throws Exception {
         restAccountMockMvc.perform(get("/api/activate?key=wrongActivationKey")).andExpect(status().isInternalServerError());
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     @WithMockUser("save-account")
     void testSaveAccount() throws Exception {
         User user = new User();
@@ -437,7 +437,7 @@ class AccountResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     @WithMockUser("save-invalid-email")
     void testSaveInvalidEmail() throws Exception {
         User user = new User();
@@ -466,7 +466,7 @@ class AccountResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     @WithMockUser("save-existing-email")
     void testSaveExistingEmail() throws Exception {
         User user = new User();
@@ -503,7 +503,7 @@ class AccountResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     @WithMockUser("save-existing-email-and-login")
     void testSaveExistingEmailAndLogin() throws Exception {
         User user = new User();
@@ -532,7 +532,7 @@ class AccountResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     @WithMockUser("change-password-wrong-existing-password")
     void testChangePasswordWrongExistingPassword() throws Exception {
         User user = new User();
@@ -556,7 +556,7 @@ class AccountResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     @WithMockUser("change-password")
     void testChangePassword() throws Exception {
         User user = new User();
@@ -579,7 +579,7 @@ class AccountResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     @WithMockUser("change-password-too-small")
     void testChangePasswordTooSmall() throws Exception {
         User user = new User();
@@ -604,7 +604,7 @@ class AccountResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     @WithMockUser("change-password-too-long")
     void testChangePasswordTooLong() throws Exception {
         User user = new User();
@@ -629,7 +629,7 @@ class AccountResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     @WithMockUser("change-password-empty")
     void testChangePasswordEmpty() throws Exception {
         User user = new User();
@@ -652,7 +652,7 @@ class AccountResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void testRequestPasswordReset() throws Exception {
         User user = new User();
         user.setPassword(RandomStringUtils.random(60));
@@ -667,7 +667,7 @@ class AccountResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void testRequestPasswordResetUpperCaseEmail() throws Exception {
         User user = new User();
         user.setPassword(RandomStringUtils.random(60));
@@ -689,7 +689,7 @@ class AccountResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void testFinishPasswordReset() throws Exception {
         User user = new User();
         user.setPassword(RandomStringUtils.random(60));
@@ -716,7 +716,7 @@ class AccountResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void testFinishPasswordResetTooSmall() throws Exception {
         User user = new User();
         user.setPassword(RandomStringUtils.random(60));
@@ -743,7 +743,7 @@ class AccountResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void testFinishPasswordResetWrongKey() throws Exception {
         KeyAndPasswordVM keyAndPassword = new KeyAndPasswordVM();
         keyAndPassword.setKey("wrong reset key");

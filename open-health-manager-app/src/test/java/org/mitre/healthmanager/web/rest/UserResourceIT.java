@@ -119,7 +119,7 @@ class UserResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void createUser() throws Exception {
         int databaseSizeBeforeCreate = userRepository.findAll().size();
 
@@ -155,7 +155,7 @@ class UserResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void createUserWithExistingId() throws Exception {
         int databaseSizeBeforeCreate = userRepository.findAll().size();
 
@@ -183,7 +183,7 @@ class UserResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void createUserWithExistingLogin() throws Exception {
         // Initialize the database
         userRepository.saveAndFlush(user);
@@ -212,7 +212,7 @@ class UserResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void createUserWithExistingEmail() throws Exception {
         // Initialize the database
         userRepository.saveAndFlush(user);
@@ -241,7 +241,7 @@ class UserResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void getAllUsers() throws Exception {
         // Initialize the database
         userRepository.saveAndFlush(user);
@@ -260,7 +260,7 @@ class UserResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void getUser() throws Exception {
         // Initialize the database
         userRepository.saveAndFlush(user);
@@ -283,13 +283,13 @@ class UserResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void getNonExistingUser() throws Exception {
         restUserMockMvc.perform(get("/api/admin/users/unknown")).andExpect(status().isNotFound());
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void updateUser() throws Exception {
         // Initialize the database
         userRepository.saveAndFlush(user);
@@ -333,7 +333,7 @@ class UserResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void updateUserLogin() throws Exception {
         // Initialize the database
         userRepository.saveAndFlush(user);
@@ -378,7 +378,7 @@ class UserResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void updateUserExistingEmail() throws Exception {
         // Initialize the database with 2 users
         userRepository.saveAndFlush(user);
@@ -421,7 +421,7 @@ class UserResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void updateUserExistingLogin() throws Exception {
         // Initialize the database
         userRepository.saveAndFlush(user);
@@ -464,7 +464,7 @@ class UserResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void deleteUser() throws Exception {
         // Initialize the database
         userRepository.saveAndFlush(user);

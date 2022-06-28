@@ -254,7 +254,7 @@ public class UserService {
             });
     }
 
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     public void changePassword(String currentClearTextPassword, String newPassword) {
         SecurityUtils
             .getCurrentUserLogin()
@@ -271,22 +271,22 @@ public class UserService {
             });
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly =  true, transactionManager = "jhipsterTransactionManager")
     public Page<AdminUserDTO> getAllManagedUsers(Pageable pageable) {
         return userRepository.findAll(pageable).map(AdminUserDTO::new);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly =  true, transactionManager = "jhipsterTransactionManager")
     public Page<UserDTO> getAllPublicUsers(Pageable pageable) {
         return userRepository.findAllByIdNotNullAndActivatedIsTrue(pageable).map(UserDTO::new);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly =  true, transactionManager = "jhipsterTransactionManager")
     public Optional<User> getUserWithAuthoritiesByLogin(String login) {
         return userRepository.findOneWithAuthoritiesByLogin(login);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly =  true, transactionManager = "jhipsterTransactionManager")
     public Optional<User> getUserWithAuthorities() {
         return SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findOneWithAuthoritiesByLogin);
     }
@@ -311,7 +311,7 @@ public class UserService {
      * Gets a list of all the authorities.
      * @return a list of all the authorities.
      */
-    @Transactional(readOnly = true)
+    @Transactional(readOnly =  true, transactionManager = "jhipsterTransactionManager")
     public List<String> getAuthorities() {
         return authorityRepository.findAll().stream().map(Authority::getName).collect(Collectors.toList());
     }

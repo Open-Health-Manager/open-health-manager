@@ -38,7 +38,7 @@ class UserJWTControllerIT {
     private MockMvc mockMvc;
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void testAuthorize() throws Exception {
         User user = new User();
         user.setLogin("user-jwt-controller");
@@ -61,7 +61,7 @@ class UserJWTControllerIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void testAuthorizeWithRememberMe() throws Exception {
         User user = new User();
         user.setLogin("user-jwt-controller-remember-me");
