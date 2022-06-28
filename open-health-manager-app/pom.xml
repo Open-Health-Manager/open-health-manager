@@ -114,6 +114,12 @@
             <groupId>org.mitre.healthmanager</groupId>
             <artifactId>open-health-manager-lib</artifactId>
             <version>${project.parent.version}</version>
+            <exclusions>
+		        <exclusion>
+				    <groupId>net.sourceforge.htmlunit</groupId>
+				    <artifactId>htmlunit</artifactId>  <!-- version mismatch -->
+		        </exclusion>
+		    </exclusions>
         </dependency>        
         <!-- This dependency is used for the "FHIR Tester" web app overlay -->
         <dependency>
