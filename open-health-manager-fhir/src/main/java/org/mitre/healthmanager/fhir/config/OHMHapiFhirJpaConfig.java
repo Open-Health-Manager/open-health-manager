@@ -115,6 +115,12 @@ public class OHMHapiFhirJpaConfig {
 			WebUtil.webJarAddSelect2(registry);
 			WebUtil.webJarAddAwesomeCheckbox(registry);
 			WebUtil.webJarAddPopperJs(registry);
+			
+			registry.addResourceHandler("/tester/css/**").addResourceLocations("/css/","classpath:/css/");
+			registry.addResourceHandler("/tester/fa/**").addResourceLocations("/fa/");
+			registry.addResourceHandler("/tester/fonts/**").addResourceLocations("/fonts/");
+			registry.addResourceHandler("/tester/img/**").addResourceLocations("/img/","classpath:/img/");
+			registry.addResourceHandler("/tester/js/**").addResourceLocations("/js/","classpath:/js/");
 	    }
 	}
 

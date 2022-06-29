@@ -1089,6 +1089,34 @@
                         <groupId>org.liquibase</groupId>
                         <artifactId>liquibase-maven-plugin</artifactId>
                     </plugin>
+			  		<plugin>
+			  			<groupId>org.apache.maven.plugins</groupId>
+			  			<artifactId>maven-dependency-plugin</artifactId>
+			  			<executions>
+			  				<execution>
+			  					<id>unpack</id>
+			  					<phase>compile</phase>
+			  					<goals>
+			  						<goal>unpack</goal>
+			  					</goals>
+			  					<configuration>
+			  						<artifactItems>
+			  							<artifactItem>
+								            <groupId>ca.uhn.hapi.fhir</groupId>
+								            <artifactId>hapi-fhir-testpage-overlay</artifactId>
+								            <version>${hapi.fhir.version}</version>
+								            <type>war</type>
+			  								<overWrite>false</overWrite>
+			  								<outputDirectory>${project.build.directory}/classes/static</outputDirectory>
+			  								<includes>**/*.js,**/*.css,**/img/**</includes>
+			  							</artifactItem>
+			  						</artifactItems>
+			  						<overWriteReleases>false</overWriteReleases>
+			  						<overWriteSnapshots>true</overWriteSnapshots>
+			  					</configuration>
+			  				</execution>
+			  			</executions>
+			  		</plugin>                    
                 </plugins>
                 <pluginManagement>
                     <plugins>
