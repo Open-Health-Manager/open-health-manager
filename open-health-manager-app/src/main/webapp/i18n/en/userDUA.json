@@ -1,0 +1,29 @@
+{
+  "openHealthManagerApp": {
+    "userDUA": {
+      "home": {
+        "title": "User DUAS",
+        "refreshListLabel": "Refresh list",
+        "createLabel": "Create a new User DUA",
+        "createOrEditLabel": "Create or edit a User DUA",
+        "notFound": "No User DUAS found"
+      },
+      "created": "A new User DUA is created with identifier {{ param }}",
+      "updated": "A User DUA is updated with identifier {{ param }}",
+      "deleted": "A User DUA is deleted with identifier {{ param }}",
+      "delete": {
+        "question": "Are you sure you want to delete User DUA {{ id }}?"
+      },
+      "detail": {
+        "title": "User DUA"
+      },
+      "id": "ID",
+      "active": "Active",
+      "version": "Version",
+      "ageAttested": "Age Attested",
+      "activeDate": "Active Date",
+      "revocationDate": "Revocation Date",
+      "user": "User"
+    }
+  }
+}
