@@ -24,12 +24,14 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import tech.jhipster.web.util.HeaderUtil;
 import tech.jhipster.web.util.PaginationUtil;
 import tech.jhipster.web.util.ResponseUtil;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.mitre.healthmanager.security.AuthoritiesConstants;
 
 /**
  * REST controller for managing {@link org.mitre.healthmanager.domain.UserDUA}.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/admin")
 public class UserDUAResource {
 
     private final Logger log = LoggerFactory.getLogger(UserDUAResource.class);
@@ -56,6 +58,7 @@ public class UserDUAResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect.
      */
     @PostMapping("/user-duas")
+    @PreAuthorize("hasAuthority(\"" + AuthoritiesConstants.ADMIN + "\")")
     public ResponseEntity<UserDUA> createUserDUA(@Valid @RequestBody UserDUA userDUA) throws URISyntaxException {
         log.debug("REST request to save UserDUA : {}", userDUA);
         if (userDUA.getId() != null) {
@@ -79,6 +82,7 @@ public class UserDUAResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect.
      */
     @PutMapping("/user-duas/{id}")
+    @PreAuthorize("hasAuthority(\"" + AuthoritiesConstants.ADMIN + "\")")
     public ResponseEntity<UserDUA> updateUserDUA(
         @PathVariable(value = "id", required = false) final Long id,
         @Valid @RequestBody UserDUA userDUA
@@ -114,6 +118,7 @@ public class UserDUAResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect.
      */
     @PatchMapping(value = "/user-duas/{id}", consumes = { "application/json", "application/merge-patch+json" })
+    @PreAuthorize("hasAuthority(\"" + AuthoritiesConstants.ADMIN + "\")")
     public ResponseEntity<UserDUA> partialUpdateUserDUA(
         @PathVariable(value = "id", required = false) final Long id,
         @NotNull @RequestBody UserDUA userDUA
@@ -146,6 +151,7 @@ public class UserDUAResource {
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and the list of userDUAS in body.
      */
     @GetMapping("/user-duas")
+    @PreAuthorize("hasAuthority(\"" + AuthoritiesConstants.ADMIN + "\")")
     public ResponseEntity<List<UserDUA>> getAllUserDUAS(
         @org.springdoc.api.annotations.ParameterObject Pageable pageable,
         @RequestParam(required = false, defaultValue = "true") boolean eagerload
@@ -168,6 +174,7 @@ public class UserDUAResource {
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the userDUA, or with status {@code 404 (Not Found)}.
      */
     @GetMapping("/user-duas/{id}")
+    @PreAuthorize("hasAuthority(\"" + AuthoritiesConstants.ADMIN + "\")")
     public ResponseEntity<UserDUA> getUserDUA(@PathVariable Long id) {
         log.debug("REST request to get UserDUA : {}", id);
         Optional<UserDUA> userDUA = userDUAService.findOne(id);
@@ -181,6 +188,7 @@ public class UserDUAResource {
      * @return the {@link ResponseEntity} with status {@code 204 (NO_CONTENT)}.
      */
     @DeleteMapping("/user-duas/{id}")
+    @PreAuthorize("hasAuthority(\"" + AuthoritiesConstants.ADMIN + "\")")
     public ResponseEntity<Void> deleteUserDUA(@PathVariable Long id) {
         log.debug("REST request to delete UserDUA : {}", id);
         userDUAService.delete(id);
