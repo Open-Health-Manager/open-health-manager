@@ -163,7 +163,10 @@ public class UserService {
     }
 
     private boolean removeNonActivatedUser(User existingUser) {
-        if (existingUser.isActivated()) {
+        // if currently or previously activated (has a FHIR patient tied to it)
+        // treat as activated and do not remove
+        // prevents change of login
+        if (existingUser.isActivated() || fhirPatientRepository.findOneForUser(existingUser.getId()).isPresent()) {
             return false;
         }
         userRepository.delete(existingUser);
@@ -216,15 +219,18 @@ public class UserService {
         String targetUsername = user.getLogin();
 
         // First check that the patient doesn't already exist
+        SystemRequestDetails searchRequestDetails = SystemRequestDetails.forAllPartition();
+        searchRequestDetails.addHeader("Cache-Control", "no-cache");
         IBundleProvider searchResults = 
             patientDAO.search(
                 new SearchParameterMap(
                     "identifier", 
                     new TokenParam(FHIR_LOGIN_SYSTEM, targetUsername)
-                )
+                ),
+                searchRequestDetails
             );
         if (!searchResults.isEmpty()) {
-            throw new RuntimeException("FHIR Patient with username '" + targetUsername + "' already exists");
+            throw new UsernameAlreadyUsedFHIRException();
         }
 
         // create the patient
@@ -276,6 +282,11 @@ public class UserService {
             .map(Optional::get)
             .map(user -> {
                 this.clearUserCaches(user);
+                String newLogin = userDTO.getLogin().toLowerCase();
+                if (!newLogin.equals(user.getLogin())) {
+                    throw new UsernameChangeException();
+                }
+                
                 user.setLogin(userDTO.getLogin().toLowerCase());
                 user.setFirstName(userDTO.getFirstName());
                 user.setLastName(userDTO.getLastName());

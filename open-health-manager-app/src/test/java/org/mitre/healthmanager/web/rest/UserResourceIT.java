@@ -3,6 +3,8 @@ package org.mitre.healthmanager.web.rest;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -12,10 +14,12 @@ import java.util.*;
 import java.util.function.Consumer;
 import javax.persistence.EntityManager;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.hl7.fhir.r4.model.Patient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mitre.healthmanager.IntegrationTest;
 import org.mitre.healthmanager.domain.Authority;
+import org.mitre.healthmanager.domain.FHIRPatient;
 import org.mitre.healthmanager.domain.User;
 import org.mitre.healthmanager.repository.FHIRPatientRepository;
 import org.mitre.healthmanager.repository.UserRepository;
@@ -23,6 +27,9 @@ import org.mitre.healthmanager.security.AuthoritiesConstants;
 import org.mitre.healthmanager.service.dto.AdminUserDTO;
 import org.mitre.healthmanager.service.mapper.UserMapper;
 import org.mitre.healthmanager.web.rest.vm.ManagedUserVM;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.mitre.healthmanager.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.cache.CacheManager;
@@ -30,6 +37,15 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
+
+import ca.uhn.fhir.jpa.api.dao.DaoRegistry;
+import ca.uhn.fhir.jpa.api.dao.IFhirResourceDao;
+import ca.uhn.fhir.jpa.api.model.DaoMethodOutcome;
+import ca.uhn.fhir.jpa.partition.SystemRequestDetails;
+import ca.uhn.fhir.jpa.searchparam.SearchParameterMap;
+import ca.uhn.fhir.model.primitive.IdDt;
+import ca.uhn.fhir.rest.api.server.IBundleProvider;
+import ca.uhn.fhir.rest.param.TokenParam;
 
 /**
  * Integration tests for the {@link UserResource} REST controller.
@@ -49,6 +65,8 @@ class UserResourceIT {
 
     private static final String DEFAULT_EMAIL = "johndoe@localhost";
     private static final String UPDATED_EMAIL = "jhipster@localhost";
+    private static final String DEFAULT_EMAIL_SUFFIX = "@localhost";
+    private static final String UPDATED_EMAIL_SUFFIX = "@example";
 
     private static final String DEFAULT_FIRSTNAME = "john";
     private static final String UPDATED_FIRSTNAME = "jhipsterFirstName";
@@ -61,6 +79,8 @@ class UserResourceIT {
 
     private static final String DEFAULT_LANGKEY = "en";
     private static final String UPDATED_LANGKEY = "fr";
+
+    private final Logger log = LoggerFactory.getLogger(UserService.class);
 
     @Autowired
     private UserRepository userRepository;
@@ -79,6 +99,9 @@ class UserResourceIT {
 
     @Autowired
     private MockMvc restUserMockMvc;
+
+    @Autowired
+	private DaoRegistry myDaoRegistry;
 
     private User user;
 
@@ -125,15 +148,18 @@ class UserResourceIT {
     @Test
     @Transactional("jhipsterTransactionManager")
     void createUser() throws Exception {
+        String methodName = "createUser";
+        log.info("**** " + methodName + " ****");
+        String testLogin = methodName.toLowerCase();
         int databaseSizeBeforeCreate = userRepository.findAll().size();
 
         // Create the User
         ManagedUserVM managedUserVM = new ManagedUserVM();
-        managedUserVM.setLogin(DEFAULT_LOGIN);
+        managedUserVM.setLogin(testLogin);
         managedUserVM.setPassword(DEFAULT_PASSWORD);
         managedUserVM.setFirstName(DEFAULT_FIRSTNAME);
         managedUserVM.setLastName(DEFAULT_LASTNAME);
-        managedUserVM.setEmail(DEFAULT_EMAIL);
+        managedUserVM.setEmail(testLogin + DEFAULT_EMAIL_SUFFIX);
         managedUserVM.setActivated(true);
         managedUserVM.setImageUrl(DEFAULT_IMAGEURL);
         managedUserVM.setLangKey(DEFAULT_LANGKEY);
@@ -149,40 +175,59 @@ class UserResourceIT {
         assertPersistedUsers(users -> {
             assertThat(users).hasSize(databaseSizeBeforeCreate + 1);
             User testUser = users.get(users.size() - 1);
-            assertThat(testUser.getLogin()).isEqualTo(DEFAULT_LOGIN);
+            assertThat(testUser.getLogin()).isEqualTo(testLogin);
             assertThat(testUser.getFirstName()).isEqualTo(DEFAULT_FIRSTNAME);
             assertThat(testUser.getLastName()).isEqualTo(DEFAULT_LASTNAME);
-            assertThat(testUser.getEmail()).isEqualTo(DEFAULT_EMAIL);
+            assertThat(testUser.getEmail()).isEqualTo(testLogin + DEFAULT_EMAIL_SUFFIX);
             assertThat(testUser.getImageUrl()).isEqualTo(DEFAULT_IMAGEURL);
             assertThat(testUser.getLangKey()).isEqualTo(DEFAULT_LANGKEY);
         });
 
         // Validate the user has an associated FHIR Patient Id
-        User testUser = userRepository.findOneByLogin(DEFAULT_LOGIN).orElse(null);
+        User testUser = userRepository.findOneByLogin(testLogin).orElse(null);
         assertNotNull(testUser);
-        assertNotNull(fhirPatientRepository.findOneForUser(testUser.getId()).orElse(null));
+        FHIRPatient fhirPatient = fhirPatientRepository.findOneForUser(testUser.getId()).orElse(null);
+        assertNotNull(fhirPatient);
+        assertNotNull(fhirPatient.getFhirId());
+        
+        IFhirResourceDao<Patient> patientDAO = myDaoRegistry.getResourceDao(Patient.class);
+        // check that the patient exists
+        Patient linkedPatient = patientDAO.read(new IdDt(fhirPatient.getFhirId()), SystemRequestDetails.forAllPartition());
+        assertNotNull(linkedPatient);
+        assertEquals(1, linkedPatient.getIdentifier().size());
+        assertEquals(testLogin, linkedPatient.getIdentifierFirstRep().getValue());
+        assertEquals(UserService.FHIR_LOGIN_SYSTEM, linkedPatient.getIdentifierFirstRep().getSystem());
+        
+        // check that search by identifier returns this patient only
+        SystemRequestDetails searchRequestDetails = SystemRequestDetails.forAllPartition();
+        searchRequestDetails.addHeader("Cache-Control", "no-cache");
+        IBundleProvider searchResults = patientDAO.search(
+            new SearchParameterMap(
+                "identifier", 
+                new TokenParam(UserService.FHIR_LOGIN_SYSTEM, testLogin)
+            ),
+            searchRequestDetails
+        );
+        assertEquals(1, searchResults.getAllResourceIds().size());
+        assertEquals(fhirPatient.getFhirId(), searchResults.getAllResourceIds().get(0));
 
-        restUserMockMvc
-            .perform(
-                get("/fhir/Patient?identifier=urn:mitre%3Ahealthmanager%3Aaccount%3Ausername%7C" + DEFAULT_LOGIN).contentType(MediaType.APPLICATION_JSON)
-            )
-            .andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("$.total").value("2"));
-    }
-
+    } 
+ 
     @Test
     @Transactional("jhipsterTransactionManager")
     void createUserWithExistingId() throws Exception {
+        String methodName = "createUserWithExistingId";
+        log.info("**** " + methodName + " ****");
+        String testLogin = methodName.toLowerCase();
         int databaseSizeBeforeCreate = userRepository.findAll().size();
 
         ManagedUserVM managedUserVM = new ManagedUserVM();
         managedUserVM.setId(DEFAULT_ID);
-        managedUserVM.setLogin(DEFAULT_LOGIN);
+        managedUserVM.setLogin(testLogin);
         managedUserVM.setPassword(DEFAULT_PASSWORD);
         managedUserVM.setFirstName(DEFAULT_FIRSTNAME);
         managedUserVM.setLastName(DEFAULT_LASTNAME);
-        managedUserVM.setEmail(DEFAULT_EMAIL);
+        managedUserVM.setEmail(testLogin + DEFAULT_EMAIL_SUFFIX);
         managedUserVM.setActivated(true);
         managedUserVM.setImageUrl(DEFAULT_IMAGEURL);
         managedUserVM.setLangKey(DEFAULT_LANGKEY);
@@ -202,6 +247,8 @@ class UserResourceIT {
     @Test
     @Transactional("jhipsterTransactionManager")
     void createUserWithExistingLogin() throws Exception {
+        String methodName = "createUserWithExistingLogin";
+        log.info("**** " + methodName + " ****");
         // Initialize the database
         userRepository.saveAndFlush(user);
         int databaseSizeBeforeCreate = userRepository.findAll().size();
@@ -211,7 +258,7 @@ class UserResourceIT {
         managedUserVM.setPassword(DEFAULT_PASSWORD);
         managedUserVM.setFirstName(DEFAULT_FIRSTNAME);
         managedUserVM.setLastName(DEFAULT_LASTNAME);
-        managedUserVM.setEmail("anothermail@localhost");
+        managedUserVM.setEmail(methodName.toLowerCase() + DEFAULT_EMAIL_SUFFIX);
         managedUserVM.setActivated(true);
         managedUserVM.setImageUrl(DEFAULT_IMAGEURL);
         managedUserVM.setLangKey(DEFAULT_LANGKEY);
@@ -231,12 +278,15 @@ class UserResourceIT {
     @Test
     @Transactional("jhipsterTransactionManager")
     void createUserWithExistingEmail() throws Exception {
+        String methodName = "createUserWithExistingEmail";
+        log.info("**** " + methodName + " ****");
+        String testLogin = methodName.toLowerCase();
         // Initialize the database
         userRepository.saveAndFlush(user);
         int databaseSizeBeforeCreate = userRepository.findAll().size();
 
         ManagedUserVM managedUserVM = new ManagedUserVM();
-        managedUserVM.setLogin("anotherlogin");
+        managedUserVM.setLogin(testLogin);
         managedUserVM.setPassword(DEFAULT_PASSWORD);
         managedUserVM.setFirstName(DEFAULT_FIRSTNAME);
         managedUserVM.setLastName(DEFAULT_LASTNAME);
@@ -259,7 +309,71 @@ class UserResourceIT {
 
     @Test
     @Transactional("jhipsterTransactionManager")
+    void createUserWithFHIRPatientUsername() throws Exception {
+        String methodName = "createUserWithFHIRPatientUsername";
+        log.info("**** " + methodName + " ****");
+        String testLogin = methodName.toLowerCase();
+        // Initialize the database
+        IFhirResourceDao<Patient> patientDAO = myDaoRegistry.getResourceDao(Patient.class);
+        Patient patientFHIR = new Patient();
+        patientFHIR.addIdentifier()
+            .setSystem(org.mitre.healthmanager.service.UserService.FHIR_LOGIN_SYSTEM)
+            .setValue(testLogin);
+        patientFHIR.addName()
+            .setFamily(DEFAULT_LASTNAME)
+            .addGiven(DEFAULT_FIRSTNAME);
+        SystemRequestDetails requestDetails = SystemRequestDetails.forAllPartition();
+        DaoMethodOutcome resp = patientDAO.create(patientFHIR, requestDetails);
+        assertTrue(resp.getCreated());
+        
+        SystemRequestDetails searchRequestDetails = SystemRequestDetails.forAllPartition();
+        searchRequestDetails.addHeader("Cache-Control", "no-cache");
+        IBundleProvider searchResultsPre = patientDAO.search(
+            new SearchParameterMap(
+                "identifier", 
+                new TokenParam(UserService.FHIR_LOGIN_SYSTEM, testLogin)
+            ),
+            searchRequestDetails
+        );
+        assertEquals(1, searchResultsPre.getAllResourceIds().size());
+        int databaseSizeBeforeCreate = userRepository.findAll().size();
+
+        ManagedUserVM managedUserVM = new ManagedUserVM();
+        managedUserVM.setLogin(testLogin);
+        managedUserVM.setPassword(DEFAULT_PASSWORD);
+        managedUserVM.setFirstName(DEFAULT_FIRSTNAME);
+        managedUserVM.setLastName(DEFAULT_LASTNAME);
+        managedUserVM.setEmail(testLogin + DEFAULT_EMAIL_SUFFIX);
+        managedUserVM.setActivated(true);
+        managedUserVM.setImageUrl(DEFAULT_IMAGEURL);
+        managedUserVM.setLangKey(DEFAULT_LANGKEY);
+        managedUserVM.setAuthorities(Collections.singleton(AuthoritiesConstants.USER));
+
+        // Create the User
+        restUserMockMvc
+            .perform(
+                post("/api/admin/users").contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(managedUserVM))
+            )
+            .andExpect(status().isBadRequest());
+
+        // Validate the User in the database
+        assertPersistedUsers(users -> assertThat(users).hasSize(databaseSizeBeforeCreate));
+        IBundleProvider searchResultsPost = patientDAO.search(
+            new SearchParameterMap(
+                "identifier", 
+                new TokenParam(UserService.FHIR_LOGIN_SYSTEM, testLogin)
+            ),
+            searchRequestDetails
+        );
+        assertEquals(1, searchResultsPost.getAllResourceIds().size());
+
+    }
+
+    @Test
+    @Transactional("jhipsterTransactionManager")
     void getAllUsers() throws Exception {
+        String methodName = "getAllUsers";
+        log.info("**** " + methodName + " ****");
         // Initialize the database
         userRepository.saveAndFlush(user);
 
@@ -279,6 +393,8 @@ class UserResourceIT {
     @Test
     @Transactional("jhipsterTransactionManager")
     void getUser() throws Exception {
+        String methodName = "getUser";
+        log.info("**** " + methodName + " ****");
         // Initialize the database
         userRepository.saveAndFlush(user);
 
@@ -302,12 +418,16 @@ class UserResourceIT {
     @Test
     @Transactional("jhipsterTransactionManager")
     void getNonExistingUser() throws Exception {
+        String methodName = "getNonExistingUser";
+        log.info("**** " + methodName + " ****");
         restUserMockMvc.perform(get("/api/admin/users/unknown")).andExpect(status().isNotFound());
     }
 
     @Test
     @Transactional("jhipsterTransactionManager")
     void updateUser() throws Exception {
+        String methodName = "updateUser";
+        log.info("**** " + methodName + " ****");
         // Initialize the database
         userRepository.saveAndFlush(user);
         int databaseSizeBeforeUpdate = userRepository.findAll().size();
@@ -317,7 +437,7 @@ class UserResourceIT {
 
         ManagedUserVM managedUserVM = new ManagedUserVM();
         managedUserVM.setId(updatedUser.getId());
-        managedUserVM.setLogin(updatedUser.getLogin());
+        managedUserVM.setLogin(updatedUser.getLogin()); // no change to login
         managedUserVM.setPassword(UPDATED_PASSWORD);
         managedUserVM.setFirstName(UPDATED_FIRSTNAME);
         managedUserVM.setLastName(UPDATED_LASTNAME);
@@ -352,6 +472,9 @@ class UserResourceIT {
     @Test
     @Transactional("jhipsterTransactionManager")
     void updateUserLogin() throws Exception {
+        String methodName = "updateUserLogin";
+        log.info("**** " + methodName + " ****");
+        
         // Initialize the database
         userRepository.saveAndFlush(user);
         int databaseSizeBeforeUpdate = userRepository.findAll().size();
@@ -379,24 +502,26 @@ class UserResourceIT {
             .perform(
                 put("/api/admin/users").contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(managedUserVM))
             )
-            .andExpect(status().isOk());
+            .andExpect(status().isBadRequest());
 
-        // Validate the User in the database
+        // Validate no changes to the user
         assertPersistedUsers(users -> {
             assertThat(users).hasSize(databaseSizeBeforeUpdate);
             User testUser = users.stream().filter(usr -> usr.getId().equals(updatedUser.getId())).findFirst().get();
-            assertThat(testUser.getLogin()).isEqualTo(UPDATED_LOGIN);
-            assertThat(testUser.getFirstName()).isEqualTo(UPDATED_FIRSTNAME);
-            assertThat(testUser.getLastName()).isEqualTo(UPDATED_LASTNAME);
-            assertThat(testUser.getEmail()).isEqualTo(UPDATED_EMAIL);
-            assertThat(testUser.getImageUrl()).isEqualTo(UPDATED_IMAGEURL);
-            assertThat(testUser.getLangKey()).isEqualTo(UPDATED_LANGKEY);
+            assertThat(testUser.getLogin()).isEqualTo(DEFAULT_LOGIN);
+            assertThat(testUser.getFirstName()).isEqualTo(DEFAULT_FIRSTNAME);
+            assertThat(testUser.getLastName()).isEqualTo(DEFAULT_LASTNAME);
+            assertThat(testUser.getEmail()).isEqualTo(DEFAULT_EMAIL);
+            assertThat(testUser.getImageUrl()).isEqualTo(DEFAULT_IMAGEURL);
+            assertThat(testUser.getLangKey()).isEqualTo(DEFAULT_LANGKEY);
         });
     }
 
     @Test
     @Transactional("jhipsterTransactionManager")
     void updateUserExistingEmail() throws Exception {
+        String methodName = "updateUserExistingEmail";
+        log.info("**** " + methodName + " ****");
         // Initialize the database with 2 users
         userRepository.saveAndFlush(user);
 
@@ -440,6 +565,8 @@ class UserResourceIT {
     @Test
     @Transactional("jhipsterTransactionManager")
     void updateUserExistingLogin() throws Exception {
+        String methodName = "updateUserExistingLogin";
+        log.info("**** " + methodName + " ****");
         // Initialize the database
         userRepository.saveAndFlush(user);
 
@@ -483,6 +610,8 @@ class UserResourceIT {
     @Test
     @Transactional("jhipsterTransactionManager")
     void deleteUser() throws Exception {
+        String methodName = "deleteUser";
+        log.info("**** " + methodName + " ****");
         // Initialize the database
         userRepository.saveAndFlush(user);
         int databaseSizeBeforeDelete = userRepository.findAll().size();
@@ -507,6 +636,8 @@ class UserResourceIT {
 
     @Test
     void testUserEquals() throws Exception {
+        String methodName = "testUserEquals";
+        log.info("**** " + methodName + " ****");
         TestUtil.equalsVerifier(User.class);
         User user1 = new User();
         user1.setId(DEFAULT_ID);
@@ -521,6 +652,8 @@ class UserResourceIT {
 
     @Test
     void testUserDTOtoUser() {
+        String methodName = "testUserDTOtoUser";
+        log.info("**** " + methodName + " ****");
         AdminUserDTO userDTO = new AdminUserDTO();
         userDTO.setId(DEFAULT_ID);
         userDTO.setLogin(DEFAULT_LOGIN);
@@ -552,6 +685,8 @@ class UserResourceIT {
 
     @Test
     void testUserToUserDTO() {
+        String methodName = "testUserToUserDTO";
+        log.info("**** " + methodName + " ****");
         user.setId(DEFAULT_ID);
         user.setCreatedBy(DEFAULT_LOGIN);
         user.setCreatedDate(Instant.now());
@@ -583,6 +718,8 @@ class UserResourceIT {
 
     @Test
     void testAuthorityEquals() {
+        String methodName = "testAuthorityEquals";
+        log.info("**** " + methodName + " ****");
         Authority authorityA = new Authority();
         assertThat(authorityA).isNotEqualTo(null).isNotEqualTo(new Object());
         assertThat(authorityA.hashCode()).isZero();
