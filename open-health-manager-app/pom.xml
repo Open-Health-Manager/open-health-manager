@@ -711,6 +711,7 @@
                             <image>openhealthmanagerapp:latest</image>
                         </to>
                         <container>
+                            <appRoot>/app</appRoot>
                             <entrypoint>
                                 <shell>bash</shell>
                                 <option>-c</option>

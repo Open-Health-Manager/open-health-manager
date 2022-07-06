@@ -31,16 +31,18 @@ spring:
       enabled: false
     livereload:
       enabled: false
-  datasource:
-    type: com.zaxxer.hikari.HikariDataSource
-    url: jdbc:postgresql://localhost:5432/OpenHealthManagerApp
-    username: OpenHealthManagerApp
-    password:
-    hikari:
-      poolName: Hikari
-      auto-commit: false
+#  datasource:
+#    type: com.zaxxer.hikari.HikariDataSource
+#    url: jdbc:postgresql://localhost:5432/OpenHealthManagerApp
+#    username: OpenHealthManagerApp
+#    password:
+#    hikari:
+#      poolName: Hikari
+#      auto-commit: false
   jpa:
     database-platform: tech.jhipster.domain.util.FixedPostgreSQL10Dialect
+    properties:
+      hibernate.dialect: ca.uhn.fhir.jpa.model.dialect.HapiFhirPostgres94Dialect
   # Replace by 'prod, faker' to add the faker context and have sample data loaded in production
   liquibase:
     contexts: prod
@@ -137,4 +139,23 @@ jhipster:
 # https://www.jhipster.tech/common-application-properties/
 # ===================================================================
 
-# application:
+application:
+  hapi:
+    datasource:
+      primary: true
+      type: com.zaxxer.hikari.HikariDataSource
+      url: jdbc:postgresql://localhost:5432/OpenHealthManagerApp
+      username: OpenHealthManagerApp
+      password:
+      hikari:
+        poolName: Hikari
+        auto-commit: false
+  jhipster:
+    datasource:
+      type: com.zaxxer.hikari.HikariDataSource
+      url: jdbc:postgresql://localhost:5432/OpenHealthManagerApp
+      username: OpenHealthManagerApp
+      password:
+      hikari:
+        poolName: Hikari
+        auto-commit: false
