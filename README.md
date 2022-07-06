@@ -23,7 +23,7 @@ To run the application using Docker:
 ```shell
 cd [base directory]/open-health-manager-app/
 ./mvnw package -Pprod -DskipTests verify jib:dockerBuild # Run this command to build the docker image of the application
-docker-compose -f src/main/docker/app.yml up # Run this once the image is built to run the application using Docker
+docker-compose -f src/main/docker/app.yml -p open-health-manager up -d # Run this once the image is built to run the application using Docker
 ```
 
 ## License
