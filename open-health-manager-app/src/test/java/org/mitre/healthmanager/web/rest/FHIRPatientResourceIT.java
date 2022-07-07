@@ -21,6 +21,7 @@ import org.mitre.healthmanager.repository.FHIRPatientRepository;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -54,6 +55,7 @@ class FHIRPatientResourceIT {
     private FHIRPatientRepository fHIRPatientRepositoryMock;
 
     @Autowired
+    @Qualifier("jhipsterEntityManagerFactory")
     private EntityManager em;
 
     @Autowired
@@ -99,7 +101,7 @@ class FHIRPatientResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void createFHIRPatient() throws Exception {
         int databaseSizeBeforeCreate = fHIRPatientRepository.findAll().size();
         // Create the FHIRPatient
@@ -115,7 +117,7 @@ class FHIRPatientResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void createFHIRPatientWithExistingId() throws Exception {
         // Create the FHIRPatient with an existing ID
         fHIRPatient.setId(1L);
@@ -133,7 +135,7 @@ class FHIRPatientResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void getAllFHIRPatients() throws Exception {
         // Initialize the database
         fHIRPatientRepository.saveAndFlush(fHIRPatient);
@@ -166,7 +168,7 @@ class FHIRPatientResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void getFHIRPatient() throws Exception {
         // Initialize the database
         fHIRPatientRepository.saveAndFlush(fHIRPatient);
@@ -181,14 +183,14 @@ class FHIRPatientResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void getNonExistingFHIRPatient() throws Exception {
         // Get the fHIRPatient
         restFHIRPatientMockMvc.perform(get(ENTITY_API_URL_ID, Long.MAX_VALUE)).andExpect(status().isNotFound());
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void putNewFHIRPatient() throws Exception {
         // Initialize the database
         fHIRPatientRepository.saveAndFlush(fHIRPatient);
@@ -217,7 +219,7 @@ class FHIRPatientResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void putNonExistingFHIRPatient() throws Exception {
         int databaseSizeBeforeUpdate = fHIRPatientRepository.findAll().size();
         fHIRPatient.setId(count.incrementAndGet());
@@ -237,7 +239,7 @@ class FHIRPatientResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void putWithIdMismatchFHIRPatient() throws Exception {
         int databaseSizeBeforeUpdate = fHIRPatientRepository.findAll().size();
         fHIRPatient.setId(count.incrementAndGet());
@@ -257,7 +259,7 @@ class FHIRPatientResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void putWithMissingIdPathParamFHIRPatient() throws Exception {
         int databaseSizeBeforeUpdate = fHIRPatientRepository.findAll().size();
         fHIRPatient.setId(count.incrementAndGet());
@@ -273,7 +275,7 @@ class FHIRPatientResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void partialUpdateFHIRPatientWithPatch() throws Exception {
         // Initialize the database
         fHIRPatientRepository.saveAndFlush(fHIRPatient);
@@ -300,7 +302,7 @@ class FHIRPatientResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void fullUpdateFHIRPatientWithPatch() throws Exception {
         // Initialize the database
         fHIRPatientRepository.saveAndFlush(fHIRPatient);
@@ -329,7 +331,7 @@ class FHIRPatientResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void patchNonExistingFHIRPatient() throws Exception {
         int databaseSizeBeforeUpdate = fHIRPatientRepository.findAll().size();
         fHIRPatient.setId(count.incrementAndGet());
@@ -349,7 +351,7 @@ class FHIRPatientResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void patchWithIdMismatchFHIRPatient() throws Exception {
         int databaseSizeBeforeUpdate = fHIRPatientRepository.findAll().size();
         fHIRPatient.setId(count.incrementAndGet());
@@ -369,7 +371,7 @@ class FHIRPatientResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void patchWithMissingIdPathParamFHIRPatient() throws Exception {
         int databaseSizeBeforeUpdate = fHIRPatientRepository.findAll().size();
         fHIRPatient.setId(count.incrementAndGet());
@@ -387,7 +389,7 @@ class FHIRPatientResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void deleteFHIRPatient() throws Exception {
         // Initialize the database
         fHIRPatientRepository.saveAndFlush(fHIRPatient);
