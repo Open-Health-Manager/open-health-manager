@@ -137,6 +137,9 @@ public class UserService {
                     throw new EmailAlreadyUsedException();
                 }
             });
+        // check that this login isn't in use on the FHIR side
+        checkFHIRLogin(userDTO.getLogin());
+
         User newUser = new User();
         String encryptedPassword = passwordEncoder.encode(password);
         newUser.setLogin(userDTO.getLogin().toLowerCase());
@@ -176,6 +179,9 @@ public class UserService {
     }
 
     public User createUser(AdminUserDTO userDTO) {
+        
+        checkFHIRLogin(userDTO.getLogin());
+        
         User user = new User();
         user.setLogin(userDTO.getLogin().toLowerCase());
         user.setFirstName(userDTO.getFirstName());
@@ -204,6 +210,7 @@ public class UserService {
                 .collect(Collectors.toSet());
             user.setAuthorities(authorities);
         }
+        
         userRepository.save(user);
         this.clearUserCaches(user);
         log.debug("Created Information for User: {}", user);
@@ -213,12 +220,8 @@ public class UserService {
         return user;
     }
 
-    private FHIRPatient createFHIRPatient(User user) {
-
+    private void checkFHIRLogin(String targetUsername) {
         IFhirResourceDao<Patient> patientDAO = myDaoRegistry.getResourceDao(Patient.class);
-        String targetUsername = user.getLogin();
-
-        // First check that the patient doesn't already exist
         SystemRequestDetails searchRequestDetails = SystemRequestDetails.forAllPartition();
         searchRequestDetails.addHeader("Cache-Control", "no-cache");
         IBundleProvider searchResults = 
@@ -232,17 +235,23 @@ public class UserService {
         if (!searchResults.isEmpty()) {
             throw new UsernameAlreadyUsedFHIRException();
         }
+    }
+
+    private FHIRPatient createFHIRPatient(User user) {
+
+        checkFHIRLogin(user.getLogin());
 
         // create the patient
         Patient patientFHIR = new Patient();
         patientFHIR.addIdentifier()
             .setSystem(FHIR_LOGIN_SYSTEM)
-            .setValue(targetUsername);
+            .setValue(user.getLogin());
         patientFHIR.addName()
             .setFamily(user.getLastName())
             .addGiven(user.getFirstName());
         
         // DaoMethodOutcome resp = patientDAO.create(patientFHIR); //does not fire interceptors
+        IFhirResourceDao<Patient> patientDAO = myDaoRegistry.getResourceDao(Patient.class);
         RequestDetails requestDetails = SystemRequestDetails.forAllPartition();
         DaoMethodOutcome resp = patientDAO.create(patientFHIR, requestDetails); //fires interceptors
         // JpaResourceProviderR4<Patient> patientProvider = new JpaResourceProviderR4<Patient>(patientDAO); 
