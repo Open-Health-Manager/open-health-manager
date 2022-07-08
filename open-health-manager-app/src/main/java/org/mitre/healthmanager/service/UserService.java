@@ -247,10 +247,8 @@ public class UserService {
                 this.clearUserCaches(user);
                 log.debug("Changed Information for User: {}", user);
 
-                /// create FHIR patient if it doesn't already exist
-                if (userDTO.isActivated()) {
-                	fhirPatientService.createFHIRPatientForUser(user);
-                }
+                
+                fhirPatientService.createFHIRPatientForUser(user);
 
                 return user;
             })

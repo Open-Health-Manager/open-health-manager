@@ -3,9 +3,11 @@ package org.mitre.healthmanager.service;
 import java.util.Optional;
 
 import org.hl7.fhir.r4.model.Patient;
+import org.mitre.healthmanager.domain.Authority;
 import org.mitre.healthmanager.domain.FHIRPatient;
 import org.mitre.healthmanager.domain.User;
 import org.mitre.healthmanager.repository.FHIRPatientRepository;
+import org.mitre.healthmanager.security.AuthoritiesConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -140,12 +142,28 @@ public class FHIRPatientService {
         fHIRPatientRepository.deleteById(id);
     }
     
+    
+    /**
+     * Creates FHIRPatient record for user if not already existing, user is ROLE_USER and user account is activated.
+     * If record already exists, will return existing record.
+     * Throws exception if there is an existing FHIR patient resource for the user.
+     * 
+     * @param user User entity
+     * @return the entity or null
+     */
     public FHIRPatient createFHIRPatientForUser(User user) {
     	// check if FHIRPatient record already exists for user
     	FHIRPatient patient = findOneForUser(user.getId()).orElse(null);
     	if(patient != null) {
     		return patient;
     	}
+    	// do not create FHIR Patient if user not activated or not ROLE_USER
+    	if(!user.isActivated() || 
+    			user.getAuthorities().stream().map(Authority::getName)
+    			.noneMatch(authority -> authority.equals(AuthoritiesConstants.USER))) {
+    		return null;
+    	}
+
         checkFHIRLogin(user.getLogin());
 
         // create the patient
