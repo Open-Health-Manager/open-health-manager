@@ -196,7 +196,7 @@ class UserResourceIT {
         assertNotNull(linkedPatient);
         assertEquals(1, linkedPatient.getIdentifier().size());
         assertEquals(testLogin, linkedPatient.getIdentifierFirstRep().getValue());
-        assertEquals(UserService.FHIR_LOGIN_SYSTEM, linkedPatient.getIdentifierFirstRep().getSystem());
+        assertEquals(org.mitre.healthmanager.service.FHIRPatientService.FHIR_LOGIN_SYSTEM, linkedPatient.getIdentifierFirstRep().getSystem());
         
         // check that search by identifier returns this patient only
         SystemRequestDetails searchRequestDetails = SystemRequestDetails.forAllPartition();
@@ -204,7 +204,7 @@ class UserResourceIT {
         IBundleProvider searchResults = patientDAO.search(
             new SearchParameterMap(
                 "identifier", 
-                new TokenParam(UserService.FHIR_LOGIN_SYSTEM, testLogin)
+                new TokenParam(org.mitre.healthmanager.service.FHIRPatientService.FHIR_LOGIN_SYSTEM, testLogin)
             ),
             searchRequestDetails
         );
@@ -308,7 +308,7 @@ class UserResourceIT {
     }
 
     @Test
-    @Transactional("jhipsterTransactionManager")
+    @Transactional //use HAPI FHIR transaction manager to rollback patientDAO transaction, User API call uses its own transaction
     void createUserWithFHIRPatientUsername() throws Exception {
         String methodName = "createUserWithFHIRPatientUsername";
         log.info("**** " + methodName + " ****");
@@ -317,7 +317,7 @@ class UserResourceIT {
         IFhirResourceDao<Patient> patientDAO = myDaoRegistry.getResourceDao(Patient.class);
         Patient patientFHIR = new Patient();
         patientFHIR.addIdentifier()
-            .setSystem(org.mitre.healthmanager.service.UserService.FHIR_LOGIN_SYSTEM)
+            .setSystem(org.mitre.healthmanager.service.FHIRPatientService.FHIR_LOGIN_SYSTEM)
             .setValue(testLogin);
         patientFHIR.addName()
             .setFamily(DEFAULT_LASTNAME)
@@ -331,7 +331,7 @@ class UserResourceIT {
         IBundleProvider searchResultsPre = patientDAO.search(
             new SearchParameterMap(
                 "identifier", 
-                new TokenParam(UserService.FHIR_LOGIN_SYSTEM, testLogin)
+                new TokenParam(org.mitre.healthmanager.service.FHIRPatientService.FHIR_LOGIN_SYSTEM, testLogin)
             ),
             searchRequestDetails
         );
@@ -361,7 +361,7 @@ class UserResourceIT {
         IBundleProvider searchResultsPost = patientDAO.search(
             new SearchParameterMap(
                 "identifier", 
-                new TokenParam(UserService.FHIR_LOGIN_SYSTEM, testLogin)
+                new TokenParam(org.mitre.healthmanager.service.FHIRPatientService.FHIR_LOGIN_SYSTEM, testLogin)
             ),
             searchRequestDetails
         );
