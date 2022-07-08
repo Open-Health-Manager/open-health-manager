@@ -20,7 +20,7 @@ export const FHIRPatientDeleteDialog = (props: RouteComponentProps<{ id: string 
   const updateSuccess = useAppSelector(state => state.fHIRPatient.updateSuccess);
 
   const handleClose = () => {
-    props.history.push('/fhir-patient');
+    props.history.push('/fhir-patient' + props.location.search);
   };
 
   useEffect(() => {

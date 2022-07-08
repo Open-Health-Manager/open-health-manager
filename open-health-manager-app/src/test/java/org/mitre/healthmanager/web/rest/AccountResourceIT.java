@@ -4,11 +4,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mitre.healthmanager.web.rest.AccountResourceIT.TEST_USER_LOGIN;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.Instant;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
+
 import org.apache.commons.lang3.RandomStringUtils;
 import org.hl7.fhir.r4.model.Patient;
 import org.junit.jupiter.api.Test;
@@ -17,9 +24,9 @@ import org.mitre.healthmanager.config.Constants;
 import org.mitre.healthmanager.domain.FHIRPatient;
 import org.mitre.healthmanager.domain.User;
 import org.mitre.healthmanager.repository.AuthorityRepository;
-import org.mitre.healthmanager.repository.FHIRPatientRepository;
 import org.mitre.healthmanager.repository.UserRepository;
 import org.mitre.healthmanager.security.AuthoritiesConstants;
+import org.mitre.healthmanager.service.FHIRPatientService;
 import org.mitre.healthmanager.service.UserService;
 import org.mitre.healthmanager.service.dto.AdminUserDTO;
 import org.mitre.healthmanager.service.dto.PasswordChangeDTO;
@@ -54,7 +61,7 @@ class AccountResourceIT {
     private UserRepository userRepository;
 
     @Autowired
-    private FHIRPatientRepository fhirPatientRepository;
+    private FHIRPatientService fhirPatientService;
 
     @Autowired
     private AuthorityRepository authorityRepository;
@@ -152,14 +159,14 @@ class AccountResourceIT {
         assertThat(findByLogin).isPresent();
         
         // FHIR Patient not created on registration
-        assertThat(fhirPatientRepository.findOneForUser(findByLogin.get().getId())).isNotPresent();
+        assertThat(fhirPatientService.findOneForUser(findByLogin.get().getId())).isNotPresent();
         IFhirResourceDao<Patient> patientDAO = myDaoRegistry.getResourceDao(Patient.class);
         SystemRequestDetails searchRequestDetails = SystemRequestDetails.forAllPartition();
         searchRequestDetails.addHeader("Cache-Control", "no-cache");
         IBundleProvider searchResults = patientDAO.search(
             new SearchParameterMap(
                 "identifier", 
-                new TokenParam(UserService.FHIR_LOGIN_SYSTEM, "test-register-valid")
+                new TokenParam(FHIRPatientService.FHIR_LOGIN_SYSTEM, "test-register-valid")
             ),
             searchRequestDetails
         );
@@ -428,7 +435,7 @@ class AccountResourceIT {
         // confirm a linked FHIR patient exists
         Optional<User> storedUser = userRepository.findOneByLogin("to-re-register");
         assertThat(storedUser).isPresent();
-        FHIRPatient fhirPatient = fhirPatientRepository.findOneForUser(storedUser.get().getId()).orElse(null);
+        FHIRPatient fhirPatient = fhirPatientService.findOneForUser(storedUser.get().getId()).orElse(null);
         assertNotNull(fhirPatient);
         IFhirResourceDao<Patient> patientDAO = myDaoRegistry.getResourceDao(Patient.class);
         SystemRequestDetails searchRequestDetails = SystemRequestDetails.forAllPartition();
@@ -436,7 +443,7 @@ class AccountResourceIT {
         IBundleProvider searchResultsPre = patientDAO.search(
             new SearchParameterMap(
                 "identifier", 
-                new TokenParam(UserService.FHIR_LOGIN_SYSTEM, "to-re-register")
+                new TokenParam(FHIRPatientService.FHIR_LOGIN_SYSTEM, "to-re-register")
             ),
             searchRequestDetails
         );
@@ -488,7 +495,7 @@ class AccountResourceIT {
         IBundleProvider searchResultsPre = patientDAO.search(
             new SearchParameterMap(
                 "identifier", 
-                new TokenParam(UserService.FHIR_LOGIN_SYSTEM, "activate-account")
+                new TokenParam(FHIRPatientService.FHIR_LOGIN_SYSTEM, "activate-account")
             ),
             searchRequestDetails
         );
@@ -498,11 +505,11 @@ class AccountResourceIT {
 
         user = userRepository.findOneByLogin(user.getLogin()).orElse(null);
         assertThat(user.isActivated()).isTrue();
-        assertThat(fhirPatientRepository.findOneForUser(user.getId())).isPresent();
+        assertThat(fhirPatientService.findOneForUser(user.getId())).isPresent();
         IBundleProvider searchResultsPost = patientDAO.search(
             new SearchParameterMap(
                 "identifier", 
-                new TokenParam(UserService.FHIR_LOGIN_SYSTEM, "activate-account")
+                new TokenParam(FHIRPatientService.FHIR_LOGIN_SYSTEM, "activate-account")
             ),
             searchRequestDetails
         );

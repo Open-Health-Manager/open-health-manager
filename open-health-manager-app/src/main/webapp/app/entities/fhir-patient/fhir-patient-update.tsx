@@ -24,7 +24,7 @@ export const FHIRPatientUpdate = (props: RouteComponentProps<{ id: string }>) =>
   const updating = useAppSelector(state => state.fHIRPatient.updating);
   const updateSuccess = useAppSelector(state => state.fHIRPatient.updateSuccess);
   const handleClose = () => {
-    props.history.push('/fhir-patient');
+    props.history.push('/fhir-patient' + props.location.search);
   };
 
   useEffect(() => {
@@ -96,6 +96,9 @@ export const FHIRPatientUpdate = (props: RouteComponentProps<{ id: string }>) =>
                 name="fhirId"
                 data-cy="fhirId"
                 type="text"
+                validate={{
+                  required: { value: true, message: translate('entity.validation.required') },
+                }}
               />
               <ValidatedField
                 id="fhir-patient-user"

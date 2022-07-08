@@ -2,7 +2,11 @@ package org.mitre.healthmanager.service;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.mitre.healthmanager.config.Constants;
@@ -10,7 +14,6 @@ import org.mitre.healthmanager.domain.Authority;
 import org.mitre.healthmanager.domain.FHIRPatient;
 import org.mitre.healthmanager.domain.User;
 import org.mitre.healthmanager.repository.AuthorityRepository;
-import org.mitre.healthmanager.repository.FHIRPatientRepository;
 import org.mitre.healthmanager.repository.UserRepository;
 import org.mitre.healthmanager.security.AuthoritiesConstants;
 import org.mitre.healthmanager.security.SecurityUtils;
@@ -26,17 +29,8 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import tech.jhipster.security.RandomUtil;
-import ca.uhn.fhir.rest.api.server.IBundleProvider;
-import ca.uhn.fhir.rest.api.server.RequestDetails;
-import ca.uhn.fhir.rest.param.TokenParam;
-import ca.uhn.fhir.jpa.api.dao.DaoRegistry;
-import ca.uhn.fhir.jpa.api.dao.IFhirResourceDao;
-import ca.uhn.fhir.jpa.api.model.DaoMethodOutcome;
-import ca.uhn.fhir.jpa.partition.SystemRequestDetails;
-import ca.uhn.fhir.jpa.searchparam.SearchParameterMap;
 
-import org.hl7.fhir.r4.model.Patient;
+import tech.jhipster.security.RandomUtil;
 
 /**
  * Service class for managing users.
@@ -44,9 +38,6 @@ import org.hl7.fhir.r4.model.Patient;
 @Service
 @Transactional("jhipsterTransactionManager")
 public class UserService {
-
-    public static final String FHIR_LOGIN_SYSTEM = "urn:mitre:healthmanager:account:username";
-
     private final Logger log = LoggerFactory.getLogger(UserService.class);
 
     private final UserRepository userRepository;
@@ -58,10 +49,7 @@ public class UserService {
     private final CacheManager cacheManager;
 
     @Autowired
-    private FHIRPatientRepository fhirPatientRepository;
-    
-    @Autowired
-	private DaoRegistry myDaoRegistry;
+    private FHIRPatientService fhirPatientService;
 
     public UserService(
         UserRepository userRepository,
@@ -86,10 +74,7 @@ public class UserService {
                 this.clearUserCaches(user);
                 log.debug("Activated user: {}", user);
 
-                /// create FHIR patient if it doesn't already exist
-                if (fhirPatientRepository.findOneForUser(user.getId()).isEmpty()) {
-                    createFHIRPatient(user);
-                }
+                fhirPatientService.createFHIRPatientForUser(user);
                 return user;
             });
     }
@@ -137,8 +122,6 @@ public class UserService {
                     throw new EmailAlreadyUsedException();
                 }
             });
-        // check that this login isn't in use on the FHIR side
-        checkFHIRLogin(userDTO.getLogin());
 
         User newUser = new User();
         String encryptedPassword = passwordEncoder.encode(password);
@@ -169,7 +152,7 @@ public class UserService {
         // if currently or previously activated (has a FHIR patient tied to it)
         // treat as activated and do not remove
         // prevents change of login
-        if (existingUser.isActivated() || fhirPatientRepository.findOneForUser(existingUser.getId()).isPresent()) {
+        if (existingUser.isActivated() || fhirPatientService.findOneForUser(existingUser.getId()).isPresent()) {
             return false;
         }
         userRepository.delete(existingUser);
@@ -179,9 +162,7 @@ public class UserService {
     }
 
     public User createUser(AdminUserDTO userDTO) {
-        
-        checkFHIRLogin(userDTO.getLogin());
-        
+       
         User user = new User();
         user.setLogin(userDTO.getLogin().toLowerCase());
         user.setFirstName(userDTO.getFirstName());
@@ -215,66 +196,15 @@ public class UserService {
         this.clearUserCaches(user);
         log.debug("Created Information for User: {}", user);
 
-        createFHIRPatient(user);
+        fhirPatientService.createFHIRPatientForUser(user);
 
         return user;
     }
 
-    private void checkFHIRLogin(String targetUsername) {
-        IFhirResourceDao<Patient> patientDAO = myDaoRegistry.getResourceDao(Patient.class);
-        SystemRequestDetails searchRequestDetails = SystemRequestDetails.forAllPartition();
-        searchRequestDetails.addHeader("Cache-Control", "no-cache");
-        IBundleProvider searchResults = 
-            patientDAO.search(
-                new SearchParameterMap(
-                    "identifier", 
-                    new TokenParam(FHIR_LOGIN_SYSTEM, targetUsername)
-                ),
-                searchRequestDetails
-            );
-        if (!searchResults.isEmpty()) {
-            throw new UsernameAlreadyUsedFHIRException();
-        }
-    }
-
-    private FHIRPatient createFHIRPatient(User user) {
-
-        checkFHIRLogin(user.getLogin());
-
-        // create the patient
-        Patient patientFHIR = new Patient();
-        patientFHIR.addIdentifier()
-            .setSystem(FHIR_LOGIN_SYSTEM)
-            .setValue(user.getLogin());
-        patientFHIR.addName()
-            .setFamily(user.getLastName())
-            .addGiven(user.getFirstName());
-        
-        // DaoMethodOutcome resp = patientDAO.create(patientFHIR); //does not fire interceptors
-        IFhirResourceDao<Patient> patientDAO = myDaoRegistry.getResourceDao(Patient.class);
-        RequestDetails requestDetails = SystemRequestDetails.forAllPartition();
-        DaoMethodOutcome resp = patientDAO.create(patientFHIR, requestDetails); //fires interceptors
-        // JpaResourceProviderR4<Patient> patientProvider = new JpaResourceProviderR4<Patient>(patientDAO); 
-        // MethodOutcome resp = patientProvider.create(null, patientFHIR, null, requestDetails); //fires interceptors
-        if (!resp.getCreated()) {
-            throw new RuntimeException("FHIR Patient creation failed");
-        }
-
-        FHIRPatient patient = new FHIRPatient();
-        patient.fhirId(resp.getId().getIdPart());
-        patient.user(user);
-        fhirPatientRepository.save(patient);
-
-        log.debug("linked to FHIR patient id: {}", patient.getFhirId());
-
-        return patient;
-
-    }
-
     private void deleteFHIRPatient(User user) {
-        Optional<FHIRPatient> linkedFHIRPatient = fhirPatientRepository.findOneForUser(user.getId());
+        Optional<FHIRPatient> linkedFHIRPatient = fhirPatientService.findOneForUser(user.getId());
         if (linkedFHIRPatient.isPresent()) {
-            fhirPatientRepository.delete(linkedFHIRPatient.get());
+        	fhirPatientService.delete(linkedFHIRPatient.get().getId());
         }
     }
 
@@ -317,10 +247,8 @@ public class UserService {
                 this.clearUserCaches(user);
                 log.debug("Changed Information for User: {}", user);
 
-                /// create FHIR patient if it doesn't already exist
-                if (userDTO.isActivated() && fhirPatientRepository.findOneForUser(user.getId()).isEmpty()) {
-                    createFHIRPatient(user);
-                }
+                
+                fhirPatientService.createFHIRPatientForUser(user);
 
                 return user;
             })

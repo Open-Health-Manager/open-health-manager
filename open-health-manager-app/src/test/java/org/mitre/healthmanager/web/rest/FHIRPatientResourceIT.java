@@ -18,6 +18,8 @@ import org.mitre.healthmanager.IntegrationTest;
 import org.mitre.healthmanager.domain.FHIRPatient;
 import org.mitre.healthmanager.domain.User;
 import org.mitre.healthmanager.repository.FHIRPatientRepository;
+import org.mitre.healthmanager.security.AuthoritiesConstants;
+import org.mitre.healthmanager.service.FHIRPatientService;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,7 +38,7 @@ import org.springframework.transaction.annotation.Transactional;
 @IntegrationTest
 @ExtendWith(MockitoExtension.class)
 @AutoConfigureMockMvc
-@WithMockUser
+@WithMockUser(authorities = AuthoritiesConstants.ADMIN)
 class FHIRPatientResourceIT {
 
     private static final String DEFAULT_FHIR_ID = "AAAAAAAAAA";
@@ -53,6 +55,9 @@ class FHIRPatientResourceIT {
 
     @Mock
     private FHIRPatientRepository fHIRPatientRepositoryMock;
+
+    @Mock
+    private FHIRPatientService fHIRPatientServiceMock;
 
     @Autowired
     @Qualifier("jhipsterEntityManagerFactory")
@@ -136,6 +141,23 @@ class FHIRPatientResourceIT {
 
     @Test
     @Transactional("jhipsterTransactionManager")
+    void checkFhirIdIsRequired() throws Exception {
+        int databaseSizeBeforeTest = fHIRPatientRepository.findAll().size();
+        // set the field null
+        fHIRPatient.setFhirId(null);
+
+        // Create the FHIRPatient, which fails.
+
+        restFHIRPatientMockMvc
+            .perform(post(ENTITY_API_URL).contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(fHIRPatient)))
+            .andExpect(status().isBadRequest());
+
+        List<FHIRPatient> fHIRPatientList = fHIRPatientRepository.findAll();
+        assertThat(fHIRPatientList).hasSize(databaseSizeBeforeTest);
+    }
+
+    @Test
+    @Transactional("jhipsterTransactionManager")
     void getAllFHIRPatients() throws Exception {
         // Initialize the database
         fHIRPatientRepository.saveAndFlush(fHIRPatient);
@@ -151,20 +173,20 @@ class FHIRPatientResourceIT {
 
     @SuppressWarnings({ "unchecked" })
     void getAllFHIRPatientsWithEagerRelationshipsIsEnabled() throws Exception {
-        when(fHIRPatientRepositoryMock.findAllWithEagerRelationships(any())).thenReturn(new PageImpl(new ArrayList<>()));
+        when(fHIRPatientServiceMock.findAllWithEagerRelationships(any())).thenReturn(new PageImpl(new ArrayList<>()));
 
         restFHIRPatientMockMvc.perform(get(ENTITY_API_URL + "?eagerload=true")).andExpect(status().isOk());
 
-        verify(fHIRPatientRepositoryMock, times(1)).findAllWithEagerRelationships(any());
+        verify(fHIRPatientServiceMock, times(1)).findAllWithEagerRelationships(any());
     }
 
     @SuppressWarnings({ "unchecked" })
     void getAllFHIRPatientsWithEagerRelationshipsIsNotEnabled() throws Exception {
-        when(fHIRPatientRepositoryMock.findAllWithEagerRelationships(any())).thenReturn(new PageImpl(new ArrayList<>()));
+        when(fHIRPatientServiceMock.findAllWithEagerRelationships(any())).thenReturn(new PageImpl(new ArrayList<>()));
 
         restFHIRPatientMockMvc.perform(get(ENTITY_API_URL + "?eagerload=true")).andExpect(status().isOk());
 
-        verify(fHIRPatientRepositoryMock, times(1)).findAllWithEagerRelationships(any());
+        verify(fHIRPatientServiceMock, times(1)).findAllWithEagerRelationships(any());
     }
 
     @Test

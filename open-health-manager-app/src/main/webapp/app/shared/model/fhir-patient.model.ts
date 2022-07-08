@@ -2,7 +2,7 @@ import { IUser } from 'app/shared/model/user.model';
 
 export interface IFHIRPatient {
   id?: number;
-  fhirId?: string | null;
+  fhirId?: string;
   user?: IUser;
 }
 

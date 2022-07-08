@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Link, RouteComponentProps } from 'react-router-dom';
 import { Button, Table } from 'reactstrap';
-import { Translate } from 'react-jhipster';
+import { Translate, getSortState, JhiPagination, JhiItemCount } from 'react-jhipster';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 import { APP_DATE_FORMAT, APP_LOCAL_DATE_FORMAT } from 'app/config/constants';
+import { ASC, DESC, ITEMS_PER_PAGE, SORT } from 'app/shared/util/pagination.constants';
+import { overridePaginationStateWithQueryParams } from 'app/shared/util/entity-utils';
 import { useAppDispatch, useAppSelector } from 'app/config/store';
 
 import { IFHIRPatient } from 'app/shared/model/fhir-patient.model';
@@ -13,15 +15,67 @@ import { getEntities } from './fhir-patient.reducer';
 export const FHIRPatient = (props: RouteComponentProps<{ url: string }>) => {
   const dispatch = useAppDispatch();
 
+  const [paginationState, setPaginationState] = useState(
+    overridePaginationStateWithQueryParams(getSortState(props.location, ITEMS_PER_PAGE, 'id'), props.location.search)
+  );
+
   const fHIRPatientList = useAppSelector(state => state.fHIRPatient.entities);
   const loading = useAppSelector(state => state.fHIRPatient.loading);
+  const totalItems = useAppSelector(state => state.fHIRPatient.totalItems);
+
+  const getAllEntities = () => {
+    dispatch(
+      getEntities({
+        page: paginationState.activePage - 1,
+        size: paginationState.itemsPerPage,
+        sort: `${paginationState.sort},${paginationState.order}`,
+      })
+    );
+  };
+
+  const sortEntities = () => {
+    getAllEntities();
+    const endURL = `?page=${paginationState.activePage}&sort=${paginationState.sort},${paginationState.order}`;
+    if (props.location.search !== endURL) {
+      props.history.push(`${props.location.pathname}${endURL}`);
+    }
+  };
 
   useEffect(() => {
-    dispatch(getEntities({}));
-  }, []);
+    sortEntities();
+  }, [paginationState.activePage, paginationState.order, paginationState.sort]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(props.location.search);
+    const page = params.get('page');
+    const sort = params.get(SORT);
+    if (page && sort) {
+      const sortSplit = sort.split(',');
+      setPaginationState({
+        ...paginationState,
+        activePage: +page,
+        sort: sortSplit[0],
+        order: sortSplit[1],
+      });
+    }
+  }, [props.location.search]);
+
+  const sort = p => () => {
+    setPaginationState({
+      ...paginationState,
+      order: paginationState.order === ASC ? DESC : ASC,
+      sort: p,
+    });
+  };
+
+  const handlePagination = currentPage =>
+    setPaginationState({
+      ...paginationState,
+      activePage: currentPage,
+    });
 
   const handleSyncList = () => {
-    dispatch(getEntities({}));
+    sortEntities();
   };
 
   const { match } = props;
@@ -47,14 +101,14 @@ export const FHIRPatient = (props: RouteComponentProps<{ url: string }>) => {
           <Table responsive>
             <thead>
               <tr>
-                <th>
-                  <Translate contentKey="openHealthManagerApp.fHIRPatient.id">ID</Translate>
+                <th className="hand" onClick={sort('id')}>
+                  <Translate contentKey="openHealthManagerApp.fHIRPatient.id">ID</Translate> <FontAwesomeIcon icon="sort" />
+                </th>
+                <th className="hand" onClick={sort('fhirId')}>
+                  <Translate contentKey="openHealthManagerApp.fHIRPatient.fhirId">Fhir Id</Translate> <FontAwesomeIcon icon="sort" />
                 </th>
                 <th>
-                  <Translate contentKey="openHealthManagerApp.fHIRPatient.fhirId">Fhir Id</Translate>
-                </th>
-                <th>
-                  <Translate contentKey="openHealthManagerApp.fHIRPatient.user">User</Translate>
+                  <Translate contentKey="openHealthManagerApp.fHIRPatient.user">User</Translate> <FontAwesomeIcon icon="sort" />
                 </th>
                 <th />
               </tr>
@@ -77,7 +131,13 @@ export const FHIRPatient = (props: RouteComponentProps<{ url: string }>) => {
                           <Translate contentKey="entity.action.view">View</Translate>
                         </span>
                       </Button>
-                      <Button tag={Link} to={`/fhir-patient/${fHIRPatient.id}/edit`} color="primary" size="sm" data-cy="entityEditButton">
+                      <Button
+                        tag={Link}
+                        to={`/fhir-patient/${fHIRPatient.id}/edit?page=${paginationState.activePage}&sort=${paginationState.sort},${paginationState.order}`}
+                        color="primary"
+                        size="sm"
+                        data-cy="entityEditButton"
+                      >
                         <FontAwesomeIcon icon="pencil-alt" />{' '}
                         <span className="d-none d-md-inline">
                           <Translate contentKey="entity.action.edit">Edit</Translate>
@@ -85,7 +145,7 @@ export const FHIRPatient = (props: RouteComponentProps<{ url: string }>) => {
                       </Button>
                       <Button
                         tag={Link}
-                        to={`/fhir-patient/${fHIRPatient.id}/delete`}
+                        to={`/fhir-patient/${fHIRPatient.id}/delete?page=${paginationState.activePage}&sort=${paginationState.sort},${paginationState.order}`}
                         color="danger"
                         size="sm"
                         data-cy="entityDeleteButton"
@@ -109,6 +169,24 @@ export const FHIRPatient = (props: RouteComponentProps<{ url: string }>) => {
           )
         )}
       </div>
+      {totalItems ? (
+        <div className={fHIRPatientList && fHIRPatientList.length > 0 ? '' : 'd-none'}>
+          <div className="justify-content-center d-flex">
+            <JhiItemCount page={paginationState.activePage} total={totalItems} itemsPerPage={paginationState.itemsPerPage} i18nEnabled />
+          </div>
+          <div className="justify-content-center d-flex">
+            <JhiPagination
+              activePage={paginationState.activePage}
+              onSelect={handlePagination}
+              maxButtons={5}
+              itemsPerPage={paginationState.itemsPerPage}
+              totalItems={totalItems}
+            />
+          </div>
+        </div>
+      ) : (
+        ''
+      )}
     </div>
   );
 };

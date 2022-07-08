@@ -10,7 +10,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
  * A FHIRPatient.
  */
 @Entity
-@Table(name = "fhirpatient")
+@Table(name = "fhir_patient")
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class FHIRPatient implements Serializable {
 
@@ -22,7 +22,8 @@ public class FHIRPatient implements Serializable {
     @Column(name = "id")
     private Long id;
 
-    @Column(name = "fhir_id")
+    @NotNull
+    @Column(name = "fhir_id", nullable = false)
     private String fhirId;
 
     @OneToOne(optional = false)

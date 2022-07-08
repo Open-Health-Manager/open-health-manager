@@ -196,7 +196,7 @@ class UserResourceIT {
         assertNotNull(linkedPatient);
         assertEquals(1, linkedPatient.getIdentifier().size());
         assertEquals(testLogin, linkedPatient.getIdentifierFirstRep().getValue());
-        assertEquals(UserService.FHIR_LOGIN_SYSTEM, linkedPatient.getIdentifierFirstRep().getSystem());
+        assertEquals(org.mitre.healthmanager.service.FHIRPatientService.FHIR_LOGIN_SYSTEM, linkedPatient.getIdentifierFirstRep().getSystem());
         
         // check that search by identifier returns this patient only
         SystemRequestDetails searchRequestDetails = SystemRequestDetails.forAllPartition();
@@ -204,7 +204,7 @@ class UserResourceIT {
         IBundleProvider searchResults = patientDAO.search(
             new SearchParameterMap(
                 "identifier", 
-                new TokenParam(UserService.FHIR_LOGIN_SYSTEM, testLogin)
+                new TokenParam(org.mitre.healthmanager.service.FHIRPatientService.FHIR_LOGIN_SYSTEM, testLogin)
             ),
             searchRequestDetails
         );
@@ -308,7 +308,7 @@ class UserResourceIT {
     }
 
     @Test
-    @Transactional("jhipsterTransactionManager")
+    @Transactional //use HAPI FHIR transaction manager to rollback patientDAO transaction, User API call uses its own transaction
     void createUserWithFHIRPatientUsername() throws Exception {
         String methodName = "createUserWithFHIRPatientUsername";
         log.info("**** " + methodName + " ****");
@@ -317,7 +317,7 @@ class UserResourceIT {
         IFhirResourceDao<Patient> patientDAO = myDaoRegistry.getResourceDao(Patient.class);
         Patient patientFHIR = new Patient();
         patientFHIR.addIdentifier()
-            .setSystem(org.mitre.healthmanager.service.UserService.FHIR_LOGIN_SYSTEM)
+            .setSystem(org.mitre.healthmanager.service.FHIRPatientService.FHIR_LOGIN_SYSTEM)
             .setValue(testLogin);
         patientFHIR.addName()
             .setFamily(DEFAULT_LASTNAME)
@@ -331,7 +331,7 @@ class UserResourceIT {
         IBundleProvider searchResultsPre = patientDAO.search(
             new SearchParameterMap(
                 "identifier", 
-                new TokenParam(UserService.FHIR_LOGIN_SYSTEM, testLogin)
+                new TokenParam(org.mitre.healthmanager.service.FHIRPatientService.FHIR_LOGIN_SYSTEM, testLogin)
             ),
             searchRequestDetails
         );
@@ -361,7 +361,7 @@ class UserResourceIT {
         IBundleProvider searchResultsPost = patientDAO.search(
             new SearchParameterMap(
                 "identifier", 
-                new TokenParam(UserService.FHIR_LOGIN_SYSTEM, testLogin)
+                new TokenParam(org.mitre.healthmanager.service.FHIRPatientService.FHIR_LOGIN_SYSTEM, testLogin)
             ),
             searchRequestDetails
         );
@@ -633,6 +633,64 @@ class UserResourceIT {
         assertNull(fhirPatientRepository.findOneForUser(testUserId).orElse(null));
     
     }
+    
+    @Test
+    @Transactional("jhipsterTransactionManager")
+    void createAdminUser() throws Exception {
+        String methodName = "createUser";
+        log.info("**** " + methodName + " ****");
+        String testLogin = methodName.toLowerCase();
+        int databaseSizeBeforeCreate = userRepository.findAll().size();
+
+        // Create the User
+        ManagedUserVM managedUserVM = new ManagedUserVM();
+        managedUserVM.setLogin(testLogin);
+        managedUserVM.setPassword(DEFAULT_PASSWORD);
+        managedUserVM.setFirstName(DEFAULT_FIRSTNAME);
+        managedUserVM.setLastName(DEFAULT_LASTNAME);
+        managedUserVM.setEmail(testLogin + DEFAULT_EMAIL_SUFFIX);
+        managedUserVM.setActivated(true);
+        managedUserVM.setImageUrl(DEFAULT_IMAGEURL);
+        managedUserVM.setLangKey(DEFAULT_LANGKEY);
+        managedUserVM.setAuthorities(Collections.singleton(AuthoritiesConstants.ADMIN));
+
+        restUserMockMvc
+            .perform(
+                post("/api/admin/users").contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(managedUserVM))
+            )
+            .andExpect(status().isCreated());
+
+        // Validate the User in the database
+        assertPersistedUsers(users -> {
+            assertThat(users).hasSize(databaseSizeBeforeCreate + 1);
+            User testUser = users.get(users.size() - 1);
+            assertThat(testUser.getLogin()).isEqualTo(testLogin);
+            assertThat(testUser.getFirstName()).isEqualTo(DEFAULT_FIRSTNAME);
+            assertThat(testUser.getLastName()).isEqualTo(DEFAULT_LASTNAME);
+            assertThat(testUser.getEmail()).isEqualTo(testLogin + DEFAULT_EMAIL_SUFFIX);
+            assertThat(testUser.getImageUrl()).isEqualTo(DEFAULT_IMAGEURL);
+            assertThat(testUser.getLangKey()).isEqualTo(DEFAULT_LANGKEY);
+        });
+
+        User testUser = userRepository.findOneByLogin(testLogin).orElse(null);
+        assertNotNull(testUser);
+        // Validate the admin user does not have an associated FHIR Patient Id
+        FHIRPatient fhirPatient = fhirPatientRepository.findOneForUser(testUser.getId()).orElse(null);
+        assertNull(fhirPatient);
+        
+        // check that search by identifier returns 0 results
+        IFhirResourceDao<Patient> patientDAO = myDaoRegistry.getResourceDao(Patient.class);
+        SystemRequestDetails searchRequestDetails = SystemRequestDetails.forAllPartition();
+        searchRequestDetails.addHeader("Cache-Control", "no-cache");
+        IBundleProvider searchResults = patientDAO.search(
+            new SearchParameterMap(
+                "identifier", 
+                new TokenParam(org.mitre.healthmanager.service.FHIRPatientService.FHIR_LOGIN_SYSTEM, testLogin)
+            ),
+            searchRequestDetails
+        );
+        assertEquals(0, searchResults.getAllResourceIds().size());
+    } 
 
     @Test
     void testUserEquals() throws Exception {
