@@ -9,8 +9,8 @@
     <changeSet id="20220603163044-2" author="jhipster">
 
         <addForeignKeyConstraint baseColumnNames="user_id"
-                                 baseTableName="fhirpatient"
-                                 constraintName="fk_fhirpatient__user_id"
+                                 baseTableName="fhir_patient"
+                                 constraintName="fk_fhir_patient__user_id"
                                  referencedColumnNames="id"
                                  referencedTableName="jhi_user"/>
     </changeSet>

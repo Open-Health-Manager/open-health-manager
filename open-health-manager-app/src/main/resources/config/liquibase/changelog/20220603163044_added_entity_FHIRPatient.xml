@@ -10,15 +10,15 @@
         Added the entity FHIRPatient.
     -->
     <changeSet id="20220603163044-1" author="jhipster">
-        <createTable tableName="fhirpatient">
+        <createTable tableName="fhir_patient">
             <column name="id" type="bigint">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="fhir_id" type="varchar(255)">
-                <constraints nullable="true" />
+                <constraints nullable="false" />
             </column>
             <column name="user_id" type="bigint">
-                <constraints nullable="false" unique="true" uniqueConstraintName="ux_fhirpatient__user_id" />
+                <constraints nullable="false" unique="true" uniqueConstraintName="ux_fhir_patient__user_id" />
             </column>
             <!-- jhipster-needle-liquibase-add-column - JHipster will add columns here -->
         </createTable>
@@ -36,9 +36,9 @@
     -->
     <changeSet id="20220603163044-1-data" author="jhipster" context="faker">
         <loadData
-                  file="config/liquibase/fake-data/fhirpatient.csv"
+                  file="config/liquibase/fake-data/fhir_patient.csv"
                   separator=";"
-                  tableName="fhirpatient"
+                  tableName="fhir_patient"
                   usePreparedStatements="true">
             <column name="id" type="numeric"/>
             <column name="fhir_id" type="string"/>

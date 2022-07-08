@@ -2,7 +2,6 @@ package org.mitre.healthmanager.web.rest;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -10,14 +9,20 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import org.mitre.healthmanager.domain.FHIRPatient;
 import org.mitre.healthmanager.repository.FHIRPatientRepository;
+import org.mitre.healthmanager.service.FHIRPatientService;
 import org.mitre.healthmanager.web.rest.errors.BadRequestAlertException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import tech.jhipster.web.util.HeaderUtil;
+import tech.jhipster.web.util.PaginationUtil;
 import tech.jhipster.web.util.ResponseUtil;
 
 /**
@@ -25,7 +30,6 @@ import tech.jhipster.web.util.ResponseUtil;
  */
 @RestController
 @RequestMapping("/api")
-@Transactional
 public class FHIRPatientResource {
 
     private final Logger log = LoggerFactory.getLogger(FHIRPatientResource.class);
@@ -35,9 +39,12 @@ public class FHIRPatientResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
+    private final FHIRPatientService fHIRPatientService;
+
     private final FHIRPatientRepository fHIRPatientRepository;
 
-    public FHIRPatientResource(FHIRPatientRepository fHIRPatientRepository) {
+    public FHIRPatientResource(FHIRPatientService fHIRPatientService, FHIRPatientRepository fHIRPatientRepository) {
+        this.fHIRPatientService = fHIRPatientService;
         this.fHIRPatientRepository = fHIRPatientRepository;
     }
 
@@ -54,7 +61,7 @@ public class FHIRPatientResource {
         if (fHIRPatient.getId() != null) {
             throw new BadRequestAlertException("A new fHIRPatient cannot already have an ID", ENTITY_NAME, "idexists");
         }
-        FHIRPatient result = fHIRPatientRepository.save(fHIRPatient);
+        FHIRPatient result = fHIRPatientService.save(fHIRPatient);
         return ResponseEntity
             .created(new URI("/api/fhir-patients/" + result.getId()))
             .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString()))
@@ -88,7 +95,7 @@ public class FHIRPatientResource {
             throw new BadRequestAlertException("Entity not found", ENTITY_NAME, "idnotfound");
         }
 
-        FHIRPatient result = fHIRPatientRepository.save(fHIRPatient);
+        FHIRPatient result = fHIRPatientService.update(fHIRPatient);
         return ResponseEntity
             .ok()
             .headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, fHIRPatient.getId().toString()))
@@ -123,16 +130,7 @@ public class FHIRPatientResource {
             throw new BadRequestAlertException("Entity not found", ENTITY_NAME, "idnotfound");
         }
 
-        Optional<FHIRPatient> result = fHIRPatientRepository
-            .findById(fHIRPatient.getId())
-            .map(existingFHIRPatient -> {
-                if (fHIRPatient.getFhirId() != null) {
-                    existingFHIRPatient.setFhirId(fHIRPatient.getFhirId());
-                }
-
-                return existingFHIRPatient;
-            })
-            .map(fHIRPatientRepository::save);
+        Optional<FHIRPatient> result = fHIRPatientService.partialUpdate(fHIRPatient);
 
         return ResponseUtil.wrapOrNotFound(
             result,
@@ -143,15 +141,24 @@ public class FHIRPatientResource {
     /**
      * {@code GET  /fhir-patients} : get all the fHIRPatients.
      *
+     * @param pageable the pagination information.
      * @param eagerload flag to eager load entities from relationships (This is applicable for many-to-many).
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and the list of fHIRPatients in body.
      */
     @GetMapping("/fhir-patients")
-    public List<FHIRPatient> getAllFHIRPatients(@RequestParam(required = false, defaultValue = "false") boolean eagerload) {
-       
-        log.debug("REST request to get all FHIRPatients");
-        return fHIRPatientRepository.findAllWithEagerRelationships();
-       
+    public ResponseEntity<List<FHIRPatient>> getAllFHIRPatients(
+        @org.springdoc.api.annotations.ParameterObject Pageable pageable,
+        @RequestParam(required = false, defaultValue = "true") boolean eagerload
+    ) {
+        log.debug("REST request to get a page of FHIRPatients");
+        Page<FHIRPatient> page;
+        if (eagerload) {
+            page = fHIRPatientService.findAllWithEagerRelationships(pageable);
+        } else {
+            page = fHIRPatientService.findAll(pageable);
+        }
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
+        return ResponseEntity.ok().headers(headers).body(page.getContent());
     }
 
     /**
@@ -163,7 +170,7 @@ public class FHIRPatientResource {
     @GetMapping("/fhir-patients/{id}")
     public ResponseEntity<FHIRPatient> getFHIRPatient(@PathVariable Long id) {
         log.debug("REST request to get FHIRPatient : {}", id);
-        Optional<FHIRPatient> fHIRPatient = fHIRPatientRepository.findOneWithEagerRelationships(id);
+        Optional<FHIRPatient> fHIRPatient = fHIRPatientService.findOne(id);
         return ResponseUtil.wrapOrNotFound(fHIRPatient);
     }
 
@@ -176,7 +183,7 @@ public class FHIRPatientResource {
     @DeleteMapping("/fhir-patients/{id}")
     public ResponseEntity<Void> deleteFHIRPatient(@PathVariable Long id) {
         log.debug("REST request to delete FHIRPatient : {}", id);
-        fHIRPatientRepository.deleteById(id);
+        fHIRPatientService.delete(id);
         return ResponseEntity
             .noContent()
             .headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString()))
