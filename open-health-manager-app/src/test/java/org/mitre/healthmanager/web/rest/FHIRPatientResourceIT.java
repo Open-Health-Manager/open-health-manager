@@ -18,6 +18,7 @@ import org.mitre.healthmanager.IntegrationTest;
 import org.mitre.healthmanager.domain.FHIRPatient;
 import org.mitre.healthmanager.domain.User;
 import org.mitre.healthmanager.repository.FHIRPatientRepository;
+import org.mitre.healthmanager.security.AuthoritiesConstants;
 import org.mitre.healthmanager.service.FHIRPatientService;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -37,7 +38,7 @@ import org.springframework.transaction.annotation.Transactional;
 @IntegrationTest
 @ExtendWith(MockitoExtension.class)
 @AutoConfigureMockMvc
-@WithMockUser
+@WithMockUser(authorities = AuthoritiesConstants.ADMIN)
 class FHIRPatientResourceIT {
 
     private static final String DEFAULT_FHIR_ID = "AAAAAAAAAA";

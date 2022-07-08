@@ -5,10 +5,13 @@ import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+
 import org.mitre.healthmanager.domain.FHIRPatient;
 import org.mitre.healthmanager.repository.FHIRPatientRepository;
+import org.mitre.healthmanager.security.AuthoritiesConstants;
 import org.mitre.healthmanager.service.FHIRPatientService;
 import org.mitre.healthmanager.web.rest.errors.BadRequestAlertException;
 import org.slf4j.Logger;
@@ -17,10 +20,20 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
 import tech.jhipster.web.util.HeaderUtil;
 import tech.jhipster.web.util.PaginationUtil;
 import tech.jhipster.web.util.ResponseUtil;
@@ -29,7 +42,7 @@ import tech.jhipster.web.util.ResponseUtil;
  * REST controller for managing {@link org.mitre.healthmanager.domain.FHIRPatient}.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/admin")
 public class FHIRPatientResource {
 
     private final Logger log = LoggerFactory.getLogger(FHIRPatientResource.class);
@@ -49,13 +62,14 @@ public class FHIRPatientResource {
     }
 
     /**
-     * {@code POST  /fhir-patients} : Create a new fHIRPatient.
+     * {@code POST  /admin/fhir-patients} : Create a new fHIRPatient.
      *
      * @param fHIRPatient the fHIRPatient to create.
      * @return the {@link ResponseEntity} with status {@code 201 (Created)} and with body the new fHIRPatient, or with status {@code 400 (Bad Request)} if the fHIRPatient has already an ID.
      * @throws URISyntaxException if the Location URI syntax is incorrect.
      */
     @PostMapping("/fhir-patients")
+    @PreAuthorize("hasAuthority(\"" + AuthoritiesConstants.ADMIN + "\")")
     public ResponseEntity<FHIRPatient> createFHIRPatient(@Valid @RequestBody FHIRPatient fHIRPatient) throws URISyntaxException {
         log.debug("REST request to save FHIRPatient : {}", fHIRPatient);
         if (fHIRPatient.getId() != null) {
@@ -69,7 +83,7 @@ public class FHIRPatientResource {
     }
 
     /**
-     * {@code PUT  /fhir-patients/:id} : Updates an existing fHIRPatient.
+     * {@code PUT  /admin/fhir-patients/:id} : Updates an existing fHIRPatient.
      *
      * @param id the id of the fHIRPatient to save.
      * @param fHIRPatient the fHIRPatient to update.
@@ -79,6 +93,7 @@ public class FHIRPatientResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect.
      */
     @PutMapping("/fhir-patients/{id}")
+    @PreAuthorize("hasAuthority(\"" + AuthoritiesConstants.ADMIN + "\")")
     public ResponseEntity<FHIRPatient> updateFHIRPatient(
         @PathVariable(value = "id", required = false) final Long id,
         @Valid @RequestBody FHIRPatient fHIRPatient
@@ -103,7 +118,7 @@ public class FHIRPatientResource {
     }
 
     /**
-     * {@code PATCH  /fhir-patients/:id} : Partial updates given fields of an existing fHIRPatient, field will ignore if it is null
+     * {@code PATCH  /admin/fhir-patients/:id} : Partial updates given fields of an existing fHIRPatient, field will ignore if it is null
      *
      * @param id the id of the fHIRPatient to save.
      * @param fHIRPatient the fHIRPatient to update.
@@ -114,6 +129,7 @@ public class FHIRPatientResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect.
      */
     @PatchMapping(value = "/fhir-patients/{id}", consumes = { "application/json", "application/merge-patch+json" })
+    @PreAuthorize("hasAuthority(\"" + AuthoritiesConstants.ADMIN + "\")")
     public ResponseEntity<FHIRPatient> partialUpdateFHIRPatient(
         @PathVariable(value = "id", required = false) final Long id,
         @NotNull @RequestBody FHIRPatient fHIRPatient
@@ -139,13 +155,14 @@ public class FHIRPatientResource {
     }
 
     /**
-     * {@code GET  /fhir-patients} : get all the fHIRPatients.
+     * {@code GET  /admin/fhir-patients} : get all the fHIRPatients.
      *
      * @param pageable the pagination information.
      * @param eagerload flag to eager load entities from relationships (This is applicable for many-to-many).
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and the list of fHIRPatients in body.
      */
     @GetMapping("/fhir-patients")
+    @PreAuthorize("hasAuthority(\"" + AuthoritiesConstants.ADMIN + "\")")
     public ResponseEntity<List<FHIRPatient>> getAllFHIRPatients(
         @org.springdoc.api.annotations.ParameterObject Pageable pageable,
         @RequestParam(required = false, defaultValue = "true") boolean eagerload
@@ -162,12 +179,13 @@ public class FHIRPatientResource {
     }
 
     /**
-     * {@code GET  /fhir-patients/:id} : get the "id" fHIRPatient.
+     * {@code GET  /admin/fhir-patients/:id} : get the "id" fHIRPatient.
      *
      * @param id the id of the fHIRPatient to retrieve.
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the fHIRPatient, or with status {@code 404 (Not Found)}.
      */
     @GetMapping("/fhir-patients/{id}")
+    @PreAuthorize("hasAuthority(\"" + AuthoritiesConstants.ADMIN + "\")")
     public ResponseEntity<FHIRPatient> getFHIRPatient(@PathVariable Long id) {
         log.debug("REST request to get FHIRPatient : {}", id);
         Optional<FHIRPatient> fHIRPatient = fHIRPatientService.findOne(id);
@@ -175,12 +193,13 @@ public class FHIRPatientResource {
     }
 
     /**
-     * {@code DELETE  /fhir-patients/:id} : delete the "id" fHIRPatient.
+     * {@code DELETE  /admin/fhir-patients/:id} : delete the "id" fHIRPatient.
      *
      * @param id the id of the fHIRPatient to delete.
      * @return the {@link ResponseEntity} with status {@code 204 (NO_CONTENT)}.
      */
     @DeleteMapping("/fhir-patients/{id}")
+    @PreAuthorize("hasAuthority(\"" + AuthoritiesConstants.ADMIN + "\")")
     public ResponseEntity<Void> deleteFHIRPatient(@PathVariable Long id) {
         log.debug("REST request to delete FHIRPatient : {}", id);
         fHIRPatientService.delete(id);

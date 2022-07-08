@@ -15,7 +15,7 @@ const initialState: EntityState<IFHIRPatient> = {
   updateSuccess: false,
 };
 
-const apiUrl = 'api/fhir-patients';
+const apiUrl = 'api/admin/fhir-patients';
 
 // Actions
 
