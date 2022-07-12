@@ -15,8 +15,13 @@ import java.util.Collection;
 import java.util.Date;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mitre.healthmanager.management.SecurityMetersService;
+import org.mitre.healthmanager.repository.FHIRPatientRepository;
+import org.mitre.healthmanager.repository.UserRepository;
 import org.mitre.healthmanager.security.AuthoritiesConstants;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -24,6 +29,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.util.ReflectionTestUtils;
 import tech.jhipster.config.JHipsterProperties;
 
+@ExtendWith(MockitoExtension.class)
 class TokenProviderSecurityMetersTests {
 
     private static final long ONE_MINUTE = 60000;
@@ -32,6 +38,12 @@ class TokenProviderSecurityMetersTests {
     private MeterRegistry meterRegistry;
 
     private TokenProvider tokenProvider;
+
+    @Mock
+    private FHIRPatientRepository fhirPatientRepositoryMock;
+
+    @Mock
+    private UserRepository userRepositoryMock;
 
     @BeforeEach
     public void setup() {
@@ -48,6 +60,8 @@ class TokenProviderSecurityMetersTests {
 
         ReflectionTestUtils.setField(tokenProvider, "key", key);
         ReflectionTestUtils.setField(tokenProvider, "tokenValidityInMilliseconds", ONE_MINUTE);
+        ReflectionTestUtils.setField(tokenProvider, "userRepository", userRepositoryMock);
+        ReflectionTestUtils.setField(tokenProvider, "fhirPatientRepository", fhirPatientRepositoryMock);
     }
 
     @Test
