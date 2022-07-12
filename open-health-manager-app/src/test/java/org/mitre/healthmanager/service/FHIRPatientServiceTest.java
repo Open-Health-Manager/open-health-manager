@@ -25,6 +25,7 @@ import ca.uhn.fhir.jpa.searchparam.SearchParameterMap;
 import ca.uhn.fhir.rest.api.server.IBundleProvider;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
 import ca.uhn.fhir.rest.server.SimpleBundleProvider;
+import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 
 @ExtendWith(MockitoExtension.class)
 class FHIRPatientServiceTest {
@@ -177,6 +178,7 @@ class FHIRPatientServiceTest {
 		when(myDaoRegistry.getResourceDao(Patient.class)).thenReturn(patientDAO);	
 		when(patientDAO.search(any(SearchParameterMap.class), any()))
 			.thenReturn(new SimpleBundleProvider());
+		when(patientDAO.read(any(IdType.class))).thenThrow(new ResourceNotFoundException(""));
 
 		Exception exception = assertThrows(FHIRPatientResourceException.class, () -> fhirPatientService.save(fhirPatient));
 		assertEquals("Patient resource does not exist.", exception.getMessage());
