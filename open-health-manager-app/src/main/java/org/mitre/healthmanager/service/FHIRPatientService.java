@@ -1,7 +1,11 @@
 package org.mitre.healthmanager.service;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
+import org.hl7.fhir.instance.model.api.IBaseResource;
+import org.hl7.fhir.r4.model.IdType;
 import org.hl7.fhir.r4.model.Patient;
 import org.mitre.healthmanager.domain.Authority;
 import org.mitre.healthmanager.domain.FHIRPatient;
@@ -24,6 +28,7 @@ import ca.uhn.fhir.jpa.searchparam.SearchParameterMap;
 import ca.uhn.fhir.rest.api.server.IBundleProvider;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
 import ca.uhn.fhir.rest.param.TokenParam;
+import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 
 /**
  * Service Implementation for managing {@link FHIRPatient}.
@@ -52,6 +57,7 @@ public class FHIRPatientService {
      */
     public FHIRPatient save(FHIRPatient fHIRPatient) {
         log.debug("Request to save FHIRPatient : {}", fHIRPatient);
+        saveFHIRPatient(fHIRPatient);
         return fHIRPatientRepository.save(fHIRPatient);
     }
 
@@ -63,6 +69,7 @@ public class FHIRPatientService {
      */
     public FHIRPatient update(FHIRPatient fHIRPatient) {
         log.debug("Request to save FHIRPatient : {}", fHIRPatient);
+        saveFHIRPatient(fHIRPatient);
         return fHIRPatientRepository.save(fHIRPatient);
     }
 
@@ -82,6 +89,7 @@ public class FHIRPatientService {
                     existingFHIRPatient.setFhirId(fHIRPatient.getFhirId());
                 }
 
+                saveFHIRPatient(existingFHIRPatient);
                 return existingFHIRPatient;
             })
             .map(fHIRPatientRepository::save);
@@ -153,9 +161,9 @@ public class FHIRPatientService {
      */
     public FHIRPatient createFHIRPatientForUser(User user) {
     	// check if FHIRPatient record already exists for user
-    	FHIRPatient patient = findOneForUser(user.getId()).orElse(null);
-    	if(patient != null) {
-    		return patient;
+    	FHIRPatient fhirPatient = findOneForUser(user.getId()).orElse(null);
+    	if(fhirPatient != null) {
+    		return fhirPatient;
     	}
     	// do not create FHIR Patient if user not activated or not ROLE_USER
     	if(!user.isActivated() || 
@@ -164,16 +172,77 @@ public class FHIRPatientService {
     		return null;
     	}
 
-        checkFHIRLogin(user.getLogin());
+        checkFHIRLogin(user);
 
         // create the patient
         Patient patientFHIR = new Patient();
-        patientFHIR.addIdentifier()
-            .setSystem(FHIR_LOGIN_SYSTEM)
-            .setValue(user.getLogin());
         patientFHIR.addName()
-            .setFamily(user.getLastName())
-            .addGiven(user.getFirstName());
+        	.setFamily(user.getLastName())
+        	.addGiven(user.getFirstName());
+        fhirPatient = new FHIRPatient();
+        fhirPatient.fhirId(savePatientResource(patientFHIR, user));
+        fhirPatient.user(user);
+        fHIRPatientRepository.save(fhirPatient);
+
+        log.debug("linked to FHIR patient id: {}", fhirPatient.getFhirId());
+
+        return fhirPatient;
+    }
+    
+    
+    // internal save or update
+    // need to manually unlink patient resource identifiers for now in case of failures
+    private void saveFHIRPatient(FHIRPatient fHIRPatient) {
+    	if(fHIRPatient.getId() != null) { // existing record
+        	FHIRPatient existingFHIRPatient = fHIRPatientRepository
+        			.findById(fHIRPatient.getId()).get();
+        	User existingUser = existingFHIRPatient.getUser();
+        	
+        	if(existingFHIRPatient.getFhirId().equals(fHIRPatient.getFhirId()) 
+        			&& existingUser.getId().equals(fHIRPatient.getUser().getId())) {
+        		// no changes
+        		return;
+        	}
+        	
+        	// fail if existing record has a patient resource link already    		
+            if (getExistingFhirPatientResources(existingFHIRPatient, existingUser).size() > 0) {
+                throw new FHIRPatientResourceException("Existing link between patient resource and user account.");
+            }
+    	}
+    	
+    	// fail if user account has any other linked patient resources
+    	if(getExistingFhirPatientResources(null, fHIRPatient.getUser()).stream()
+    			.filter(resource -> !resource.getIdElement().getIdPart().equals(fHIRPatient.getFhirId()))
+    			.count() > 0) {
+    		throw new FHIRPatientResourceException("User account already linked to another patient resource.");
+    	}
+    	
+    	// fail if patient resource does not exist
+    	IFhirResourceDao<Patient> patientDAO = myDaoRegistry.getResourceDao(Patient.class);
+    	Patient patientFHIR = null;
+    	try {
+    		patientFHIR = patientDAO.read(new IdType(fHIRPatient.getFhirId()));
+    	} catch(ResourceNotFoundException rnfe) {    		
+			throw new FHIRPatientResourceException("Patient resource does not exist.");
+		}
+		
+		// fail if patient resource linked to another user account
+		if(hasExistingAccountIdentifier(patientFHIR, fHIRPatient.getUser())) {
+			throw new FHIRPatientResourceException("Patient resource already linked to another user account.");
+		}
+		
+		savePatientResource(patientFHIR, fHIRPatient.getUser());
+    }
+    
+    private String savePatientResource(Patient patientFHIR, User user) {
+    	if(patientFHIR.getIdentifier().stream()
+				.filter(identifier -> identifier.getSystem().equals(FHIR_LOGIN_SYSTEM) 
+						&& identifier.getValue().equals(user.getLogin()))
+				.count() == 0) {
+            patientFHIR.addIdentifier()
+            	.setSystem(FHIR_LOGIN_SYSTEM)
+            	.setValue(user.getLogin());		
+    	}
         
         // DaoMethodOutcome resp = patientDAO.create(patientFHIR); //does not fire interceptors
         IFhirResourceDao<Patient> patientDAO = myDaoRegistry.getResourceDao(Patient.class);
@@ -184,18 +253,17 @@ public class FHIRPatientService {
         if (!resp.getCreated()) {
             throw new RuntimeException("FHIR Patient creation failed");
         }
-
-        patient = new FHIRPatient();
-        patient.fhirId(resp.getId().getIdPart());
-        patient.user(user);
-        fHIRPatientRepository.save(patient);
-
-        log.debug("linked to FHIR patient id: {}", patient.getFhirId());
-
-        return patient;
+        
+        return resp.getId().getIdPart();
     }
     
-    private void checkFHIRLogin(String targetUsername) {
+    private void checkFHIRLogin(User user) {
+        if (getExistingFhirPatientResources(null, user).size() > 0) {
+            throw new UsernameAlreadyUsedFHIRException();
+        }
+    }
+    
+    private List<IBaseResource> getExistingFhirPatientResources(FHIRPatient fHIRPatient, User user) {
         IFhirResourceDao<Patient> patientDAO = myDaoRegistry.getResourceDao(Patient.class);
         SystemRequestDetails searchRequestDetails = SystemRequestDetails.forAllPartition();
         searchRequestDetails.addHeader("Cache-Control", "no-cache");
@@ -203,12 +271,25 @@ public class FHIRPatientService {
             patientDAO.search(
                 new SearchParameterMap(
                     "identifier", 
-                    new TokenParam(FHIR_LOGIN_SYSTEM, targetUsername)
+                    new TokenParam(FHIR_LOGIN_SYSTEM, user.getLogin())
                 ),
                 searchRequestDetails
             );
         if (!searchResults.isEmpty()) {
-            throw new UsernameAlreadyUsedFHIRException();
+        	if(fHIRPatient == null) return searchResults.getAllResources();
+        	return searchResults.getAllResources().stream()
+        			.filter(resource -> resource.getIdElement().getIdPart().equals(fHIRPatient.getFhirId()))
+        			.collect(Collectors.toList());
         }
+        return searchResults.getAllResources();
+    }
+    
+    // check if Patient resource has an account identifier for another user
+    private boolean hasExistingAccountIdentifier(Patient patientFHIR, User user) {
+    	return patientFHIR != null && 
+    		patientFHIR.getIdentifier().stream()
+				.filter(identifier -> identifier.getSystem().equals(FHIR_LOGIN_SYSTEM) 
+						&& !identifier.getValue().equals(user.getLogin()))
+				.count() > 0;
     }
 }

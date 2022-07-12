@@ -12,6 +12,7 @@ import javax.validation.constraints.NotNull;
 import org.mitre.healthmanager.domain.FHIRPatient;
 import org.mitre.healthmanager.repository.FHIRPatientRepository;
 import org.mitre.healthmanager.security.AuthoritiesConstants;
+import org.mitre.healthmanager.service.FHIRPatientResourceException;
 import org.mitre.healthmanager.service.FHIRPatientService;
 import org.mitre.healthmanager.web.rest.errors.BadRequestAlertException;
 import org.slf4j.Logger;
@@ -75,11 +76,15 @@ public class FHIRPatientResource {
         if (fHIRPatient.getId() != null) {
             throw new BadRequestAlertException("A new fHIRPatient cannot already have an ID", ENTITY_NAME, "idexists");
         }
-        FHIRPatient result = fHIRPatientService.save(fHIRPatient);
-        return ResponseEntity
-            .created(new URI("/api/fhir-patients/" + result.getId()))
-            .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString()))
-            .body(result);
+        try {
+	        FHIRPatient result = fHIRPatientService.save(fHIRPatient);
+	        return ResponseEntity
+	            .created(new URI("/api/fhir-patients/" + result.getId()))
+	            .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString()))
+	            .body(result);
+        } catch(FHIRPatientResourceException ex) {
+        	throw new BadRequestAlertException(ex.getMessage(), ENTITY_NAME, "patientconstraint");
+        }
     }
 
     /**
@@ -110,11 +115,15 @@ public class FHIRPatientResource {
             throw new BadRequestAlertException("Entity not found", ENTITY_NAME, "idnotfound");
         }
 
+        try {
         FHIRPatient result = fHIRPatientService.update(fHIRPatient);
         return ResponseEntity
             .ok()
             .headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, fHIRPatient.getId().toString()))
             .body(result);
+        } catch(FHIRPatientResourceException ex) {
+        	throw new BadRequestAlertException(ex.getMessage(), ENTITY_NAME, "patientconstraint");
+        }
     }
 
     /**
@@ -146,12 +155,16 @@ public class FHIRPatientResource {
             throw new BadRequestAlertException("Entity not found", ENTITY_NAME, "idnotfound");
         }
 
-        Optional<FHIRPatient> result = fHIRPatientService.partialUpdate(fHIRPatient);
-
-        return ResponseUtil.wrapOrNotFound(
-            result,
-            HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, fHIRPatient.getId().toString())
-        );
+        try {
+	        Optional<FHIRPatient> result = fHIRPatientService.partialUpdate(fHIRPatient);
+	
+	        return ResponseUtil.wrapOrNotFound(
+	            result,
+	            HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, fHIRPatient.getId().toString())
+	        );
+        } catch(FHIRPatientResourceException ex) {
+        	throw new BadRequestAlertException(ex.getMessage(), ENTITY_NAME, "patientconstraint");
+        }
     }
 
     /**
