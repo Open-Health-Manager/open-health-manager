@@ -7,12 +7,15 @@ import java.util.stream.Collectors;
 import org.mitre.healthmanager.config.Constants;
 import org.mitre.healthmanager.domain.Authority;
 import org.mitre.healthmanager.domain.User;
+import org.mitre.healthmanager.domain.UserDUA;
+import org.mitre.healthmanager.repository.UserDUARepository;
 import org.mitre.healthmanager.repository.AuthorityRepository;
 import org.mitre.healthmanager.repository.UserRepository;
 import org.mitre.healthmanager.security.AuthoritiesConstants;
 import org.mitre.healthmanager.security.SecurityUtils;
 import org.mitre.healthmanager.service.dto.AdminUserDTO;
 import org.mitre.healthmanager.service.dto.UserDTO;
+import org.mitre.healthmanager.web.rest.errors.BadRequestAlertException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.CacheManager;
@@ -41,16 +44,20 @@ public class UserService {
 
     private final CacheManager cacheManager;
 
+    private final UserDUARepository userDUARepository;
+
     public UserService(
         UserRepository userRepository,
         PasswordEncoder passwordEncoder,
         AuthorityRepository authorityRepository,
-        CacheManager cacheManager
+        CacheManager cacheManager,
+        UserDUARepository userDUARepository
     ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authorityRepository = authorityRepository;
         this.cacheManager = cacheManager;
+        this.userDUARepository = userDUARepository;
     }
 
     public Optional<User> activateRegistration(String key) {
@@ -93,7 +100,7 @@ public class UserService {
             });
     }
 
-    public User registerUser(AdminUserDTO userDTO, String password) {
+    public User registerUser(AdminUserDTO userDTO, String password, UserDUA userDUA) {
         userRepository
             .findOneByLogin(userDTO.getLogin().toLowerCase())
             .ifPresent(existingUser -> {
@@ -110,6 +117,15 @@ public class UserService {
                     throw new EmailAlreadyUsedException();
                 }
             });
+
+        if (!userDUA.getActive() || !userDUA.getAgeAttested()) {
+            throw new BadRequestAlertException("An inactive DUA or a DUA without attested age was given to register new user. ", "userDUA", "dua.inactive");
+        }
+
+        if (userDUA.getId() != null) {
+            throw new BadRequestAlertException("A new userDUA cannot already have an ID", "userDUA", "idexists");
+        }
+
         User newUser = new User();
         String encryptedPassword = passwordEncoder.encode(password);
         newUser.setLogin(userDTO.getLogin().toLowerCase());
@@ -130,6 +146,10 @@ public class UserService {
         authorityRepository.findById(AuthoritiesConstants.USER).ifPresent(authorities::add);
         newUser.setAuthorities(authorities);
         userRepository.save(newUser);
+
+        userDUA.setUser(newUser);
+        userDUARepository.save(userDUA);
+
         this.clearUserCaches(newUser);
         log.debug("Created Information for User: {}", newUser);
         return newUser;
