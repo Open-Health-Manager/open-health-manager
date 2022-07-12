@@ -9,12 +9,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.time.Instant;
 
 /**
  * Service Implementation for managing {@link UserDUA}.
  */
 @Service
-@Transactional
+@Transactional("jhipsterTransactionManager")
 public class UserDUAService {
 
     private final Logger log = LoggerFactory.getLogger(UserDUAService.class);
@@ -32,6 +33,9 @@ public class UserDUAService {
      * @return the persisted entity.
      */
     public UserDUA save(UserDUA userDUA) {
+        if (userDIA.getActiveDate() == null) {
+            userDUA.setActiveDate(Instant.now());
+        }
         log.debug("Request to save UserDUA : {}", userDUA);
         return userDUARepository.save(userDUA);
     }

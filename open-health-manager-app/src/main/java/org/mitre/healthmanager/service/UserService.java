@@ -8,7 +8,7 @@ import org.mitre.healthmanager.config.Constants;
 import org.mitre.healthmanager.domain.Authority;
 import org.mitre.healthmanager.domain.User;
 import org.mitre.healthmanager.domain.UserDUA;
-import org.mitre.healthmanager.repository.UserDUARepository;
+import org.mitre.healthmanager.service.UserDUAService;
 import org.mitre.healthmanager.repository.AuthorityRepository;
 import org.mitre.healthmanager.repository.UserRepository;
 import org.mitre.healthmanager.security.AuthoritiesConstants;
@@ -44,20 +44,20 @@ public class UserService {
 
     private final CacheManager cacheManager;
 
-    private final UserDUARepository userDUARepository;
+    private final UserDUAService userDUAService;
 
     public UserService(
         UserRepository userRepository,
         PasswordEncoder passwordEncoder,
         AuthorityRepository authorityRepository,
         CacheManager cacheManager,
-        UserDUARepository userDUARepository
+        UserDUAService userDUAService
     ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authorityRepository = authorityRepository;
         this.cacheManager = cacheManager;
-        this.userDUARepository = userDUARepository;
+        this.userDUAService = userDUAService;
     }
 
     public Optional<User> activateRegistration(String key) {
@@ -145,10 +145,11 @@ public class UserService {
         Set<Authority> authorities = new HashSet<>();
         authorityRepository.findById(AuthoritiesConstants.USER).ifPresent(authorities::add);
         newUser.setAuthorities(authorities);
+        
         userRepository.save(newUser);
 
         userDUA.setUser(newUser);
-        userDUARepository.save(userDUA);
+        userDUAService.save(userDUA);
 
         this.clearUserCaches(newUser);
         log.debug("Created Information for User: {}", newUser);
