@@ -3,8 +3,10 @@ package org.mitre.healthmanager.web.rest;
 import java.util.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import org.apache.commons.lang3.StringUtils;
 import org.mitre.healthmanager.domain.User;
+import org.mitre.healthmanager.domain.UserDUA;
 import org.mitre.healthmanager.repository.UserRepository;
 import org.mitre.healthmanager.security.SecurityUtils;
 import org.mitre.healthmanager.service.MailService;
@@ -19,12 +21,22 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+
 /**
  * REST controller for managing the current user's account.
  */
 @RestController
 @RequestMapping("/api")
 public class AccountResource {
+
+    public static class RegisterWrapper {
+        @NotNull
+        public ManagedUserVM managedUserVM;
+        
+        @NotNull
+        public UserDUA userDUA;
+    }
+    
 
     private static class AccountResourceException extends RuntimeException {
 
@@ -57,11 +69,16 @@ public class AccountResource {
      */
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
-    public void registerAccount(@Valid @RequestBody ManagedUserVM managedUserVM) {
+    public void registerAccount(@Valid @RequestBody RegisterWrapper registerWrapper) {
+
+        ManagedUserVM managedUserVM = registerWrapper.managedUserVM;
+        UserDUA userDUA = registerWrapper.userDUA;
+
         if (isPasswordLengthInvalid(managedUserVM.getPassword())) {
             throw new InvalidPasswordException();
         }
-        User user = userService.registerUser(managedUserVM, managedUserVM.getPassword());
+        
+        User user = userService.registerUser(managedUserVM, managedUserVM.getPassword(), userDUA);
         mailService.sendActivationEmail(user);
     }
 
