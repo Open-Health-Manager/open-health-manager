@@ -3,8 +3,10 @@ package org.mitre.healthmanager.web.rest;
 import java.util.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import org.apache.commons.lang3.StringUtils;
 import org.mitre.healthmanager.domain.User;
+import org.mitre.healthmanager.domain.UserDUA;
 import org.mitre.healthmanager.repository.UserRepository;
 import org.mitre.healthmanager.security.SecurityUtils;
 import org.mitre.healthmanager.service.MailService;
@@ -14,10 +16,12 @@ import org.mitre.healthmanager.service.dto.PasswordChangeDTO;
 import org.mitre.healthmanager.web.rest.errors.*;
 import org.mitre.healthmanager.web.rest.vm.KeyAndPasswordVM;
 import org.mitre.healthmanager.web.rest.vm.ManagedUserVM;
+import org.mitre.healthmanager.web.rest.vm.DUAManagedUserVM;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+
 
 /**
  * REST controller for managing the current user's account.
@@ -50,18 +54,20 @@ public class AccountResource {
     /**
      * {@code POST  /register} : register the user.
      *
-     * @param managedUserVM the managed user View Model.
+     * @param DUAmanagedUserVM the managed user View Model.
      * @throws InvalidPasswordException {@code 400 (Bad Request)} if the password is incorrect.
      * @throws EmailAlreadyUsedException {@code 400 (Bad Request)} if the email is already used.
      * @throws LoginAlreadyUsedException {@code 400 (Bad Request)} if the login is already used.
      */
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
-    public void registerAccount(@Valid @RequestBody ManagedUserVM managedUserVM) {
-        if (isPasswordLengthInvalid(managedUserVM.getPassword())) {
+    public void registerAccount(@Valid @RequestBody DUAManagedUserVM duaManagedUserVM) {
+
+        if (isPasswordLengthInvalid(duaManagedUserVM.getPassword())) {
             throw new InvalidPasswordException();
         }
-        User user = userService.registerUser(managedUserVM, managedUserVM.getPassword());
+        
+        User user = userService.registerUser(duaManagedUserVM, duaManagedUserVM.getPassword(), duaManagedUserVM.getUserDUADTO());
         mailService.sendActivationEmail(user);
     }
 
