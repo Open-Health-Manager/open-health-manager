@@ -15,7 +15,7 @@ const initialState: EntityState<IUserDUA> = {
   updateSuccess: false,
 };
 
-const apiUrl = 'api/user-duas';
+const apiUrl = 'api/admin/user-duas';
 
 // Actions
 
