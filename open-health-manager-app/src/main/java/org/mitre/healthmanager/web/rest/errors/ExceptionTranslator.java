@@ -142,6 +142,32 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
     }
 
     @ExceptionHandler
+    public ResponseEntity<Problem> handleFHIRUsernameAlreadyUsedException(
+        org.mitre.healthmanager.service.UsernameAlreadyUsedFHIRException ex,
+        NativeWebRequest request
+    ) {
+        LoginAlreadyUsedFHIRException problem = new LoginAlreadyUsedFHIRException();
+        return create(
+            problem,
+            request,
+            HeaderUtil.createFailureAlert(applicationName, true, problem.getEntityName(), problem.getErrorKey(), problem.getMessage())
+        );
+    }
+
+    @ExceptionHandler
+    public ResponseEntity<Problem> handleUsernameChangeException(
+        org.mitre.healthmanager.service.UsernameChangeException ex,
+        NativeWebRequest request
+    ) {
+        UsernameChangeException problem = new UsernameChangeException();
+        return create(
+            problem,
+            request,
+            HeaderUtil.createFailureAlert(applicationName, true, problem.getEntityName(), problem.getErrorKey(), problem.getMessage())
+        );
+    }
+
+    @ExceptionHandler
     public ResponseEntity<Problem> handleInvalidPasswordException(
         org.mitre.healthmanager.service.InvalidPasswordException ex,
         NativeWebRequest request

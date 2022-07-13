@@ -2,10 +2,16 @@ package org.mitre.healthmanager.service;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
+
 import org.mitre.healthmanager.config.Constants;
 import org.mitre.healthmanager.domain.Authority;
+import org.mitre.healthmanager.domain.FHIRPatient;
 import org.mitre.healthmanager.domain.User;
 import org.mitre.healthmanager.service.dto.UserDUADTO;
 import org.mitre.healthmanager.service.mapper.UserMapper;
@@ -18,6 +24,7 @@ import org.mitre.healthmanager.service.dto.UserDTO;
 import org.mitre.healthmanager.web.rest.errors.BadRequestAlertException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.CacheManager;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -25,6 +32,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import tech.jhipster.security.RandomUtil;
 
 /**
@@ -33,7 +41,6 @@ import tech.jhipster.security.RandomUtil;
 @Service
 @Transactional("jhipsterTransactionManager")
 public class UserService {
-
     private final Logger log = LoggerFactory.getLogger(UserService.class);
 
     private final UserRepository userRepository;
@@ -47,6 +54,9 @@ public class UserService {
     private final UserDUAService userDUAService;
     
     private final UserMapper userMapper;
+
+    @Autowired
+    private FHIRPatientService fhirPatientService;
 
     public UserService(
         UserRepository userRepository,
@@ -74,6 +84,8 @@ public class UserService {
                 user.setActivationKey(null);
                 this.clearUserCaches(user);
                 log.debug("Activated user: {}", user);
+
+                fhirPatientService.createFHIRPatientForUser(user);
                 return user;
             });
     }
@@ -161,7 +173,10 @@ public class UserService {
     }
 
     private boolean removeNonActivatedUser(User existingUser) {
-        if (existingUser.isActivated()) {
+        // if currently or previously activated (has a FHIR patient tied to it)
+        // treat as activated and do not remove
+        // prevents change of login
+        if (existingUser.isActivated() || fhirPatientService.findOneForUser(existingUser.getId()).isPresent()) {
             return false;
         }
         userRepository.delete(existingUser);
@@ -171,6 +186,7 @@ public class UserService {
     }
 
     public User createUser(AdminUserDTO userDTO) {
+       
         User user = new User();
         user.setLogin(userDTO.getLogin().toLowerCase());
         user.setFirstName(userDTO.getFirstName());
@@ -199,10 +215,21 @@ public class UserService {
                 .collect(Collectors.toSet());
             user.setAuthorities(authorities);
         }
+        
         userRepository.save(user);
         this.clearUserCaches(user);
         log.debug("Created Information for User: {}", user);
+
+        fhirPatientService.createFHIRPatientForUser(user);
+
         return user;
+    }
+
+    private void deleteFHIRPatient(User user) {
+        Optional<FHIRPatient> linkedFHIRPatient = fhirPatientService.findOneForUser(user.getId());
+        if (linkedFHIRPatient.isPresent()) {
+        	fhirPatientService.delete(linkedFHIRPatient.get().getId());
+        }
     }
 
     /**
@@ -218,6 +245,11 @@ public class UserService {
             .map(Optional::get)
             .map(user -> {
                 this.clearUserCaches(user);
+                String newLogin = userDTO.getLogin().toLowerCase();
+                if (!newLogin.equals(user.getLogin())) {
+                    throw new UsernameChangeException();
+                }
+                
                 user.setLogin(userDTO.getLogin().toLowerCase());
                 user.setFirstName(userDTO.getFirstName());
                 user.setLastName(userDTO.getLastName());
@@ -238,6 +270,10 @@ public class UserService {
                     .forEach(managedAuthorities::add);
                 this.clearUserCaches(user);
                 log.debug("Changed Information for User: {}", user);
+
+                
+                fhirPatientService.createFHIRPatientForUser(user);
+
                 return user;
             })
             .map(AdminUserDTO::new);
@@ -247,6 +283,7 @@ public class UserService {
         userRepository
             .findOneByLogin(login)
             .ifPresent(user -> {
+                deleteFHIRPatient(user);
                 userRepository.delete(user);
                 this.clearUserCaches(user);
                 log.debug("Deleted User: {}", user);

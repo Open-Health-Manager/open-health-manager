@@ -1,0 +1,31 @@
+{
+  "applications": ["OpenHealthManagerApp"],
+  "changelogDate": "20220603163044",
+  "dto": "no",
+  "embedded": false,
+  "entityTableName": "fhir_patient",
+  "fields": [
+    {
+      "fieldName": "fhirId",
+      "fieldType": "String",
+      "fieldValidateRules": ["required"]
+    }
+  ],
+  "fluentMethods": true,
+  "jpaMetamodelFiltering": false,
+  "name": "FHIRPatient",
+  "pagination": "pagination",
+  "readOnly": false,
+  "relationships": [
+    {
+      "otherEntityField": "login",
+      "otherEntityName": "user",
+      "otherEntityRelationshipName": "fHIRPatient",
+      "ownerSide": true,
+      "relationshipName": "user",
+      "relationshipType": "one-to-one",
+      "relationshipValidateRules": "required"
+    }
+  ],
+  "service": "serviceClass"
+}

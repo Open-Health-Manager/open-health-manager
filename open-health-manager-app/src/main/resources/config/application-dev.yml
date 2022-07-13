@@ -42,10 +42,16 @@ spring:
     # Remove 'faker' if you do not want the sample data to be loaded automatically
     contexts: dev, faker
   mail:
-    host: localhost
+    host: mail.mitre.org
     port: 25
-    username:
-    password:
+    username: healthmanager@groups.mitre.org
+    password: 
+    protocol: smtp
+    tls: true
+    properties.mail.smtp:
+      auth: false
+      starttls.enable: true
+      ssl.trust: mail.mitre.org  
   messages:
     cache-duration: PT1S # 1 second, see the ISO 8601 standard
   thymeleaf:
@@ -100,6 +106,7 @@ jhipster:
         token-validity-in-seconds-for-remember-me: 2592000
   mail: # specific JHipster mail property, for standard properties see MailProperties
     base-url: http://127.0.0.1:8080
+    from: healthmanager@groups.mitre.org
   logging:
     use-json-format: false # By default, logs are not in Json format
     logstash: # Forward logs to logstash over a socket, used by LoggingConfiguration
