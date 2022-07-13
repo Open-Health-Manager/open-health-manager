@@ -67,7 +67,7 @@ public class AccountResource {
             throw new InvalidPasswordException();
         }
         
-        User user = userService.registerUser(duaManagedUserVM, duaManagedUserVM.getPassword(), duaManagedUserVM.getUserDUA());
+        User user = userService.registerUser(duaManagedUserVM, duaManagedUserVM.getPassword(), duaManagedUserVM.getUserDUADTO());
         mailService.sendActivationEmail(user);
     }
 

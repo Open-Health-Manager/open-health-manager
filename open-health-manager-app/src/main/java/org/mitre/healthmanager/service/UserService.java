@@ -7,8 +7,8 @@ import java.util.stream.Collectors;
 import org.mitre.healthmanager.config.Constants;
 import org.mitre.healthmanager.domain.Authority;
 import org.mitre.healthmanager.domain.User;
-import org.mitre.healthmanager.domain.UserDUA;
-import org.mitre.healthmanager.service.UserDUAService;
+import org.mitre.healthmanager.service.dto.UserDUADTO;
+import org.mitre.healthmanager.service.mapper.UserMapper;
 import org.mitre.healthmanager.repository.AuthorityRepository;
 import org.mitre.healthmanager.repository.UserRepository;
 import org.mitre.healthmanager.security.AuthoritiesConstants;
@@ -45,19 +45,23 @@ public class UserService {
     private final CacheManager cacheManager;
 
     private final UserDUAService userDUAService;
+    
+    private final UserMapper userMapper;
 
     public UserService(
         UserRepository userRepository,
         PasswordEncoder passwordEncoder,
         AuthorityRepository authorityRepository,
         CacheManager cacheManager,
-        UserDUAService userDUAService
+        UserDUAService userDUAService,
+        UserMapper userMapper
     ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authorityRepository = authorityRepository;
         this.cacheManager = cacheManager;
         this.userDUAService = userDUAService;
+        this.userMapper = userMapper;
     }
 
     public Optional<User> activateRegistration(String key) {
@@ -100,7 +104,7 @@ public class UserService {
             });
     }
 
-    public User registerUser(AdminUserDTO userDTO, String password, UserDUA userDUA) {
+    public User registerUser(AdminUserDTO userDTO, String password, UserDUADTO userDUADTO) {
         userRepository
             .findOneByLogin(userDTO.getLogin().toLowerCase())
             .ifPresent(existingUser -> {
@@ -118,11 +122,11 @@ public class UserService {
                 }
             });
 
-        if (!userDUA.getActive() || !userDUA.getAgeAttested()) {
+        if (!userDUADTO.getActive() || !userDUADTO.getAgeAttested()) {
             throw new BadRequestAlertException("An inactive DUA or a DUA without attested age was given to register new user. ", "userDUA", "dua.inactive");
         }
 
-        if (userDUA.getId() != null) {
+        if (userDUADTO.getId() != null) {
             throw new BadRequestAlertException("A new userDUA cannot already have an ID", "userDUA", "idexists");
         }
 
@@ -148,8 +152,8 @@ public class UserService {
         
         userRepository.save(newUser);
 
-        userDUA.setUser(newUser);
-        userDUAService.save(userDUA);
+        userDUADTO.setUser(userMapper.userToUserDTO(newUser));
+        userDUAService.save(userDUADTO);
 
         this.clearUserCaches(newUser);
         log.debug("Created Information for User: {}", newUser);

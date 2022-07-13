@@ -3,6 +3,8 @@ package org.mitre.healthmanager.service;
 import java.util.Optional;
 import org.mitre.healthmanager.domain.UserDUA;
 import org.mitre.healthmanager.repository.UserDUARepository;
+import org.mitre.healthmanager.service.dto.UserDUADTO;
+import org.mitre.healthmanager.service.mapper.UserDUAMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -22,66 +24,61 @@ public class UserDUAService {
 
     private final UserDUARepository userDUARepository;
 
-    public UserDUAService(UserDUARepository userDUARepository) {
+    private final UserDUAMapper userDUAMapper;
+
+    public UserDUAService(UserDUARepository userDUARepository, UserDUAMapper userDUAMapper) {
         this.userDUARepository = userDUARepository;
+        this.userDUAMapper = userDUAMapper;
     }
 
     /**
      * Save a userDUA.
      *
-     * @param userDUA the entity to save.
+     * @param userDUADTO the entity to save.
      * @return the persisted entity.
      */
-    public UserDUA save(UserDUA userDUA) {
+    public UserDUADTO save(UserDUADTO userDUADTO) {
+        log.debug("Request to save UserDUA : {}", userDUADTO);
+        UserDUA userDUA = userDUAMapper.toEntity(userDUADTO);
+        // set active date to now if null
         if (userDUA.getActiveDate() == null) {
             userDUA.setActiveDate(Instant.now());
         }
-        log.debug("Request to save UserDUA : {}", userDUA);
-        return userDUARepository.save(userDUA);
+        userDUA = userDUARepository.save(userDUA);
+        return userDUAMapper.toDto(userDUA);
     }
 
     /**
      * Update a userDUA.
      *
-     * @param userDUA the entity to save.
+     * @param userDUADTO the entity to save.
      * @return the persisted entity.
      */
-    public UserDUA update(UserDUA userDUA) {
-        log.debug("Request to save UserDUA : {}", userDUA);
-        return userDUARepository.save(userDUA);
+    public UserDUADTO update(UserDUADTO userDUADTO) {
+        log.debug("Request to save UserDUA : {}", userDUADTO);
+        UserDUA userDUA = userDUAMapper.toEntity(userDUADTO);
+        userDUA = userDUARepository.save(userDUA);
+        return userDUAMapper.toDto(userDUA);
     }
 
     /**
      * Partially update a userDUA.
      *
-     * @param userDUA the entity to update partially.
+     * @param userDUADTO the entity to update partially.
      * @return the persisted entity.
      */
-    public Optional<UserDUA> partialUpdate(UserDUA userDUA) {
-        log.debug("Request to partially update UserDUA : {}", userDUA);
+    public Optional<UserDUADTO> partialUpdate(UserDUADTO userDUADTO) {
+        log.debug("Request to partially update UserDUA : {}", userDUADTO);
 
         return userDUARepository
-            .findById(userDUA.getId())
+            .findById(userDUADTO.getId())
             .map(existingUserDUA -> {
-                if (userDUA.getActive() != null) {
-                    existingUserDUA.setActive(userDUA.getActive());
-                }
-                if (userDUA.getVersion() != null) {
-                    existingUserDUA.setVersion(userDUA.getVersion());
-                }
-                if (userDUA.getAgeAttested() != null) {
-                    existingUserDUA.setAgeAttested(userDUA.getAgeAttested());
-                }
-                if (userDUA.getActiveDate() != null) {
-                    existingUserDUA.setActiveDate(userDUA.getActiveDate());
-                }
-                if (userDUA.getRevocationDate() != null) {
-                    existingUserDUA.setRevocationDate(userDUA.getRevocationDate());
-                }
+                userDUAMapper.partialUpdate(existingUserDUA, userDUADTO);
 
                 return existingUserDUA;
             })
-            .map(userDUARepository::save);
+            .map(userDUARepository::save)
+            .map(userDUAMapper::toDto);
     }
 
     /**
@@ -91,9 +88,9 @@ public class UserDUAService {
      * @return the list of entities.
      */
     @Transactional(readOnly = true)
-    public Page<UserDUA> findAll(Pageable pageable) {
+    public Page<UserDUADTO> findAll(Pageable pageable) {
         log.debug("Request to get all UserDUAS");
-        return userDUARepository.findAll(pageable);
+        return userDUARepository.findAll(pageable).map(userDUAMapper::toDto);
     }
 
     /**
@@ -101,8 +98,8 @@ public class UserDUAService {
      *
      * @return the list of entities.
      */
-    public Page<UserDUA> findAllWithEagerRelationships(Pageable pageable) {
-        return userDUARepository.findAllWithEagerRelationships(pageable);
+    public Page<UserDUADTO> findAllWithEagerRelationships(Pageable pageable) {
+        return userDUARepository.findAllWithEagerRelationships(pageable).map(userDUAMapper::toDto);
     }
 
     /**
@@ -112,9 +109,9 @@ public class UserDUAService {
      * @return the entity.
      */
     @Transactional(readOnly = true)
-    public Optional<UserDUA> findOne(Long id) {
+    public Optional<UserDUADTO> findOne(Long id) {
         log.debug("Request to get UserDUA : {}", id);
-        return userDUARepository.findOneWithEagerRelationships(id);
+        return userDUARepository.findOneWithEagerRelationships(id).map(userDUAMapper::toDto);
     }
 
     /**

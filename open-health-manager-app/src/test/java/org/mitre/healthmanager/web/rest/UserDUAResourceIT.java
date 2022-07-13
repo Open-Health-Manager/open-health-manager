@@ -21,6 +21,8 @@ import org.mitre.healthmanager.domain.User;
 import org.mitre.healthmanager.domain.UserDUA;
 import org.mitre.healthmanager.repository.UserDUARepository;
 import org.mitre.healthmanager.service.UserDUAService;
+import org.mitre.healthmanager.service.dto.UserDUADTO;
+import org.mitre.healthmanager.service.mapper.UserDUAMapper;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -67,6 +69,9 @@ class UserDUAResourceIT {
 
     @Mock
     private UserDUARepository userDUARepositoryMock;
+
+    @Autowired
+    private UserDUAMapper userDUAMapper;
 
     @Mock
     private UserDUAService userDUAServiceMock;
@@ -131,8 +136,9 @@ class UserDUAResourceIT {
     void createUserDUA() throws Exception {
         int databaseSizeBeforeCreate = userDUARepository.findAll().size();
         // Create the UserDUA
+        UserDUADTO userDUADTO = userDUAMapper.toDto(userDUA);
         restUserDUAMockMvc
-            .perform(post(ENTITY_API_URL).contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(userDUA)))
+            .perform(post(ENTITY_API_URL).contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(userDUADTO)))
             .andExpect(status().isCreated());
 
         // Validate the UserDUA in the database
@@ -151,12 +157,13 @@ class UserDUAResourceIT {
     void createUserDUAWithExistingId() throws Exception {
         // Create the UserDUA with an existing ID
         userDUA.setId(1L);
+        UserDUADTO userDUADTO = userDUAMapper.toDto(userDUA);
 
         int databaseSizeBeforeCreate = userDUARepository.findAll().size();
 
         // An entity with an existing ID cannot be created, so this API call must fail
         restUserDUAMockMvc
-            .perform(post(ENTITY_API_URL).contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(userDUA)))
+            .perform(post(ENTITY_API_URL).contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(userDUADTO)))
             .andExpect(status().isBadRequest());
 
         // Validate the UserDUA in the database
@@ -172,9 +179,10 @@ class UserDUAResourceIT {
         userDUA.setActive(null);
 
         // Create the UserDUA, which fails.
+        UserDUADTO userDUADTO = userDUAMapper.toDto(userDUA);
 
         restUserDUAMockMvc
-            .perform(post(ENTITY_API_URL).contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(userDUA)))
+            .perform(post(ENTITY_API_URL).contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(userDUADTO)))
             .andExpect(status().isBadRequest());
 
         List<UserDUA> userDUAList = userDUARepository.findAll();
@@ -189,9 +197,10 @@ class UserDUAResourceIT {
         userDUA.setVersion(null);
 
         // Create the UserDUA, which fails.
+        UserDUADTO userDUADTO = userDUAMapper.toDto(userDUA);
 
         restUserDUAMockMvc
-            .perform(post(ENTITY_API_URL).contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(userDUA)))
+            .perform(post(ENTITY_API_URL).contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(userDUADTO)))
             .andExpect(status().isBadRequest());
 
         List<UserDUA> userDUAList = userDUARepository.findAll();
@@ -206,9 +215,10 @@ class UserDUAResourceIT {
         userDUA.setAgeAttested(null);
 
         // Create the UserDUA, which fails.
+        UserDUADTO userDUADTO = userDUAMapper.toDto(userDUA);
 
         restUserDUAMockMvc
-            .perform(post(ENTITY_API_URL).contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(userDUA)))
+            .perform(post(ENTITY_API_URL).contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(userDUADTO)))
             .andExpect(status().isBadRequest());
 
         List<UserDUA> userDUAList = userDUARepository.findAll();
@@ -223,9 +233,10 @@ class UserDUAResourceIT {
         userDUA.setActiveDate(null);
 
         // Create the UserDUA, which fails.
+        UserDUADTO userDUADTO = userDUAMapper.toDto(userDUA);
 
         restUserDUAMockMvc
-            .perform(post(ENTITY_API_URL).contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(userDUA)))
+            .perform(post(ENTITY_API_URL).contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(userDUADTO)))
             .andExpect(status().isBadRequest());
 
         List<UserDUA> userDUAList = userDUARepository.findAll();
@@ -313,12 +324,13 @@ class UserDUAResourceIT {
             .ageAttested(UPDATED_AGE_ATTESTED)
             .activeDate(UPDATED_ACTIVE_DATE)
             .revocationDate(UPDATED_REVOCATION_DATE);
+        UserDUADTO userDUADTO = userDUAMapper.toDto(updatedUserDUA);
 
         restUserDUAMockMvc
             .perform(
-                put(ENTITY_API_URL_ID, updatedUserDUA.getId())
+                put(ENTITY_API_URL_ID, userDUADTO.getId())
                     .contentType(MediaType.APPLICATION_JSON)
-                    .content(TestUtil.convertObjectToJsonBytes(updatedUserDUA))
+                    .content(TestUtil.convertObjectToJsonBytes(userDUADTO))
             )
             .andExpect(status().isOk());
 
@@ -339,12 +351,15 @@ class UserDUAResourceIT {
         int databaseSizeBeforeUpdate = userDUARepository.findAll().size();
         userDUA.setId(count.incrementAndGet());
 
+        // Create the UserDUA
+        UserDUADTO userDUADTO = userDUAMapper.toDto(userDUA);
+
         // If the entity doesn't have an ID, it will throw BadRequestAlertException
         restUserDUAMockMvc
             .perform(
-                put(ENTITY_API_URL_ID, userDUA.getId())
+                put(ENTITY_API_URL_ID, userDUADTO.getId())
                     .contentType(MediaType.APPLICATION_JSON)
-                    .content(TestUtil.convertObjectToJsonBytes(userDUA))
+                    .content(TestUtil.convertObjectToJsonBytes(userDUADTO))
             )
             .andExpect(status().isBadRequest());
 
@@ -359,12 +374,15 @@ class UserDUAResourceIT {
         int databaseSizeBeforeUpdate = userDUARepository.findAll().size();
         userDUA.setId(count.incrementAndGet());
 
+        // Create the UserDUA
+        UserDUADTO userDUADTO = userDUAMapper.toDto(userDUA);
+
         // If url ID doesn't match entity ID, it will throw BadRequestAlertException
         restUserDUAMockMvc
             .perform(
                 put(ENTITY_API_URL_ID, count.incrementAndGet())
                     .contentType(MediaType.APPLICATION_JSON)
-                    .content(TestUtil.convertObjectToJsonBytes(userDUA))
+                    .content(TestUtil.convertObjectToJsonBytes(userDUADTO))
             )
             .andExpect(status().isBadRequest());
 
@@ -379,9 +397,12 @@ class UserDUAResourceIT {
         int databaseSizeBeforeUpdate = userDUARepository.findAll().size();
         userDUA.setId(count.incrementAndGet());
 
+        // Create the UserDUA
+        UserDUADTO userDUADTO = userDUAMapper.toDto(userDUA);
+
         // If url ID doesn't match entity ID, it will throw BadRequestAlertException
         restUserDUAMockMvc
-            .perform(put(ENTITY_API_URL).contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(userDUA)))
+            .perform(put(ENTITY_API_URL).contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(userDUADTO)))
             .andExpect(status().isMethodNotAllowed());
 
         // Validate the UserDUA in the database
@@ -471,12 +492,15 @@ class UserDUAResourceIT {
         int databaseSizeBeforeUpdate = userDUARepository.findAll().size();
         userDUA.setId(count.incrementAndGet());
 
+        // Create the UserDUA
+        UserDUADTO userDUADTO = userDUAMapper.toDto(userDUA);
+
         // If the entity doesn't have an ID, it will throw BadRequestAlertException
         restUserDUAMockMvc
             .perform(
-                patch(ENTITY_API_URL_ID, userDUA.getId())
+                patch(ENTITY_API_URL_ID, userDUADTO.getId())
                     .contentType("application/merge-patch+json")
-                    .content(TestUtil.convertObjectToJsonBytes(userDUA))
+                    .content(TestUtil.convertObjectToJsonBytes(userDUADTO))
             )
             .andExpect(status().isBadRequest());
 
@@ -491,12 +515,15 @@ class UserDUAResourceIT {
         int databaseSizeBeforeUpdate = userDUARepository.findAll().size();
         userDUA.setId(count.incrementAndGet());
 
+        // Create the UserDUA
+        UserDUADTO userDUADTO = userDUAMapper.toDto(userDUA);
+
         // If url ID doesn't match entity ID, it will throw BadRequestAlertException
         restUserDUAMockMvc
             .perform(
                 patch(ENTITY_API_URL_ID, count.incrementAndGet())
                     .contentType("application/merge-patch+json")
-                    .content(TestUtil.convertObjectToJsonBytes(userDUA))
+                    .content(TestUtil.convertObjectToJsonBytes(userDUADTO))
             )
             .andExpect(status().isBadRequest());
 
@@ -511,9 +538,14 @@ class UserDUAResourceIT {
         int databaseSizeBeforeUpdate = userDUARepository.findAll().size();
         userDUA.setId(count.incrementAndGet());
 
+        // Create the UserDUA
+        UserDUADTO userDUADTO = userDUAMapper.toDto(userDUA);
+
         // If url ID doesn't match entity ID, it will throw BadRequestAlertException
         restUserDUAMockMvc
-            .perform(patch(ENTITY_API_URL).contentType("application/merge-patch+json").content(TestUtil.convertObjectToJsonBytes(userDUA)))
+            .perform(
+                patch(ENTITY_API_URL).contentType("application/merge-patch+json").content(TestUtil.convertObjectToJsonBytes(userDUADTO))
+            )
             .andExpect(status().isMethodNotAllowed());
 
         // Validate the UserDUA in the database

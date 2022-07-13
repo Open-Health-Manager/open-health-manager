@@ -1,7 +1,7 @@
 {
   "applications": ["OpenHealthManagerApp"],
-  "changelogDate": "20220629182630",
-  "dto": "no",
+  "changelogDate": "20220713153436",
+  "dto": "mapstruct",
   "embedded": false,
   "entityTableName": "user_dua",
   "fields": [

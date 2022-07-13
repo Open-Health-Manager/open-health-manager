@@ -1,33 +1,33 @@
 package org.mitre.healthmanager.web.rest.vm;
 
-import org.mitre.healthmanager.domain.UserDUA;
+import org.mitre.healthmanager.service.dto.UserDUADTO;
 
 /**
- * View Model extending the ManagedUserVM class with a UserDUA object included
+ * View Model extending the ManagedUserVM class with a UserDUADTO object included
  */
 public class DUAManagedUserVM extends ManagedUserVM {
 
-    private UserDUA userDUA;
+    private UserDUADTO userDUADTO;
 
     public DUAManagedUserVM() {
         // Empty constructor needed for Jackson.
     }
 
-    public DUAManagedUserVM(UserDUA userDUA) {
-        this.userDUA = userDUA;
+    public DUAManagedUserVM(UserDUADTO userDUADTO) {
+        this.userDUADTO = userDUADTO;
     }
 
-    public UserDUA getUserDUA() {
-        return userDUA;
+    public UserDUADTO getUserDUADTO() {
+        return userDUADTO;
     }
 
-    public void setUserDUA(UserDUA userDUA) {
-        this.userDUA = userDUA;
+    public void setUserDUADTO(UserDUADTO userDUADTO) {
+        this.userDUADTO = userDUADTO;
     }
 
     // prettier-ignore
     @Override
     public String toString() {
-        return "ManagedUserVM{" + super.toString() + "} ";
+        return "DUAManagedUserVM{" + super.toString() + "} ";
     }
 }
