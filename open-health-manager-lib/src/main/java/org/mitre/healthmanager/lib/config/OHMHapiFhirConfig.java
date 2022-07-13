@@ -22,11 +22,10 @@ public class OHMHapiFhirConfig extends BaseR4Config {
 		return new OHMJpaRestfulServer();
 	}
 	
-	/*
-	 * @Override
-	 * 
-	 * @Bean(name = "mySystemDaoR4") public IFhirSystemDao<Bundle, Meta>
-	 * systemDaoR4() { org.mitre.healthmanager.lib.sphr.ProcessMessage retVal = new
-	 * org.mitre.healthmanager.lib.sphr.ProcessMessage(); return retVal; }
-	 */
+	@Override
+	@Bean(name = "mySystemDaoR4")
+	public IFhirSystemDao<Bundle, Meta> systemDaoR4() {
+		org.mitre.healthmanager.lib.sphr.ProcessMessage retVal = new org.mitre.healthmanager.lib.sphr.ProcessMessage();
+		return retVal;
+	}
 }
