@@ -1,7 +1,6 @@
 package org.mitre.healthmanager.web.rest.vm;
 
 import org.mitre.healthmanager.domain.UserDUA;
-import org.mitre.healthmanager.service.dto.AdminUserDTO;
 
 /**
  * View Model extending the ManagedUserVM class with a UserDUA object included

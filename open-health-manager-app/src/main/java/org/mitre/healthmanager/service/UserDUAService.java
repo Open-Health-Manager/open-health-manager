@@ -33,7 +33,7 @@ public class UserDUAService {
      * @return the persisted entity.
      */
     public UserDUA save(UserDUA userDUA) {
-        if (userDIA.getActiveDate() == null) {
+        if (userDUA.getActiveDate() == null) {
             userDUA.setActiveDate(Instant.now());
         }
         log.debug("Request to save UserDUA : {}", userDUA);
