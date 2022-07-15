@@ -2,6 +2,8 @@ package org.mitre.healthmanager.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -14,6 +16,8 @@ import org.junit.jupiter.api.Test;
 import org.mitre.healthmanager.IntegrationTest;
 import org.mitre.healthmanager.config.Constants;
 import org.mitre.healthmanager.domain.User;
+import org.mitre.healthmanager.service.dto.UserDUADTO;
+import org.mitre.healthmanager.service.UserDUAService;
 import org.mitre.healthmanager.repository.UserRepository;
 import org.mitre.healthmanager.service.dto.AdminUserDTO;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +28,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.transaction.annotation.Transactional;
 import tech.jhipster.security.RandomUtil;
+import org.mitre.healthmanager.web.rest.errors.BadRequestAlertException;
+import org.mitre.healthmanager.service.mapper.UserMapper;
 
 /**
  * Integration tests for {@link UserService}.
@@ -53,10 +59,14 @@ class UserServiceIT {
     @Autowired
     private AuditingHandler auditingHandler;
 
+    @Autowired
+    private UserMapper userMapper;
+
     @MockBean
     private DateTimeProvider dateTimeProvider;
 
     private User user;
+    private UserDUADTO userDUADTO;
 
     @BeforeEach
     public void init() {
@@ -69,6 +79,13 @@ class UserServiceIT {
         user.setLastName(DEFAULT_LASTNAME);
         user.setImageUrl(DEFAULT_IMAGEURL);
         user.setLangKey(DEFAULT_LANGKEY);
+
+        userDUADTO = new UserDUADTO();
+        userDUADTO.setActive(true);
+        userDUADTO.setVersion("v2020-03-21");
+        userDUADTO.setAgeAttested(true);
+
+        userMapper = new UserMapper();
 
         when(dateTimeProvider.getNow()).thenReturn(Optional.of(LocalDateTime.now()));
         auditingHandler.setDateTimeProvider(dateTimeProvider);
@@ -182,4 +199,40 @@ class UserServiceIT {
         Optional<User> maybeDbUser = userRepository.findById(dbUser.getId());
         assertThat(maybeDbUser).contains(dbUser);
     }
+
+    @Test
+    @Transactional("jhipsterTransactionManager")
+    void assertThatRegisteringUsersWithUnActivatedDUAFails() {
+        userDUADTO.setActive(false);
+        AdminUserDTO userDTO = userMapper.userToAdminUserDTO(user);
+
+        InvalidDUAException thrown = assertThrows(InvalidDUAException.class, () -> userService.registerUser(userDTO, user.getPassword(), userDUADTO));
+        assertEquals("An inactive DUA or a DUA without an attested age cannot be given to register new user.", thrown.getMessage());
+
+        userDUADTO.setActive(true);
+    }
+
+    @Test
+    @Transactional("jhipsterTransactionManager")
+    void assertThatRegisteringUsersWithDUAWithFalseAgeAttestedFails() {
+        userDUADTO.setActive(false);
+        AdminUserDTO userDTO = userMapper.userToAdminUserDTO(user);
+
+        InvalidDUAException thrown = assertThrows(InvalidDUAException.class, () -> userService.registerUser(userDTO, user.getPassword(), userDUADTO));
+        assertEquals("An inactive DUA or a DUA without an attested age cannot be given to register new user.", thrown.getMessage());
+
+        userDUADTO.setActive(true);
+    }
+
+    @Test
+    @Transactional("jhipsterTransactionManager")
+    void assertThatRegisteringWithValidDUASavesDUA() {
+        AdminUserDTO userDTO = userMapper.userToAdminUserDTO(user);
+        User newUser = userService.registerUser(userDTO, user.getPassword(), userDUADTO);
+
+        assertEquals(userDUADTO.getUser().getId(), newUser.getId());
+        assertEquals(userDUADTO.getUser().getLogin(), newUser.getLogin());
+
+    }
+
 }

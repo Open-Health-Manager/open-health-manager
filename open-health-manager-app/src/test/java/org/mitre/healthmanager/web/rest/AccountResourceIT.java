@@ -29,9 +29,11 @@ import org.mitre.healthmanager.security.AuthoritiesConstants;
 import org.mitre.healthmanager.service.FHIRPatientService;
 import org.mitre.healthmanager.service.UserService;
 import org.mitre.healthmanager.service.dto.AdminUserDTO;
+import org.mitre.healthmanager.service.dto.UserDUADTO;
 import org.mitre.healthmanager.service.dto.PasswordChangeDTO;
 import org.mitre.healthmanager.web.rest.vm.KeyAndPasswordVM;
 import org.mitre.healthmanager.web.rest.vm.ManagedUserVM;
+import org.mitre.healthmanager.web.rest.vm.DUAManagedUserVM;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
@@ -140,7 +142,7 @@ class AccountResourceIT {
     @Test
     @Transactional("jhipsterTransactionManager")
     void testRegisterValid() throws Exception {
-        ManagedUserVM validUser = new ManagedUserVM();
+        DUAManagedUserVM validUser = new DUAManagedUserVM();
         validUser.setLogin("test-register-valid");
         validUser.setPassword("password");
         validUser.setFirstName("Alice");
@@ -149,6 +151,14 @@ class AccountResourceIT {
         validUser.setImageUrl("http://placehold.it/50x50");
         validUser.setLangKey(Constants.DEFAULT_LANGUAGE);
         validUser.setAuthorities(Collections.singleton(AuthoritiesConstants.USER));
+
+        UserDUADTO userDUADTO = new UserDUADTO();
+        userDUADTO.setActive(true);
+        userDUADTO.setVersion("v2020-03-21");
+        userDUADTO.setAgeAttested(true);
+
+        validUser.setUserDUADTO(userDUADTO);
+
         assertThat(userRepository.findOneByLogin("test-register-valid")).isEmpty();
 
         restAccountMockMvc
@@ -178,7 +188,7 @@ class AccountResourceIT {
     @Test
     @Transactional("jhipsterTransactionManager")
     void testRegisterInvalidLogin() throws Exception {
-        ManagedUserVM invalidUser = new ManagedUserVM();
+        DUAManagedUserVM invalidUser = new DUAManagedUserVM();
         invalidUser.setLogin("funky-log(n"); // <-- invalid
         invalidUser.setPassword("password");
         invalidUser.setFirstName("Funky");
@@ -188,6 +198,13 @@ class AccountResourceIT {
         invalidUser.setImageUrl("http://placehold.it/50x50");
         invalidUser.setLangKey(Constants.DEFAULT_LANGUAGE);
         invalidUser.setAuthorities(Collections.singleton(AuthoritiesConstants.USER));
+
+        UserDUADTO userDUADTO = new UserDUADTO();
+        userDUADTO.setActive(true);
+        userDUADTO.setVersion("v2020-03-21");
+        userDUADTO.setAgeAttested(true);
+
+        invalidUser.setUserDUADTO(userDUADTO);
 
         restAccountMockMvc
             .perform(post("/api/register").contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(invalidUser)))
@@ -200,7 +217,7 @@ class AccountResourceIT {
     @Test
     @Transactional("jhipsterTransactionManager")
     void testRegisterInvalidEmail() throws Exception {
-        ManagedUserVM invalidUser = new ManagedUserVM();
+        DUAManagedUserVM invalidUser = new DUAManagedUserVM();
         invalidUser.setLogin("bob");
         invalidUser.setPassword("password");
         invalidUser.setFirstName("Bob");
@@ -210,6 +227,13 @@ class AccountResourceIT {
         invalidUser.setImageUrl("http://placehold.it/50x50");
         invalidUser.setLangKey(Constants.DEFAULT_LANGUAGE);
         invalidUser.setAuthorities(Collections.singleton(AuthoritiesConstants.USER));
+
+        UserDUADTO userDUADTO = new UserDUADTO();
+        userDUADTO.setActive(true);
+        userDUADTO.setVersion("v2020-03-21");
+        userDUADTO.setAgeAttested(true);
+
+        invalidUser.setUserDUADTO(userDUADTO);
 
         restAccountMockMvc
             .perform(post("/api/register").contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(invalidUser)))
@@ -222,7 +246,7 @@ class AccountResourceIT {
     @Test
     @Transactional("jhipsterTransactionManager")
     void testRegisterInvalidPassword() throws Exception {
-        ManagedUserVM invalidUser = new ManagedUserVM();
+        DUAManagedUserVM invalidUser = new DUAManagedUserVM();
         invalidUser.setLogin("bob");
         invalidUser.setPassword("123"); // password with only 3 digits
         invalidUser.setFirstName("Bob");
@@ -232,6 +256,13 @@ class AccountResourceIT {
         invalidUser.setImageUrl("http://placehold.it/50x50");
         invalidUser.setLangKey(Constants.DEFAULT_LANGUAGE);
         invalidUser.setAuthorities(Collections.singleton(AuthoritiesConstants.USER));
+
+        UserDUADTO userDUADTO = new UserDUADTO();
+        userDUADTO.setActive(true);
+        userDUADTO.setVersion("v2020-03-21");
+        userDUADTO.setAgeAttested(true);
+
+        invalidUser.setUserDUADTO(userDUADTO);
 
         restAccountMockMvc
             .perform(post("/api/register").contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(invalidUser)))
@@ -244,7 +275,7 @@ class AccountResourceIT {
     @Test
     @Transactional("jhipsterTransactionManager")
     void testRegisterNullPassword() throws Exception {
-        ManagedUserVM invalidUser = new ManagedUserVM();
+        DUAManagedUserVM invalidUser = new DUAManagedUserVM();
         invalidUser.setLogin("bob");
         invalidUser.setPassword(null); // invalid null password
         invalidUser.setFirstName("Bob");
@@ -254,6 +285,13 @@ class AccountResourceIT {
         invalidUser.setImageUrl("http://placehold.it/50x50");
         invalidUser.setLangKey(Constants.DEFAULT_LANGUAGE);
         invalidUser.setAuthorities(Collections.singleton(AuthoritiesConstants.USER));
+
+        UserDUADTO userDUADTO = new UserDUADTO();
+        userDUADTO.setActive(true);
+        userDUADTO.setVersion("v2020-03-21");
+        userDUADTO.setAgeAttested(true);
+
+        invalidUser.setUserDUADTO(userDUADTO);
 
         restAccountMockMvc
             .perform(post("/api/register").contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(invalidUser)))
@@ -267,7 +305,7 @@ class AccountResourceIT {
     @Transactional("jhipsterTransactionManager")
     void testRegisterDuplicateLogin() throws Exception {
         // First registration
-        ManagedUserVM firstUser = new ManagedUserVM();
+        DUAManagedUserVM firstUser = new DUAManagedUserVM();
         firstUser.setLogin("alice");
         firstUser.setPassword("password");
         firstUser.setFirstName("Alice");
@@ -277,8 +315,15 @@ class AccountResourceIT {
         firstUser.setLangKey(Constants.DEFAULT_LANGUAGE);
         firstUser.setAuthorities(Collections.singleton(AuthoritiesConstants.USER));
 
+        UserDUADTO firstUserDUADTO = new UserDUADTO();
+        firstUserDUADTO.setActive(true);
+        firstUserDUADTO.setVersion("v2020-03-21");
+        firstUserDUADTO.setAgeAttested(true);
+
+        firstUser.setUserDUADTO(firstUserDUADTO);
+
         // Duplicate login, different email
-        ManagedUserVM secondUser = new ManagedUserVM();
+        DUAManagedUserVM secondUser = new DUAManagedUserVM();
         secondUser.setLogin(firstUser.getLogin());
         secondUser.setPassword(firstUser.getPassword());
         secondUser.setFirstName(firstUser.getFirstName());
@@ -291,6 +336,13 @@ class AccountResourceIT {
         secondUser.setLastModifiedBy(firstUser.getLastModifiedBy());
         secondUser.setLastModifiedDate(firstUser.getLastModifiedDate());
         secondUser.setAuthorities(new HashSet<>(firstUser.getAuthorities()));
+
+        UserDUADTO secondUserDUADTO = new UserDUADTO();
+        secondUserDUADTO.setActive(true);
+        secondUserDUADTO.setVersion("v2020-03-21");
+        secondUserDUADTO.setAgeAttested(true);
+
+        secondUser.setUserDUADTO(secondUserDUADTO);
 
         // First user
         restAccountMockMvc
@@ -317,7 +369,7 @@ class AccountResourceIT {
     @Transactional("jhipsterTransactionManager")
     void testRegisterDuplicateEmail() throws Exception {
         // First user
-        ManagedUserVM firstUser = new ManagedUserVM();
+        DUAManagedUserVM firstUser = new DUAManagedUserVM();
         firstUser.setLogin("test-register-duplicate-email");
         firstUser.setPassword("password");
         firstUser.setFirstName("Alice");
@@ -327,6 +379,14 @@ class AccountResourceIT {
         firstUser.setLangKey(Constants.DEFAULT_LANGUAGE);
         firstUser.setAuthorities(Collections.singleton(AuthoritiesConstants.USER));
 
+        UserDUADTO firstUserDUADTO = new UserDUADTO();
+        firstUserDUADTO.setActive(true);
+        firstUserDUADTO.setVersion("v2020-03-21");
+        firstUserDUADTO.setAgeAttested(true);
+
+        firstUser.setUserDUADTO(firstUserDUADTO);
+
+        
         // Register first user
         restAccountMockMvc
             .perform(post("/api/register").contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(firstUser)))
@@ -336,7 +396,7 @@ class AccountResourceIT {
         assertThat(testUser1).isPresent();
 
         // Duplicate email, different login
-        ManagedUserVM secondUser = new ManagedUserVM();
+        DUAManagedUserVM secondUser = new DUAManagedUserVM();
         secondUser.setLogin("test-register-duplicate-email-2");
         secondUser.setPassword(firstUser.getPassword());
         secondUser.setFirstName(firstUser.getFirstName());
@@ -345,6 +405,13 @@ class AccountResourceIT {
         secondUser.setImageUrl(firstUser.getImageUrl());
         secondUser.setLangKey(firstUser.getLangKey());
         secondUser.setAuthorities(new HashSet<>(firstUser.getAuthorities()));
+
+        UserDUADTO secondUserDUADTO = new UserDUADTO();
+        secondUserDUADTO.setActive(true);
+        secondUserDUADTO.setVersion("v2020-03-21");
+        secondUserDUADTO.setAgeAttested(true);
+
+        secondUser.setUserDUADTO(secondUserDUADTO);
 
         // Register second (non activated) user
         restAccountMockMvc
@@ -358,7 +425,7 @@ class AccountResourceIT {
         assertThat(testUser3).isPresent();
 
         // Duplicate email - with uppercase email address
-        ManagedUserVM userWithUpperCaseEmail = new ManagedUserVM();
+        DUAManagedUserVM userWithUpperCaseEmail = new DUAManagedUserVM();
         userWithUpperCaseEmail.setId(firstUser.getId());
         userWithUpperCaseEmail.setLogin("test-register-duplicate-email-3");
         userWithUpperCaseEmail.setPassword(firstUser.getPassword());
@@ -368,6 +435,14 @@ class AccountResourceIT {
         userWithUpperCaseEmail.setImageUrl(firstUser.getImageUrl());
         userWithUpperCaseEmail.setLangKey(firstUser.getLangKey());
         userWithUpperCaseEmail.setAuthorities(new HashSet<>(firstUser.getAuthorities()));
+        
+        UserDUADTO emailUserDUADTO = new UserDUADTO();
+        emailUserDUADTO.setActive(true);
+        emailUserDUADTO.setVersion("v2020-03-21");
+        emailUserDUADTO.setAgeAttested(true);
+
+        userWithUpperCaseEmail.setUserDUADTO(emailUserDUADTO);
+
 
         // Register third (not activated) user
         restAccountMockMvc
@@ -394,7 +469,7 @@ class AccountResourceIT {
     @Test
     @Transactional("jhipsterTransactionManager")
     void testRegisterAdminIsIgnored() throws Exception {
-        ManagedUserVM validUser = new ManagedUserVM();
+        DUAManagedUserVM validUser = new DUAManagedUserVM();
         validUser.setLogin("badguy");
         validUser.setPassword("password");
         validUser.setFirstName("Bad");
@@ -404,6 +479,13 @@ class AccountResourceIT {
         validUser.setImageUrl("http://placehold.it/50x50");
         validUser.setLangKey(Constants.DEFAULT_LANGUAGE);
         validUser.setAuthorities(Collections.singleton(AuthoritiesConstants.ADMIN));
+    
+        UserDUADTO validUserDUADTO = new UserDUADTO();
+        validUserDUADTO.setActive(true);
+        validUserDUADTO.setVersion("v2020-03-21");
+        validUserDUADTO.setAgeAttested(true);
+
+        validUser.setUserDUADTO(validUserDUADTO);
 
         restAccountMockMvc
             .perform(post("/api/register").contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(validUser)))
@@ -455,20 +537,34 @@ class AccountResourceIT {
         userService.updateUser(firstUserDTO);
 
         // attempt to re-register email with a different login
-        ManagedUserVM secondUser = new ManagedUserVM();
+        DUAManagedUserVM secondUser = new DUAManagedUserVM();
         secondUser.setLogin("to-re-register-2");
         secondUser.setPassword("password");
         secondUser.setEmail("to-re-register@example.com");
+
+        UserDUADTO secondUserDUADTO = new UserDUADTO();
+        secondUserDUADTO.setActive(true);
+        secondUserDUADTO.setVersion("v2020-03-21");
+        secondUserDUADTO.setAgeAttested(true);
+
+        secondUser.setUserDUADTO(secondUserDUADTO);
 
         restAccountMockMvc
             .perform(post("/api/register").contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(secondUser)))
             .andExpect(status().is4xxClientError());
 
         // attempt to re-register login with a different email
-        ManagedUserVM thirdUser = new ManagedUserVM();
+        DUAManagedUserVM thirdUser = new DUAManagedUserVM();
         thirdUser.setLogin("to-re-register");
         thirdUser.setPassword("password");
         thirdUser.setEmail("to-re-register-2@example.com");
+
+        UserDUADTO thirdUserDUADTO = new UserDUADTO();
+        thirdUserDUADTO.setActive(true);
+        thirdUserDUADTO.setVersion("v2020-03-21");
+        thirdUserDUADTO.setAgeAttested(true);
+
+        thirdUser.setUserDUADTO(thirdUserDUADTO);
 
         restAccountMockMvc
             .perform(post("/api/register").contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(thirdUser)))
