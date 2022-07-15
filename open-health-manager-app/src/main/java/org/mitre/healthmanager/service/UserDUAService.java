@@ -1,5 +1,7 @@
 package org.mitre.healthmanager.service;
 
+import java.util.List;
+import java.util.stream.Collectors;
 import java.util.Optional;
 import org.mitre.healthmanager.domain.UserDUA;
 import org.mitre.healthmanager.repository.UserDUARepository;
@@ -122,5 +124,22 @@ public class UserDUAService {
     public void delete(Long id) {
         log.debug("Request to delete UserDUA : {}", id);
         userDUARepository.deleteById(id);
+    }
+
+    public List<UserDUADTO> findAllForUser(Long id) {
+        log.debug("Request to get UserDUAs with User id : {}", id);
+        return userDUARepository.findAllForUser(id).stream().map(userDUAMapper::toDto).collect(Collectors.toList());
+    }
+
+    public void removeDeletedUserDUAs(Long id) {
+        List<UserDUADTO> foundUserDUAs =  userDUARepository.findAllForUser(id).stream().map(userDUAMapper::toDto).collect(Collectors.toList());
+        
+        if (foundUserDUAs.size() <= 0) {
+            return;
+        }
+
+        foundUserDUAs.forEach((userDUA) -> {
+            userDUARepository.deleteById(userDUA.getId());
+        });
     }
 }

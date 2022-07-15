@@ -7,6 +7,7 @@ import javax.validation.constraints.NotNull;
 import org.apache.commons.lang3.StringUtils;
 import org.mitre.healthmanager.domain.User;
 import org.mitre.healthmanager.domain.UserDUA;
+import org.mitre.healthmanager.service.dto.UserDUADTO;
 import org.mitre.healthmanager.repository.UserRepository;
 import org.mitre.healthmanager.security.SecurityUtils;
 import org.mitre.healthmanager.service.MailService;
@@ -21,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.mitre.healthmanager.web.rest.errors.BadRequestAlertException;
 
 
 /**
@@ -66,8 +68,14 @@ public class AccountResource {
         if (isPasswordLengthInvalid(duaManagedUserVM.getPassword())) {
             throw new InvalidPasswordException();
         }
+
+        UserDUADTO userDUADTO = duaManagedUserVM.getUserDUADTO();
+
+        if (userDUADTO.getId() != null) {
+            throw new BadRequestAlertException("A new userDUA cannot already have an ID", "userDUA", "idexists");
+        }
         
-        User user = userService.registerUser(duaManagedUserVM, duaManagedUserVM.getPassword(), duaManagedUserVM.getUserDUADTO());
+        User user = userService.registerUser(duaManagedUserVM, duaManagedUserVM.getPassword(), userDUADTO);
         mailService.sendActivationEmail(user);
     }
 
