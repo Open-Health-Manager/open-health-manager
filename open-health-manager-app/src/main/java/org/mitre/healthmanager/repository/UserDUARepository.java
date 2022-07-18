@@ -41,7 +41,4 @@ public interface UserDUARepository extends JpaRepository<UserDUA, Long> {
     @Query("select userDUA from UserDUA userDUA left join fetch userDUA.user where userDUA.id =:id")
     Optional<UserDUA> findOneWithToOneRelationships(@Param("id") Long id);
 
-    @Query("select distinct userDUA from UserDUA userDUA where user_id =:id")
-    List<UserDUA> findAllForUser(@Param("id") Long id);
-
 }

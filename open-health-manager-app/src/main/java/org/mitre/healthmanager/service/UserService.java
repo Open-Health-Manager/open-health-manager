@@ -177,8 +177,6 @@ public class UserService {
             return false;
         }
 
-        userDUAService.removeDeletedUserDUAs(existingUser.getId());
-
         userRepository.delete(existingUser);
         userRepository.flush();
         this.clearUserCaches(existingUser);
@@ -283,7 +281,6 @@ public class UserService {
         userRepository
             .findOneByLogin(login)
             .ifPresent(user -> {
-                userDUAService.removeDeletedUserDUAs(user.getId());
                 deleteFHIRPatient(user);
                 userRepository.delete(user);
                 this.clearUserCaches(user);
@@ -365,7 +362,6 @@ public class UserService {
             .findAllByActivatedIsFalseAndActivationKeyIsNotNullAndCreatedDateBefore(Instant.now().minus(3, ChronoUnit.DAYS))
             .forEach(user -> {
                 log.debug("Deleting not activated user {}", user.getLogin());
-                userDUAService.removeDeletedUserDUAs(user.getId());
                 userRepository.delete(user);
                 this.clearUserCaches(user);
             });
