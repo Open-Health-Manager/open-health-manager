@@ -27,6 +27,7 @@ import org.mitre.healthmanager.lib.dataMgr.pdrLinkExtensionURL
 import org.mitre.healthmanager.lib.dataMgr.pdrLinkListExtensionURL
 import org.mitre.healthmanager.lib.dataMgr.usernameSystem
 import org.mitre.healthmanager.stringFromResource
+import org.mitre.healthmanager.getAdminAuthClient
 import org.slf4j.LoggerFactory
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.web.server.LocalServerPort
@@ -61,7 +62,7 @@ class DeletePDRTests {
     fun testDeleteOnlyPDRForObservation() {
         val methodName = "testDeleteOnlyPDRForObservation"
         ourLog.info("Entering $methodName()...")
-        val testClient : IGenericClient = ourCtx.newRestfulGenericClient("http://localhost:$port/fhir/")
+        val testClient : IGenericClient = getAdminAuthClient(ourCtx, "http://localhost:$port/fhir/")
         val testUsername = "testDeleteOnlyPDRForObservation"
         val testPatientId = "test-deleteOnlyPDRForObservation"
 
@@ -163,7 +164,7 @@ class DeletePDRTests {
     fun testDeleteLaterPDRForObservation() {
         val methodName = "testDeleteLaterPDRForObservation"
         ourLog.info("Entering $methodName()...")
-        val testClient : IGenericClient = ourCtx.newRestfulGenericClient("http://localhost:$port/fhir/")
+        val testClient : IGenericClient = getAdminAuthClient(ourCtx, "http://localhost:$port/fhir/")
         val testUsername = "testDeleteLaterPDRForObservation"
         val testPatientId = "test-deleteLaterPDRForObservation"
         val testObsId = "test-deleteLaterPDRForObservation-Obs"
@@ -307,7 +308,7 @@ class DeletePDRTests {
     fun testDeleteEarlierPDRForObservationFirst() {
         val methodName = "testDeleteEarlierPDRForObservationFirst"
         ourLog.info("Entering $methodName()...")
-        val testClient : IGenericClient = ourCtx.newRestfulGenericClient("http://localhost:$port/fhir/")
+        val testClient : IGenericClient = getAdminAuthClient(ourCtx, "http://localhost:$port/fhir/")
         val testUsername = "testDeleteEarlierPDRForObservationFirst"
         val testPatientId = "test-deleteEarlierPDRForObservationFirst"
         val testObsId = "test-deleteEarlierPDRForObservationFirst-Obs"
@@ -491,7 +492,7 @@ class DeletePDRTests {
     fun testNoDeletionOfSharedResources() {
         val methodName = "testNoDeletionOfSharedResources"
         ourLog.info("Entering $methodName()...")
-        val testClient : IGenericClient = ourCtx.newRestfulGenericClient("http://localhost:$port/fhir/")
+        val testClient : IGenericClient = getAdminAuthClient(ourCtx, "http://localhost:$port/fhir/")
         val testUsername = "testNoDeletionOfSharedResources"
         val testPatientId = "test-NoDeletionOfSharedResources"
         val testPractitionerId = "test-NoDeletionOfSharedResources-prov"
@@ -585,7 +586,7 @@ class DeletePDRTests {
     fun testDeleteOfOnlyPatientPDRRevertsToSkeleton() {
         val methodName = "testDeleteOfOnlyPatientPDRRevertsToSkeleton"
         ourLog.info("Entering $methodName()...")
-        val testClient : IGenericClient = ourCtx.newRestfulGenericClient("http://localhost:$port/fhir/")
+        val testClient : IGenericClient = getAdminAuthClient(ourCtx, "http://localhost:$port/fhir/")
         val testUsername = "testDeleteOfOnlyPatientPDRRevertsToSkeleton"
         val testPatientId = "test-DeleteOfOnlyPatientPDRRevertsToSkeleton"
 

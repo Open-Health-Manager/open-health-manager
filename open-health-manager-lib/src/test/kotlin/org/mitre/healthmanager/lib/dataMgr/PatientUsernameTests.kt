@@ -29,6 +29,7 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.mitre.healthmanager.searchForPatientByUsername
 import org.mitre.healthmanager.stringFromResource
+import org.mitre.healthmanager.getAdminAuthClient
 import org.slf4j.LoggerFactory
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.web.server.LocalServerPort
@@ -64,7 +65,7 @@ class PatientUsernameTests {
     fun testCreateWithoutUsername() {
         val methodName = "testCreateWithoutUsername"
         ourLog.info("Entering $methodName()...")
-        val testClient: IGenericClient = ourCtx.newRestfulGenericClient("http://localhost:$port/fhir/")
+        val testClient : IGenericClient = getAdminAuthClient(ourCtx, "http://localhost:$port/fhir/")
 
         val noUsernamePatient = Patient()
         noUsernamePatient.addIdentifier().setSystem("urn:system").setValue("12345")
@@ -87,7 +88,7 @@ class PatientUsernameTests {
     fun testCreateWithoutUsernameOnPatientRecordPDR() {
         val methodName = "testCreateWithoutUsernameOnPatientRecordPDR"
         ourLog.info("Entering $methodName()...")
-        val testClient: IGenericClient = ourCtx.newRestfulGenericClient("http://localhost:$port/fhir/")
+        val testClient : IGenericClient = getAdminAuthClient(ourCtx, "http://localhost:$port/fhir/")
 
         // make sure patient doesn't exist
         val results = testClient
@@ -128,7 +129,7 @@ class PatientUsernameTests {
     fun testUpdateWithoutUsername() {
         val methodName = "testUpdateWithoutUsername"
         ourLog.info("Entering $methodName()...")
-        val testClient: IGenericClient = ourCtx.newRestfulGenericClient("http://localhost:$port/fhir/")
+        val testClient : IGenericClient = getAdminAuthClient(ourCtx, "http://localhost:$port/fhir/")
         val testUsername = "testCreate"
 
         // create
@@ -180,7 +181,7 @@ class PatientUsernameTests {
     fun testUpdateToDifferentUsername() {
         val methodName = "testUpdateToDifferentUsername"
         ourLog.info("Entering $methodName()...")
-        val testClient: IGenericClient = ourCtx.newRestfulGenericClient("http://localhost:$port/fhir/")
+        val testClient : IGenericClient = getAdminAuthClient(ourCtx, "http://localhost:$port/fhir/")
 
         // create
         val usernamePatient = Patient()
