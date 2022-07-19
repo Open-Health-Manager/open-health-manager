@@ -181,8 +181,66 @@ class AccountResourceIT {
             searchRequestDetails
         );
         assertEquals(0, searchResults.getAllResourceIds().size());
+    }
 
+    @Test
+    @Transactional("jhipsterTransactionManager")
+    void testRegisterInactiveDUA() throws Exception {
+        DUAManagedUserVM invalidUser = new DUAManagedUserVM();
+        invalidUser.setLogin("test-register-invalid");
+        invalidUser.setPassword("password");
+        invalidUser.setFirstName("Alice");
+        invalidUser.setLastName("Test");
+        invalidUser.setEmail("test-register-invalid@example.com");
+        invalidUser.setImageUrl("http://placehold.it/50x50");
+        invalidUser.setLangKey(Constants.DEFAULT_LANGUAGE);
+        invalidUser.setAuthorities(Collections.singleton(AuthoritiesConstants.USER));
 
+        UserDUADTO inactiveDUADTO = new UserDUADTO();
+        inactiveDUADTO.setActive(false);
+        inactiveDUADTO.setVersion("v2020-03-21");
+        inactiveDUADTO.setAgeAttested(true);
+
+        invalidUser.setUserDUADTO(inactiveDUADTO);
+
+        assertThat(userRepository.findOneByLogin("test-register-valid")).isEmpty();
+
+        restAccountMockMvc
+            .perform(post("/api/register").contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(invalidUser)))
+            .andExpect(status().is5xxServerError());
+
+        Optional<User> findByLogin = userRepository.findOneByLogin("test-register-invalid");
+        assertThat(findByLogin).isEmpty();
+    }
+
+    @Test
+    @Transactional("jhipsterTransactionManager")
+    void testRegisterAgeNotAttestedDUA() throws Exception {
+        DUAManagedUserVM invalidUser = new DUAManagedUserVM();
+        invalidUser.setLogin("test-register-invalid");
+        invalidUser.setPassword("password");
+        invalidUser.setFirstName("Alice");
+        invalidUser.setLastName("Test");
+        invalidUser.setEmail("test-register-invalid@example.com");
+        invalidUser.setImageUrl("http://placehold.it/50x50");
+        invalidUser.setLangKey(Constants.DEFAULT_LANGUAGE);
+        invalidUser.setAuthorities(Collections.singleton(AuthoritiesConstants.USER));
+
+        UserDUADTO invalidDUADTO = new UserDUADTO();
+        invalidDUADTO.setActive(true);
+        invalidDUADTO.setVersion("v2020-03-21");
+        invalidDUADTO.setAgeAttested(false);
+
+        invalidUser.setUserDUADTO(invalidDUADTO);
+
+        assertThat(userRepository.findOneByLogin("test-register-invalid")).isEmpty();
+
+        restAccountMockMvc
+            .perform(post("/api/register").contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(invalidUser)))
+            .andExpect(status().is5xxServerError());
+
+        Optional<User> findByLogin = userRepository.findOneByLogin("test-register-invalid");
+        assertThat(findByLogin).isEmpty();
     }
 
     @Test
