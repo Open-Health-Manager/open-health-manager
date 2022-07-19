@@ -26,6 +26,7 @@ import org.junit.jupiter.api.*
 import org.mitre.healthmanager.lib.dataMgr.pdrAccountExtension
 import org.mitre.healthmanager.lib.dataMgr.pdrLinkListExtensionURL
 import org.mitre.healthmanager.stringFromResource
+import org.mitre.healthmanager.getAdminAuthClient
 import org.slf4j.LoggerFactory
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.web.server.LocalServerPort
@@ -64,7 +65,7 @@ class ProcessMessageTests {
     fun testSuccessfulBundleStorage() {
         val methodName = "testSuccessfulBundleStorage"
         ourLog.info("Entering $methodName()...")
-        val testClient : IGenericClient = ourCtx.newRestfulGenericClient("http://localhost:$port/fhir/")
+        val testClient : IGenericClient = getAdminAuthClient(ourCtx, "http://localhost:$port/fhir/")
 
         // Submit the bundle
         val messageBundle: Bundle = ourCtx.newJsonParser().parseResource<Bundle>(

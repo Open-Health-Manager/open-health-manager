@@ -15,7 +15,9 @@ limitations under the License.
  */
 package org.mitre.healthmanager
 
+import ca.uhn.fhir.context.FhirContext
 import ca.uhn.fhir.rest.client.api.IGenericClient
+import ca.uhn.fhir.rest.client.interceptor.BearerTokenAuthInterceptor
 import org.apache.commons.io.IOUtils
 import org.awaitility.Awaitility
 import org.hl7.fhir.instance.model.api.IBaseBundle
@@ -72,4 +74,25 @@ fun stringFromResource(theLocation : String) : String {
     }
 
     return IOUtils.toString(inputStream, com.google.common.base.Charsets.UTF_8)
+}
+
+fun getAdminAuthClient(context : FhirContext, fhirBase : String) : IGenericClient {
+    /*
+      {
+        "alg": "HS512"
+      }
+      {
+        "sub": "admin",
+        "auth": "ROLE_ADMIN,ROLE_USER",
+        "exp": 1657306962
+      }
+      { ... signature ... }
+    */
+    val token = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbiIsImF1dGgiOiJST0xFX0FETUlOLFJPTEVfVVNFUiIsImV4cCI6MTY1NzMwNjk2Mn0.SgmWPeS3sbqLXTr1I8zlX26ZekwyHCr2x67gzhBaFUjaoc1d5ryP3nu_EPaJQoBkIwB9ZOO1LOAPEoz6z8y1Vg"
+    val authInterceptor = BearerTokenAuthInterceptor(token)
+    
+    val genericClient = context.newRestfulGenericClient(fhirBase)
+    genericClient.registerInterceptor(authInterceptor)
+
+    return genericClient
 }
