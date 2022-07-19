@@ -27,6 +27,7 @@ import org.mitre.healthmanager.lib.dataMgr.pdrLinkExtensionURL
 import org.mitre.healthmanager.lib.dataMgr.pdrLinkListExtensionURL
 import org.mitre.healthmanager.searchForPatientByUsername
 import org.mitre.healthmanager.stringFromResource
+import org.mitre.healthmanager.getAdminAuthClient
 import org.slf4j.LoggerFactory
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.web.server.LocalServerPort
@@ -61,7 +62,7 @@ class TransactionAsPDRTests {
     fun testTransactionAsPDR() {
         val methodName = "testTransactionAsPDR"
         ourLog.info("Entering $methodName()...")
-        val testClient : IGenericClient = ourCtx.newRestfulGenericClient("http://localhost:$port/fhir/")
+        val testClient : IGenericClient = getAdminAuthClient(ourCtx, "http://localhost:$port/fhir/")
         val testUsername = "testTransactionAsPDR"
         val testPatientId = "test-testTransactionAsPDR"
         val tx1Source = "urn:mitre:healthmanager:test:source1"
@@ -304,7 +305,7 @@ class TransactionAsPDRTests {
     fun testUpdatePatientLinksInTx() {
         val methodName = "testUpdatePatientLinksInTx"
         ourLog.info("Entering $methodName()...")
-        val testClient : IGenericClient = ourCtx.newRestfulGenericClient("http://localhost:$port/fhir/")
+        val testClient : IGenericClient = getAdminAuthClient(ourCtx, "http://localhost:$port/fhir/")
         val testUsername = "testUpdatePatientLinksInTx"
 
         val inParams = Parameters()

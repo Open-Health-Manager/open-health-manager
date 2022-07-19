@@ -27,6 +27,7 @@ import org.mitre.healthmanager.lib.dataMgr.pdrLinkExtensionURL
 import org.mitre.healthmanager.lib.dataMgr.pdrLinkListExtensionURL
 import org.mitre.healthmanager.lib.dataMgr.usernameSystem
 import org.mitre.healthmanager.stringFromResource
+import org.mitre.healthmanager.getAdminAuthClient
 import org.slf4j.LoggerFactory
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.web.server.LocalServerPort
@@ -61,7 +62,7 @@ class PDRLinkTests {
     fun testPDRLinksAddedToDirectWrite() {
         val methodName = "testPDRLinksAddedToDirectWrite"
         ourLog.info("Entering $methodName()...")
-        val testClient : IGenericClient = ourCtx.newRestfulGenericClient("http://localhost:$port/fhir/")
+        val testClient : IGenericClient = getAdminAuthClient(ourCtx, "http://localhost:$port/fhir/")
         val testUsername = "testPDRLinksAddedToDirectWrite"
         val testPatientId = "test-PDRLinksAddedToDirectWrite"
         val testObsId = "test-PDRLinksAddedToDirectWrite-Obs"
@@ -190,7 +191,7 @@ class PDRLinkTests {
     fun testPDRLinksAddedStoreViaPDR() {
         val methodName = "testPDRLinksAddedStoreViaPDR"
         ourLog.info("Entering $methodName()...")
-        val testClient : IGenericClient = ourCtx.newRestfulGenericClient("http://localhost:$port/fhir/")
+        val testClient : IGenericClient = getAdminAuthClient(ourCtx, "http://localhost:$port/fhir/")
         val testUsername = "testPDRLinksAddedStoreViaPDR"
         val testPatientId = "test-PDRLinksAddedStoreViaPDR"
         val testObsId = "test-PDRLinksAddedStoreViaPDR-Obs"
@@ -298,7 +299,7 @@ class PDRLinkTests {
     fun testNoPDRLinksForSharedResourcesStoreViaPDR() {
         val methodName = "testNoPDRLinksForSharedResourcesStoreViaPDR"
         ourLog.info("Entering $methodName()...")
-        val testClient : IGenericClient = ourCtx.newRestfulGenericClient("http://localhost:$port/fhir/")
+        val testClient : IGenericClient = getAdminAuthClient(ourCtx, "http://localhost:$port/fhir/")
         val testUsername = "testNoPDRLinksForSharedResourcesStoreViaPDR"
         val testPatientId = "test-NoPDRLinksForSharedResourcesStoreViaPDR"
         val testPractitionerId = "test-NoPDRLinksForSharedResourcesStoreViaPDR-prov"
@@ -364,7 +365,7 @@ class PDRLinkTests {
     fun testNoPDRLinksForSharedResourcesDirectWrite() {
         val methodName = "testNoPDRLinksForSharedResourcesDirectWrite"
         ourLog.info("Entering $methodName()...")
-        val testClient : IGenericClient = ourCtx.newRestfulGenericClient("http://localhost:$port/fhir/")
+        val testClient : IGenericClient = getAdminAuthClient(ourCtx, "http://localhost:$port/fhir/")
         val testPractitionerId = "test-NoPDRLinksForSharedResourcesDirectWrite-prov"
 
         val createProv = Practitioner()
@@ -392,7 +393,7 @@ class PDRLinkTests {
     fun testPDRLinksForPatientStoreViaPDR() {
         val methodName = "testPDRLinksForPatientStoreViaPDR"
         ourLog.info("Entering $methodName()...")
-        val testClient : IGenericClient = ourCtx.newRestfulGenericClient("http://localhost:$port/fhir/")
+        val testClient : IGenericClient = getAdminAuthClient(ourCtx, "http://localhost:$port/fhir/")
         val testUsername = "testPDRLinksForPatientStoreViaPDR"
         val testPatientId = "test-PDRLinksForPatientStoreViaPDR"
 
@@ -457,7 +458,7 @@ class PDRLinkTests {
     fun testPDRLinksForPatientDirectWrite() {
         val methodName = "testPDRLinksForPatientDirectWrite"
         ourLog.info("Entering $methodName()...")
-        val testClient : IGenericClient = ourCtx.newRestfulGenericClient("http://localhost:$port/fhir/")
+        val testClient : IGenericClient = getAdminAuthClient(ourCtx, "http://localhost:$port/fhir/")
         val testUsername = "testPDRLinksForPatientDirectWrite"
         val testPatientId = "test-PDRLinksForPatientDirectWrite"
 
