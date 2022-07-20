@@ -39,6 +39,8 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.annotation.DirtiesContext.MethodMode;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -360,7 +362,7 @@ class AccountResourceIT {
     }
 
     @Test
-    @Transactional("jhipsterTransactionManager")
+    @DirtiesContext(methodMode = MethodMode.AFTER_METHOD)
     void testRegisterDuplicateLogin() throws Exception {
         // First registration
         DUAManagedUserVM firstUser = new DUAManagedUserVM();
@@ -427,7 +429,7 @@ class AccountResourceIT {
     }
 
     @Test
-    @Transactional("jhipsterTransactionManager")
+    @DirtiesContext(methodMode = MethodMode.AFTER_METHOD)
     void testRegisterDuplicateEmail() throws Exception {
         // First user
         DUAManagedUserVM firstUser = new DUAManagedUserVM();
