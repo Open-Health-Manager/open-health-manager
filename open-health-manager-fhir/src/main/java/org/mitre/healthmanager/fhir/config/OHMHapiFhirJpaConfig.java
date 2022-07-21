@@ -67,63 +67,6 @@ public class OHMHapiFhirJpaConfig {
 		return servletRegistrationBean;
 	}
 
-	@Bean 
-	public ServletRegistrationBean<DispatcherServlet> overlayRegistrationBean() {
-		AnnotationConfigWebApplicationContext annotationConfigServletWebApplicationContext =
-				new AnnotationConfigWebApplicationContext();
-		annotationConfigServletWebApplicationContext.register(FhirTesterConfig.class);
-		annotationConfigServletWebApplicationContext.addBeanFactoryPostProcessor(new BeanFactoryPostProcessor() {
-		    @Override
-		    public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
-		        beanFactory.registerSingleton("appProperties", appProperties);
-		        beanFactory.registerSingleton("testerTemplateResolver", testerTemplateResolver());
-		    }});
-
-		DispatcherServlet dispatcherServlet = new DispatcherServlet(annotationConfigServletWebApplicationContext);
-		ServletRegistrationBean<DispatcherServlet> registrationBean = new ServletRegistrationBean<DispatcherServlet>();
-		registrationBean.setName("overlayDispatcher");
-		registrationBean.setServlet(dispatcherServlet);
-		registrationBean.addUrlMappings("/tester/*");
-		registrationBean.setLoadOnStartup(1); 
-		return registrationBean; 
-	}
-	
-	@Bean
-	public SpringResourceTemplateResolver testerTemplateResolver() {
-		SpringResourceTemplateResolver secondaryTemplateResolver = new SpringResourceTemplateResolver();
-	    secondaryTemplateResolver.setPrefix("classpath:/WEB-INF/templates/");
-	    secondaryTemplateResolver.setSuffix(".html");
-	    secondaryTemplateResolver.setTemplateMode(TemplateMode.HTML);
-	    secondaryTemplateResolver.setCharacterEncoding("UTF-8");
-	    secondaryTemplateResolver.setOrder(1);
-	    secondaryTemplateResolver.setCheckExistence(true);
-	        
-	    return secondaryTemplateResolver;
-	}
-	
-	// map tester files to root resources path (hardcoded in templates)
-	@Configuration
-	static class TesterStaticResourcesWebConfiguration implements WebMvcConfigurer {
-	    @Override
-	    public void addResourceHandlers(ResourceHandlerRegistry registry) {
-			WebUtil.webJarAddBoostrap(registry);
-			WebUtil.webJarAddJQuery(registry);
-			WebUtil.webJarAddFontAwesome(registry);
-			WebUtil.webJarAddJSTZ(registry);
-			WebUtil.webJarAddEonasdanBootstrapDatetimepicker(registry);
-			WebUtil.webJarAddMomentJS(registry);
-			WebUtil.webJarAddSelect2(registry);
-			WebUtil.webJarAddAwesomeCheckbox(registry);
-			WebUtil.webJarAddPopperJs(registry);
-			
-			registry.addResourceHandler("/tester/css/**").addResourceLocations("/css/","classpath:/css/");
-			registry.addResourceHandler("/tester/fa/**").addResourceLocations("/fa/");
-			registry.addResourceHandler("/tester/fonts/**").addResourceLocations("/fonts/");
-			registry.addResourceHandler("/tester/img/**").addResourceLocations("/img/","classpath:/img/");
-			registry.addResourceHandler("/tester/js/**").addResourceLocations("/js/","classpath:/js/");
-	    }
-	}
-
 	@Bean
 	@Primary
 	@ConfigurationProperties("application.hapi.datasource") 

@@ -26,7 +26,7 @@
             <artifactId>hapi-fhir-jpaserver-starter</artifactId>
             <version>${hapi.fhir.version}</version>
             <exclusions>
-        		<exclusion>  <!-- declare the exclusion here -->
+        		<exclusion>
 	          		<groupId>org.springdoc</groupId>
 	          		<artifactId>springdoc-openapi-ui</artifactId>
         		</exclusion>
@@ -43,6 +43,12 @@
 			<version>${hapi.fhir.version}</version>
 		</dependency>	
         <dependency>
+            <groupId>ca.uhn.hapi.fhir</groupId>
+            <artifactId>hapi-fhir-testpage-overlay</artifactId>
+            <version>${hapi.fhir.version}</version>
+            <classifier>classes</classifier>
+	        </dependency>		
+        <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-webmvc-core</artifactId>
             <version>1.6.6</version>
@@ -52,6 +58,69 @@
 		    <artifactId>spring-boot-configuration-processor</artifactId>
 		    <version>${spring-boot.version}</version>
 		    <optional>true</optional>
-		</dependency>        
+		</dependency>     
+		<!-- webjars -->
+		<dependency>
+			<groupId>org.webjars.npm</groupId>
+			<artifactId>bootstrap</artifactId>
+			<version>4.5.2</version>
+		</dependency>
+		<dependency>
+			<groupId>org.webjars</groupId>
+			<artifactId>Eonasdan-bootstrap-datetimepicker</artifactId>
+			<version>4.17.47</version>
+			<exclusions>
+				<exclusion>
+					<groupId>*</groupId>
+					<artifactId>*</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>org.webjars</groupId>
+			<artifactId>font-awesome</artifactId>
+			<version>5.8.2</version>
+		</dependency>
+		<dependency>
+			<groupId>org.webjars.bower</groupId>
+			<artifactId>awesome-bootstrap-checkbox</artifactId>
+			<version>1.0.2</version>
+		</dependency>
+		<dependency>
+			<groupId>org.webjars</groupId>
+			<artifactId>jstimezonedetect</artifactId>
+			<version>1.0.6</version>
+		</dependency>
+		<dependency>
+			<groupId>org.webjars</groupId>
+			<artifactId>select2</artifactId>
+			<version>4.0.13</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.webjars</groupId>
+					<artifactId>jquery</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>org.webjars.bower</groupId>
+			<artifactId>jquery</artifactId>
+			<version>3.5.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.webjars.bower</groupId>
+			<artifactId>moment</artifactId>
+			<version>2.27.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.webjars.npm</groupId>
+			<artifactId>popper.js</artifactId>
+			<version>1.16.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.webjars</groupId>
+			<artifactId>swagger-ui</artifactId>
+			<version>4.1.3</version>
+		</dependency>		   
 	</dependencies>
 </project>
