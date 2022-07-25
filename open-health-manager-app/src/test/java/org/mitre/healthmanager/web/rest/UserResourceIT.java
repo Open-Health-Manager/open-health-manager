@@ -120,7 +120,7 @@ class UserResourceIT {
     public static User createEntity(EntityManager em) {
         User user = new User();
         user.setLogin(DEFAULT_LOGIN + RandomStringUtils.randomAlphabetic(5));
-        user.setPassword(RandomStringUtils.random(60));
+        user.setPassword("DefaultPassword135*");
         user.setActivated(true);
         user.setEmail(RandomStringUtils.randomAlphabetic(5) + DEFAULT_EMAIL);
         user.setFirstName(DEFAULT_FIRSTNAME);

@@ -23,6 +23,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.mitre.healthmanager.web.rest.errors.BadRequestAlertException;
+import org.mitre.healthmanager.PasswordConstraintValidator;
+import javax.validation.ConstraintValidatorContext;
 
 
 /**
@@ -65,7 +67,7 @@ public class AccountResource {
     @ResponseStatus(HttpStatus.CREATED)
     public void registerAccount(@Valid @RequestBody DUAManagedUserVM duaManagedUserVM) {
 
-        if (isPasswordLengthInvalid(duaManagedUserVM.getPassword())) {
+        if (!isPasswordValid(duaManagedUserVM.getPassword())) {
             throw new InvalidPasswordException();
         }
 
@@ -155,10 +157,15 @@ public class AccountResource {
      * @throws InvalidPasswordException {@code 400 (Bad Request)} if the new password is incorrect.
      */
     @PostMapping(path = "/account/change-password")
-    public void changePassword(@RequestBody PasswordChangeDTO passwordChangeDto) {
-        if (isPasswordLengthInvalid(passwordChangeDto.getNewPassword())) {
+    public void changePassword(@Valid @RequestBody PasswordChangeDTO passwordChangeDto) {
+        /*if (isPasswordLengthIvalid(passwordChangeDto.getNewPassword())) {
+            throw new InvalidPasswordException();
+        }*/
+
+        if (!isPasswordValid(passwordChangeDto.getNewPassword())) {
             throw new InvalidPasswordException();
         }
+
         userService.changePassword(passwordChangeDto.getCurrentPassword(), passwordChangeDto.getNewPassword());
     }
 
@@ -187,8 +194,8 @@ public class AccountResource {
      * @throws RuntimeException {@code 500 (Internal Server Error)} if the password could not be reset.
      */
     @PostMapping(path = "/account/reset-password/finish")
-    public void finishPasswordReset(@RequestBody KeyAndPasswordVM keyAndPassword) {
-        if (isPasswordLengthInvalid(keyAndPassword.getNewPassword())) {
+    public void finishPasswordReset(@Valid @RequestBody KeyAndPasswordVM keyAndPassword) {
+        if (!isPasswordValid(keyAndPassword.getNewPassword())) {
             throw new InvalidPasswordException();
         }
         Optional<User> user = userService.completePasswordReset(keyAndPassword.getNewPassword(), keyAndPassword.getKey());
@@ -198,11 +205,9 @@ public class AccountResource {
         }
     }
 
-    private static boolean isPasswordLengthInvalid(String password) {
-        return (
-            StringUtils.isEmpty(password) ||
-            password.length() < ManagedUserVM.PASSWORD_MIN_LENGTH ||
-            password.length() > ManagedUserVM.PASSWORD_MAX_LENGTH
-        );
+    private static boolean isPasswordValid(String password) {
+        //PasswordConstraintValidator passwordValidator = new PasswordConstraintValidator();
+        return true;
+        //return (passwordValidator.isValid(password, Class<ConstraintValidatorContext> context));
     }
 }

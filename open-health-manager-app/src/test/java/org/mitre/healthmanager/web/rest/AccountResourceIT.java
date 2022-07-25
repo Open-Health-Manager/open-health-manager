@@ -148,7 +148,7 @@ class AccountResourceIT {
     void testRegisterValid() throws Exception {
         DUAManagedUserVM validUser = new DUAManagedUserVM();
         validUser.setLogin("test-register-valid");
-        validUser.setPassword("password");
+        validUser.setPassword("Password135*");
         validUser.setFirstName("Alice");
         validUser.setLastName("Test");
         validUser.setEmail("test-register-valid@example.com");
@@ -252,7 +252,7 @@ class AccountResourceIT {
     void testRegisterInvalidLogin() throws Exception {
         DUAManagedUserVM invalidUser = new DUAManagedUserVM();
         invalidUser.setLogin("funky-log(n"); // <-- invalid
-        invalidUser.setPassword("password");
+        invalidUser.setPassword("Password135*");
         invalidUser.setFirstName("Funky");
         invalidUser.setLastName("One");
         invalidUser.setEmail("funky@example.com");
@@ -281,7 +281,7 @@ class AccountResourceIT {
     void testRegisterInvalidEmail() throws Exception {
         DUAManagedUserVM invalidUser = new DUAManagedUserVM();
         invalidUser.setLogin("bob");
-        invalidUser.setPassword("password");
+        invalidUser.setPassword("Password135*");
         invalidUser.setFirstName("Bob");
         invalidUser.setLastName("Green");
         invalidUser.setEmail("invalid"); // <-- invalid
@@ -369,7 +369,7 @@ class AccountResourceIT {
         // First registration
         DUAManagedUserVM firstUser = new DUAManagedUserVM();
         firstUser.setLogin("alice");
-        firstUser.setPassword("password");
+        firstUser.setPassword("Password135*");
         firstUser.setFirstName("Alice");
         firstUser.setLastName("Something");
         firstUser.setEmail("alice@example.com");
@@ -436,7 +436,7 @@ class AccountResourceIT {
         // First user
         DUAManagedUserVM firstUser = new DUAManagedUserVM();
         firstUser.setLogin("test-register-duplicate-email");
-        firstUser.setPassword("password");
+        firstUser.setPassword("Password135*");
         firstUser.setFirstName("Alice");
         firstUser.setLastName("Test");
         firstUser.setEmail("test-register-duplicate-email@example.com");
@@ -568,7 +568,7 @@ class AccountResourceIT {
     void testRegisterAdminIsIgnored() throws Exception {
         DUAManagedUserVM validUser = new DUAManagedUserVM();
         validUser.setLogin("badguy");
-        validUser.setPassword("password");
+        validUser.setPassword("Password135*");
         validUser.setFirstName("Bad");
         validUser.setLastName("Guy");
         validUser.setEmail("badguy@example.com");
@@ -636,7 +636,7 @@ class AccountResourceIT {
         // attempt to re-register email with a different login
         DUAManagedUserVM secondUser = new DUAManagedUserVM();
         secondUser.setLogin("to-re-register-2");
-        secondUser.setPassword("password");
+        secondUser.setPassword("Password135*");
         secondUser.setEmail("to-re-register@example.com");
 
         UserDUADTO secondUserDUADTO = new UserDUADTO();
@@ -653,7 +653,7 @@ class AccountResourceIT {
         // attempt to re-register login with a different email
         DUAManagedUserVM thirdUser = new DUAManagedUserVM();
         thirdUser.setLogin("to-re-register");
-        thirdUser.setPassword("password");
+        thirdUser.setPassword("Password135*");
         thirdUser.setEmail("to-re-register-2@example.com");
 
         UserDUADTO thirdUserDUADTO = new UserDUADTO();
@@ -861,12 +861,12 @@ class AccountResourceIT {
             .perform(
                 post("/api/account/change-password")
                     .contentType(MediaType.APPLICATION_JSON)
-                    .content(TestUtil.convertObjectToJsonBytes(new PasswordChangeDTO("1" + currentPassword, "new password")))
+                    .content(TestUtil.convertObjectToJsonBytes(new PasswordChangeDTO("1" + currentPassword, "Password135*")))
             )
             .andExpect(status().isBadRequest());
 
         User updatedUser = userRepository.findOneByLogin("change-password-wrong-existing-password").orElse(null);
-        assertThat(passwordEncoder.matches("new password", updatedUser.getPassword())).isFalse();
+        assertThat(passwordEncoder.matches("Password135*", updatedUser.getPassword())).isFalse();
         assertThat(passwordEncoder.matches(currentPassword, updatedUser.getPassword())).isTrue();
     }
 
@@ -885,12 +885,12 @@ class AccountResourceIT {
             .perform(
                 post("/api/account/change-password")
                     .contentType(MediaType.APPLICATION_JSON)
-                    .content(TestUtil.convertObjectToJsonBytes(new PasswordChangeDTO(currentPassword, "new password")))
+                    .content(TestUtil.convertObjectToJsonBytes(new PasswordChangeDTO(currentPassword, "Password135*")))
             )
             .andExpect(status().isOk());
 
         User updatedUser = userRepository.findOneByLogin("change-password").orElse(null);
-        assertThat(passwordEncoder.matches("new password", updatedUser.getPassword())).isTrue();
+        assertThat(passwordEncoder.matches("Password135*", updatedUser.getPassword())).isTrue();
     }
 
     @Test
@@ -1016,7 +1016,7 @@ class AccountResourceIT {
 
         KeyAndPasswordVM keyAndPassword = new KeyAndPasswordVM();
         keyAndPassword.setKey(user.getResetKey());
-        keyAndPassword.setNewPassword("new password");
+        keyAndPassword.setNewPassword("Password135*");
 
         restAccountMockMvc
             .perform(
@@ -1062,7 +1062,7 @@ class AccountResourceIT {
     void testFinishPasswordResetWrongKey() throws Exception {
         KeyAndPasswordVM keyAndPassword = new KeyAndPasswordVM();
         keyAndPassword.setKey("wrong reset key");
-        keyAndPassword.setNewPassword("new password");
+        keyAndPassword.setNewPassword("Password135*");
 
         restAccountMockMvc
             .perform(
