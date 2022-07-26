@@ -23,9 +23,11 @@ import org.mitre.healthmanager.repository.UserDUARepository;
 import org.mitre.healthmanager.service.UserDUAService;
 import org.mitre.healthmanager.service.dto.UserDUADTO;
 import org.mitre.healthmanager.service.mapper.UserDUAMapper;
+import org.mitre.healthmanager.security.AuthoritiesConstants;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -40,7 +42,7 @@ import org.springframework.transaction.annotation.Transactional;
 @IntegrationTest
 @ExtendWith(MockitoExtension.class)
 @AutoConfigureMockMvc
-@WithMockUser
+@WithMockUser(authorities = AuthoritiesConstants.ADMIN)
 class UserDUAResourceIT {
 
     private static final Boolean DEFAULT_ACTIVE = false;
@@ -58,7 +60,7 @@ class UserDUAResourceIT {
     private static final Instant DEFAULT_REVOCATION_DATE = Instant.ofEpochMilli(0L);
     private static final Instant UPDATED_REVOCATION_DATE = Instant.now().truncatedTo(ChronoUnit.MILLIS);
 
-    private static final String ENTITY_API_URL = "/api/user-duas";
+    private static final String ENTITY_API_URL = "/api/admin/user-duas";
     private static final String ENTITY_API_URL_ID = ENTITY_API_URL + "/{id}";
 
     private static Random random = new Random();
@@ -77,6 +79,7 @@ class UserDUAResourceIT {
     private UserDUAService userDUAServiceMock;
 
     @Autowired
+    @Qualifier("jhipsterEntityManagerFactory")
     private EntityManager em;
 
     @Autowired
@@ -132,7 +135,7 @@ class UserDUAResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void createUserDUA() throws Exception {
         int databaseSizeBeforeCreate = userDUARepository.findAll().size();
         // Create the UserDUA
@@ -153,7 +156,7 @@ class UserDUAResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void createUserDUAWithExistingId() throws Exception {
         // Create the UserDUA with an existing ID
         userDUA.setId(1L);
@@ -172,7 +175,7 @@ class UserDUAResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void checkActiveIsRequired() throws Exception {
         int databaseSizeBeforeTest = userDUARepository.findAll().size();
         // set the field null
@@ -190,7 +193,7 @@ class UserDUAResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void checkVersionIsRequired() throws Exception {
         int databaseSizeBeforeTest = userDUARepository.findAll().size();
         // set the field null
@@ -208,7 +211,7 @@ class UserDUAResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void checkAgeAttestedIsRequired() throws Exception {
         int databaseSizeBeforeTest = userDUARepository.findAll().size();
         // set the field null
@@ -226,7 +229,7 @@ class UserDUAResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void checkActiveDateIsRequired() throws Exception {
         int databaseSizeBeforeTest = userDUARepository.findAll().size();
         // set the field null
@@ -244,7 +247,7 @@ class UserDUAResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void getAllUserDUAS() throws Exception {
         // Initialize the database
         userDUARepository.saveAndFlush(userDUA);
@@ -281,7 +284,7 @@ class UserDUAResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void getUserDUA() throws Exception {
         // Initialize the database
         userDUARepository.saveAndFlush(userDUA);
@@ -300,14 +303,14 @@ class UserDUAResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void getNonExistingUserDUA() throws Exception {
         // Get the userDUA
         restUserDUAMockMvc.perform(get(ENTITY_API_URL_ID, Long.MAX_VALUE)).andExpect(status().isNotFound());
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void putNewUserDUA() throws Exception {
         // Initialize the database
         userDUARepository.saveAndFlush(userDUA);
@@ -346,7 +349,7 @@ class UserDUAResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void putNonExistingUserDUA() throws Exception {
         int databaseSizeBeforeUpdate = userDUARepository.findAll().size();
         userDUA.setId(count.incrementAndGet());
@@ -369,7 +372,7 @@ class UserDUAResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void putWithIdMismatchUserDUA() throws Exception {
         int databaseSizeBeforeUpdate = userDUARepository.findAll().size();
         userDUA.setId(count.incrementAndGet());
@@ -392,7 +395,7 @@ class UserDUAResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void putWithMissingIdPathParamUserDUA() throws Exception {
         int databaseSizeBeforeUpdate = userDUARepository.findAll().size();
         userDUA.setId(count.incrementAndGet());
@@ -411,7 +414,7 @@ class UserDUAResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void partialUpdateUserDUAWithPatch() throws Exception {
         // Initialize the database
         userDUARepository.saveAndFlush(userDUA);
@@ -449,7 +452,7 @@ class UserDUAResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void fullUpdateUserDUAWithPatch() throws Exception {
         // Initialize the database
         userDUARepository.saveAndFlush(userDUA);
@@ -487,7 +490,7 @@ class UserDUAResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void patchNonExistingUserDUA() throws Exception {
         int databaseSizeBeforeUpdate = userDUARepository.findAll().size();
         userDUA.setId(count.incrementAndGet());
@@ -510,7 +513,7 @@ class UserDUAResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void patchWithIdMismatchUserDUA() throws Exception {
         int databaseSizeBeforeUpdate = userDUARepository.findAll().size();
         userDUA.setId(count.incrementAndGet());
@@ -533,7 +536,7 @@ class UserDUAResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void patchWithMissingIdPathParamUserDUA() throws Exception {
         int databaseSizeBeforeUpdate = userDUARepository.findAll().size();
         userDUA.setId(count.incrementAndGet());
@@ -554,7 +557,7 @@ class UserDUAResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void deleteUserDUA() throws Exception {
         // Initialize the database
         userDUARepository.saveAndFlush(userDUA);

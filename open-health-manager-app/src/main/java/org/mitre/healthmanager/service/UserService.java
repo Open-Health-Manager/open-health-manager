@@ -21,7 +21,8 @@ import org.mitre.healthmanager.security.AuthoritiesConstants;
 import org.mitre.healthmanager.security.SecurityUtils;
 import org.mitre.healthmanager.service.dto.AdminUserDTO;
 import org.mitre.healthmanager.service.dto.UserDTO;
-import org.mitre.healthmanager.web.rest.errors.BadRequestAlertException;
+
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -135,11 +136,7 @@ public class UserService {
             });
 
         if (!userDUADTO.getActive() || !userDUADTO.getAgeAttested()) {
-            throw new BadRequestAlertException("An inactive DUA or a DUA without attested age was given to register new user. ", "userDUA", "dua.inactive");
-        }
-
-        if (userDUADTO.getId() != null) {
-            throw new BadRequestAlertException("A new userDUA cannot already have an ID", "userDUA", "idexists");
+            throw new InvalidDUAException();
         }
 
         User newUser = new User();
@@ -179,6 +176,7 @@ public class UserService {
         if (existingUser.isActivated() || fhirPatientService.findOneForUser(existingUser.getId()).isPresent()) {
             return false;
         }
+
         userRepository.delete(existingUser);
         userRepository.flush();
         this.clearUserCaches(existingUser);

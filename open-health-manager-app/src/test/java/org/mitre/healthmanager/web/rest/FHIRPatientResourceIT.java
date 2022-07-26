@@ -44,7 +44,7 @@ class FHIRPatientResourceIT {
     private static final String DEFAULT_FHIR_ID = "AAAAAAAAAA";
     private static final String UPDATED_FHIR_ID = "BBBBBBBBBB";
 
-    private static final String ENTITY_API_URL = "/api/fhir-patients";
+    private static final String ENTITY_API_URL = "/api/admin/fhir-patients";
     private static final String ENTITY_API_URL_ID = ENTITY_API_URL + "/{id}";
 
     private static Random random = new Random();
@@ -91,7 +91,7 @@ class FHIRPatientResourceIT {
      * if they test an entity which requires the current entity.
      */
     public static FHIRPatient createUpdatedEntity(EntityManager em) {
-        FHIRPatient fHIRPatient = new FHIRPatient().fhirId(UPDATED_FHIR_ID);
+        FHIRPatient fHIRPatient = new FHIRPatient();
         // Add required entity
         User user = UserResourceIT.createEntity(em);
         em.persist(user);
