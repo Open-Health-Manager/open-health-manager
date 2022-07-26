@@ -26,6 +26,13 @@ public class PasswordConstraintValidator implements ConstraintValidator<ValidPas
 
     @Override
     public boolean isValid(String password, ConstraintValidatorContext context) {
+
+        if (password == null) {
+            context.disableDefaultConstraintViolation();
+            context.buildConstraintViolationWithTemplate("Password must not be null.")
+              .addConstraintViolation();
+            return false;
+        }
         PasswordValidator validator = new PasswordValidator(Arrays.asList(
             // length between 3 and 100 characters
             new LengthRule(3, 60),

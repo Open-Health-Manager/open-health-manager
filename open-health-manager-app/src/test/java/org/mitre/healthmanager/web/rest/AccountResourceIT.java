@@ -192,7 +192,7 @@ class AccountResourceIT {
     void testRegisterInactiveDUA() throws Exception {
         DUAManagedUserVM invalidUser = new DUAManagedUserVM();
         invalidUser.setLogin("test-register-invalid");
-        invalidUser.setPassword("password");
+        invalidUser.setPassword("Password135*");
         invalidUser.setFirstName("Alice");
         invalidUser.setLastName("Test");
         invalidUser.setEmail("test-register-invalid@example.com");
@@ -222,7 +222,7 @@ class AccountResourceIT {
     void testRegisterAgeNotAttestedDUA() throws Exception {
         DUAManagedUserVM invalidUser = new DUAManagedUserVM();
         invalidUser.setLogin("test-register-invalid");
-        invalidUser.setPassword("password");
+        invalidUser.setPassword("Password135*");
         invalidUser.setFirstName("Alice");
         invalidUser.setLastName("Test");
         invalidUser.setEmail("test-register-invalid@example.com");
@@ -500,13 +500,14 @@ class AccountResourceIT {
     @Test
     @DirtiesContext(methodMode = MethodMode.AFTER_METHOD)
     void testRegisterDuplicateEmailUppercase() throws Exception {
+
         // First user
         DUAManagedUserVM firstUser = new DUAManagedUserVM();
-        firstUser.setLogin("test-register-duplicate-email");
-        firstUser.setPassword("password");
+        firstUser.setLogin("test-register-duplicate-email-uppercase");
+        firstUser.setPassword("Password135*");
         firstUser.setFirstName("Alice");
         firstUser.setLastName("Test");
-        firstUser.setEmail("test-register-duplicate-email@example.com");
+        firstUser.setEmail("test-register-duplicate-email-uppercase@example.com");
         firstUser.setImageUrl("http://placehold.it/50x50");
         firstUser.setLangKey(Constants.DEFAULT_LANGUAGE);
         firstUser.setAuthorities(Collections.singleton(AuthoritiesConstants.USER));
@@ -523,17 +524,17 @@ class AccountResourceIT {
             .perform(post("/api/register").contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(firstUser)))
             .andExpect(status().isCreated());
 
-        Optional<User> testUser1 = userRepository.findOneByLogin("test-register-duplicate-email");
+        Optional<User> testUser1 = userRepository.findOneByLogin("test-register-duplicate-email-uppercase");
         assertThat(testUser1).isPresent();
 
         // Duplicate email - with uppercase email address
         DUAManagedUserVM userWithUpperCaseEmail = new DUAManagedUserVM();
         userWithUpperCaseEmail.setId(firstUser.getId());
-        userWithUpperCaseEmail.setLogin("test-register-duplicate-email-3");
+        userWithUpperCaseEmail.setLogin("test-register-duplicate-email-uppercase-2");
         userWithUpperCaseEmail.setPassword(firstUser.getPassword());
         userWithUpperCaseEmail.setFirstName(firstUser.getFirstName());
         userWithUpperCaseEmail.setLastName(firstUser.getLastName());
-        userWithUpperCaseEmail.setEmail("TEST-register-duplicate-email@example.com");
+        userWithUpperCaseEmail.setEmail("TEST-register-duplicate-email-uppercase@example.com");
         userWithUpperCaseEmail.setImageUrl(firstUser.getImageUrl());
         userWithUpperCaseEmail.setLangKey(firstUser.getLangKey());
         userWithUpperCaseEmail.setAuthorities(new HashSet<>(firstUser.getAuthorities()));
@@ -555,12 +556,12 @@ class AccountResourceIT {
             .andExpect(status().is5xxServerError());
 
        
-        Optional<User> testUser3 = userRepository.findOneByLogin("test-register-duplicate-email-3");
+        Optional<User> testUser3 = userRepository.findOneByLogin("test-register-duplicate-email-uppercase-2");
         assertThat(testUser3).isEmpty();
 
-        Optional<User> testUser2 = userRepository.findOneByLogin("test-register-duplicate-email");
+        Optional<User> testUser2 = userRepository.findOneByLogin("test-register-duplicate-email-uppercase");
         assertThat(testUser2).isPresent();
-        assertThat(testUser2.get().getEmail()).isEqualTo("test-register-duplicate-email@example.com");
+        assertThat(testUser2.get().getEmail()).isEqualTo("test-register-duplicate-email-uppercase@example.com");
     }
 
     @Test

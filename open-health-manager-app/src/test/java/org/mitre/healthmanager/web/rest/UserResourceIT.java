@@ -60,8 +60,8 @@ class UserResourceIT {
 
     private static final Long DEFAULT_ID = 1L;
 
-    private static final String DEFAULT_PASSWORD = "passjohndoe";
-    private static final String UPDATED_PASSWORD = "passjhipster";
+    private static final String DEFAULT_PASSWORD = "passJohnDoe15*";
+    private static final String UPDATED_PASSWORD = "passJHipster15*";
 
     private static final String DEFAULT_EMAIL = "johndoe@localhost";
     private static final String UPDATED_EMAIL = "jhipster@localhost";
@@ -120,7 +120,7 @@ class UserResourceIT {
     public static User createEntity(EntityManager em) {
         User user = new User();
         user.setLogin(DEFAULT_LOGIN + RandomStringUtils.randomAlphabetic(5));
-        user.setPassword("DefaultPassword135*");
+        user.setPassword(RandomStringUtils.random(60));
         user.setActivated(true);
         user.setEmail(RandomStringUtils.randomAlphabetic(5) + DEFAULT_EMAIL);
         user.setFirstName(DEFAULT_FIRSTNAME);
