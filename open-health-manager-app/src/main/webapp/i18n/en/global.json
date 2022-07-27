@@ -139,7 +139,15 @@
     "file": {
       "could.not.extract": "Could not extract file",
       "not.image": "File was expected to be an image but was found to be \"{{ fileType }}\""
-    }
+    },
+    "INSUFFICIENT_SPECIAL": "Password must contain 1 or more special characters.",
+    "TOO_SHORT": "Password must be 4 or more characters in length.",
+    "INSUFFICIENT_DIGIT": "Password must contain 1 or more digit characters.",
+    "INSUFFICIENT_UPPERCASE": "Password must contain 1 or more uppercase characters.",
+    "INSUFFICIENT_LOWERCASE": "Password must contain 1 or more lowercase characters.",
+    "ILLEGAL_WHITESPACE": "Password contains a whitespace character",
+    "ILLEGAL_ALPHABETICAL_SEQUENCE": "Password contains an illegal alphabetical sequence of 5 or more consecutive letters",
+    "ILLEGAL_NUMERICAL_SEQUENCE": "Password contains an illegal numerical sequence of 5 or more consecutive digits"
   },
   "footer": "Copyright 2022 The MITRE Corporation"
 }

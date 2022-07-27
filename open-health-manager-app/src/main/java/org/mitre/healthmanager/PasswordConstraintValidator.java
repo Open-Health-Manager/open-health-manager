@@ -1,7 +1,6 @@
 package org.mitre.healthmanager;
 
 import java.util.Arrays;
-import com.google.common.base.Joiner;
 
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
@@ -34,8 +33,8 @@ public class PasswordConstraintValidator implements ConstraintValidator<ValidPas
             return false;
         }
         PasswordValidator validator = new PasswordValidator(Arrays.asList(
-            // length between 3 and 100 characters
-            new LengthRule(3, 60),
+            // length between 4 and 100 characters
+            new LengthRule(4, 60),
             // at least one upper-case character
             new CharacterRule(EnglishCharacterData.UpperCase, 1),
             // at least one lower-case character
@@ -56,10 +55,13 @@ public class PasswordConstraintValidator implements ConstraintValidator<ValidPas
         if (result.isValid()) {
             return true;
         }
+
         context.disableDefaultConstraintViolation();
-        context.buildConstraintViolationWithTemplate(
-          Joiner.on(",").join(validator.getMessages(result)))
-          .addConstraintViolation();
-        return false;
+        result.getDetails().forEach(rule -> {
+            context.buildConstraintViolationWithTemplate(rule.getErrorCode())
+            .addConstraintViolation();
+        });
+        
+          return false;
     }
 }
