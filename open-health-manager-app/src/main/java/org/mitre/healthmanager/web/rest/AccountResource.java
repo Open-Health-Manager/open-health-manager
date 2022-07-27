@@ -1,24 +1,34 @@
 package org.mitre.healthmanager.web.rest;
 
-import java.util.*;
+import java.util.Optional;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+
 import org.mitre.healthmanager.domain.User;
-import org.mitre.healthmanager.service.dto.UserDUADTO;
 import org.mitre.healthmanager.repository.UserRepository;
 import org.mitre.healthmanager.security.SecurityUtils;
 import org.mitre.healthmanager.service.MailService;
 import org.mitre.healthmanager.service.UserService;
 import org.mitre.healthmanager.service.dto.AdminUserDTO;
 import org.mitre.healthmanager.service.dto.PasswordChangeDTO;
-import org.mitre.healthmanager.web.rest.errors.*;
-import org.mitre.healthmanager.web.rest.vm.KeyAndPasswordVM;
+import org.mitre.healthmanager.service.dto.UserDUADTO;
+import org.mitre.healthmanager.web.rest.errors.BadRequestAlertException;
+import org.mitre.healthmanager.web.rest.errors.EmailAlreadyUsedException;
+import org.mitre.healthmanager.web.rest.errors.InvalidPasswordException;
+import org.mitre.healthmanager.web.rest.errors.LoginAlreadyUsedException;
 import org.mitre.healthmanager.web.rest.vm.DUAManagedUserVM;
+import org.mitre.healthmanager.web.rest.vm.KeyAndPasswordVM;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.*;
-import org.mitre.healthmanager.web.rest.errors.BadRequestAlertException;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 
 
 /**
@@ -56,6 +66,7 @@ public class AccountResource {
      * @throws InvalidPasswordException {@code 400 (Bad Request)} if the password is incorrect.
      * @throws EmailAlreadyUsedException {@code 400 (Bad Request)} if the email is already used.
      * @throws LoginAlreadyUsedException {@code 400 (Bad Request)} if the login is already used.
+     * @throws InvalidDUAException {@code 400 (Bad Request)} if DUA is not active and attested.
      */
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)

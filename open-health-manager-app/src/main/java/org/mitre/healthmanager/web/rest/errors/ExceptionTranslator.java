@@ -172,7 +172,12 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
         org.mitre.healthmanager.service.InvalidDUAException ex,
         NativeWebRequest request
     ) {
-    	return create(new InvalidDUAException(), request);
+    	InvalidDUAException problem = new InvalidDUAException();
+        return create(
+            problem,
+            request,
+            HeaderUtil.createFailureAlert(applicationName, true, problem.getEntityName(), problem.getErrorKey(), problem.getMessage())
+        );
     }
 
     @ExceptionHandler
