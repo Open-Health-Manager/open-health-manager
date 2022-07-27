@@ -126,14 +126,6 @@
       		<artifactId>ognl</artifactId>      	
       		<version>3.1.26</version>
     	</dependency>
-        <!-- This dependency is used for the "FHIR Tester" web app overlay -->
-        <dependency>
-            <groupId>ca.uhn.hapi.fhir</groupId>
-            <artifactId>hapi-fhir-testpage-overlay</artifactId>
-            <version>${hapi.fhir.version}</version>
-            <type>war</type>
-            <scope>provided</scope>
-        </dependency>
 		<!-- JHipster generated -->          
         <dependency>
             <groupId>tech.jhipster</groupId>
@@ -406,46 +398,7 @@
             <plugin>
                 <groupId>org.gaul</groupId>
                 <artifactId>modernizer-maven-plugin</artifactId>
-            </plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-dependency-plugin</artifactId>
-				<executions>
-					<execution>
-						<id>unpacktester</id>
-						<phase>compile</phase>
-						<goals>
-							<goal>unpack</goal>
-						</goals>
-						<configuration>
-							<artifactItems>
-								<artifactItem>
-									<groupId>ca.uhn.hapi.fhir</groupId>
-									<artifactId>hapi-fhir-testpage-overlay</artifactId>
-									<version>${hapi.fhir.version}</version>
-									<type>war</type>
-									<overWrite>true</overWrite>
-									<outputDirectory>${project.build.directory}/classes/static
-									</outputDirectory>
-									<includes>**/*.js,**/*.css,**/img/**</includes>
-								</artifactItem>
-								<artifactItem>
-									<groupId>ca.uhn.hapi.fhir</groupId>
-									<artifactId>hapi-fhir-testpage-overlay</artifactId>
-									<version>${hapi.fhir.version}</version>
-									<type>war</type>
-									<overWrite>true</overWrite>
-									<outputDirectory>${project.build.directory}/classes/tester
-									</outputDirectory>
-									<includes>**/WEB-INF/templates/**</includes>
-								</artifactItem>								
-							</artifactItems>
-							<overWriteReleases>false</overWriteReleases>
-							<overWriteSnapshots>true</overWriteSnapshots>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>             
+            </plugin>           
             <!-- jhipster-needle-maven-add-plugin -->
         </plugins>
         <pluginManagement>

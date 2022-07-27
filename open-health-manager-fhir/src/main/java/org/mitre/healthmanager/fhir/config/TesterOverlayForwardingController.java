@@ -1,46 +1,33 @@
 package org.mitre.healthmanager.fhir.config;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.util.UrlPathHelper;
 
 /**
- * Forwards hard-coded tester overlay paths to /tester/*.
+ * Redirects or forwards hard-coded tester overlay links to /tester/*.
  * Will override other mappings.
  */
 @Controller
 @ConditionalOnExpression("'${hapi.fhir.tester}' != null")
 public class TesterOverlayForwardingController {
-    @GetMapping("/home")
-    public String forwardHome() {
-        return "redirect:/tester/home";
-    }
-    @GetMapping("/about")
-    public String forwardAbout() {
-        return "redirect:/tester/about";
+    @GetMapping({"/home", "/about", "/resource", "/search", "/read", "/history-type", "/delete"})
+    public String redirectGetRequest(HttpServletRequest request) {    	
+        StringBuilder requestURL = new StringBuilder("redirect:/tester");
+        String path = new UrlPathHelper().getPathWithinApplication(request);
+        String queryString = request.getQueryString();
+
+        if (queryString == null) {
+            return requestURL.append(path).toString();
+        } else {
+            return requestURL.append(path).append('?').append(queryString).toString();
+        }
     }
     
-    @GetMapping("/resource")
-    public String forwardResource() {
-        return "redirect:/tester/resource";
-    }
-    @GetMapping("/search")
-    public String forwardSearch() {
-        return "redirect:/tester/search";
-    }
-    @GetMapping("/read")
-    public String forwardRead() {
-        return "redirect:/tester/read";
-    }
-    @GetMapping("/history-type")
-    public String forwardHistoryType() {
-        return "redirect:/tester/history-type";
-    }
-    @GetMapping("/delete")
-    public String forwardDelete() {
-        return "redirect:/tester/delete";
-    }
     @PostMapping("/create")
     public String forwardCreate() {
         return "redirect:/tester/create";

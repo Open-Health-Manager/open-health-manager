@@ -49,7 +49,7 @@ public class OHMHapiFhirTesterConfig {
 	@Bean
 	public SpringResourceTemplateResolver testerTemplateResolver() {
 		SpringResourceTemplateResolver secondaryTemplateResolver = new SpringResourceTemplateResolver();
-	    secondaryTemplateResolver.setPrefix("classpath:/tester/WEB-INF/templates/");
+	    secondaryTemplateResolver.setPrefix("classpath:/WEB-INF/templates/");
 	    secondaryTemplateResolver.setSuffix(".html");
 	    secondaryTemplateResolver.setTemplateMode(TemplateMode.HTML);
 	    secondaryTemplateResolver.setCharacterEncoding("UTF-8");
@@ -73,6 +73,13 @@ public class OHMHapiFhirTesterConfig {
 			WebUtil.webJarAddSelect2(registry);
 			WebUtil.webJarAddAwesomeCheckbox(registry);
 			WebUtil.webJarAddPopperJs(registry);
+			
+			registry.addResourceHandler("/tester/css/**").addResourceLocations("classpath:/css/");
+			registry.addResourceHandler("/tester/fa/**").addResourceLocations("classpath:/fa/");
+			registry.addResourceHandler("/tester/fonts/**").addResourceLocations("classpath:/fonts/");
+			registry.addResourceHandler("/tester/img/**").addResourceLocations("classpath:/img/");
+			registry.addResourceHandler("/tester/js/**").addResourceLocations("classpath:/js/");
+
 	    }
-	}
+	}	
 }
