@@ -36,6 +36,7 @@ export const PasswordPage = () => {
     } else if (errorMessage) {
       toast.error(translate(errorMessage));
     }
+    dispatch(reset()); //reset in case use saves twice in a row
   }, [successMessage, errorMessage]);
 
   return (
@@ -68,7 +69,7 @@ export const PasswordPage = () => {
                 minLength: { value: 4, message: translate('global.messages.validate.newpassword.minlength') },
                 maxLength: { value: 50, message: translate('global.messages.validate.newpassword.maxlength') },
                 pattern: { 
-					        value: /(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[!"#$%&'()*+,-./:;<=>?@[\\\]^_`{|}~])/, 
+					value: /(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[!"#$%&'()*+,-./:;<=>?@[\\\]^_`{|}~])/, 
                 	message: translate('global.messages.validate.newpassword.pattern') 
                 }
               }}
