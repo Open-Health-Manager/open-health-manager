@@ -33,9 +33,13 @@ export const PasswordResetFinishPage = (props: RouteComponentProps<{ key: string
           placeholder={translate('global.form.newpassword.placeholder')}
           type="password"
           validate={{
-            required: { value: true, message: translate('global.messages.validate.newpassword.required') },
-            minLength: { value: 4, message: translate('global.messages.validate.newpassword.minlength') },
+            required: { value: true, message: translate('global.messages.validate.newpassword.required') },                          
+            minLength: { value: 6, message: translate('global.messages.validate.newpassword.minlength') },
             maxLength: { value: 50, message: translate('global.messages.validate.newpassword.maxlength') },
+            pattern: { 
+				value: /(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[!"#$%&'()*+,-./:;<=>?@[\\\]^_`{|}~])/, 
+				message: translate('global.messages.validate.newpassword.pattern') 
+			}
           }}
           onChange={updatePassword}
           data-cy="resetPassword"
@@ -48,8 +52,6 @@ export const PasswordResetFinishPage = (props: RouteComponentProps<{ key: string
           type="password"
           validate={{
             required: { value: true, message: translate('global.messages.validate.confirmpassword.required') },
-            minLength: { value: 4, message: translate('global.messages.validate.confirmpassword.minlength') },
-            maxLength: { value: 50, message: translate('global.messages.validate.confirmpassword.maxlength') },
             validate: v => v === password || translate('global.messages.error.dontmatch'),
           }}
           data-cy="confirmResetPassword"
