@@ -143,6 +143,7 @@
     },
     "INSUFFICIENT_SPECIAL": "Password must contain 1 or more special characters.",
     "TOO_SHORT": "Password must be 4 or more characters in length.",
+    "TOO_LONG": "Password must be 60 or less characters in length",
     "INSUFFICIENT_DIGIT": "Password must contain 1 or more digit characters.",
     "INSUFFICIENT_UPPERCASE": "Password must contain 1 or more uppercase characters.",
     "INSUFFICIENT_LOWERCASE": "Password must contain 1 or more lowercase characters.",

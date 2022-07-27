@@ -3,10 +3,7 @@ package org.mitre.healthmanager.web.rest;
 import java.util.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-import org.apache.commons.lang3.StringUtils;
 import org.mitre.healthmanager.domain.User;
-import org.mitre.healthmanager.domain.UserDUA;
 import org.mitre.healthmanager.service.dto.UserDUADTO;
 import org.mitre.healthmanager.repository.UserRepository;
 import org.mitre.healthmanager.security.SecurityUtils;
@@ -16,15 +13,12 @@ import org.mitre.healthmanager.service.dto.AdminUserDTO;
 import org.mitre.healthmanager.service.dto.PasswordChangeDTO;
 import org.mitre.healthmanager.web.rest.errors.*;
 import org.mitre.healthmanager.web.rest.vm.KeyAndPasswordVM;
-import org.mitre.healthmanager.web.rest.vm.ManagedUserVM;
 import org.mitre.healthmanager.web.rest.vm.DUAManagedUserVM;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.mitre.healthmanager.web.rest.errors.BadRequestAlertException;
-import org.mitre.healthmanager.PasswordConstraintValidator;
-import javax.validation.ConstraintValidatorContext;
 
 
 /**
@@ -66,10 +60,6 @@ public class AccountResource {
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
     public void registerAccount(@Valid @RequestBody DUAManagedUserVM duaManagedUserVM) {
-
-        if (!isPasswordValid(duaManagedUserVM.getPassword())) {
-            throw new InvalidPasswordException();
-        }
 
         UserDUADTO userDUADTO = duaManagedUserVM.getUserDUADTO();
 
@@ -158,14 +148,6 @@ public class AccountResource {
      */
     @PostMapping(path = "/account/change-password")
     public void changePassword(@Valid @RequestBody PasswordChangeDTO passwordChangeDto) {
-        /*if (isPasswordLengthIvalid(passwordChangeDto.getNewPassword())) {
-            throw new InvalidPasswordException();
-        }*/
-
-        if (!isPasswordValid(passwordChangeDto.getNewPassword())) {
-            throw new InvalidPasswordException();
-        }
-
         userService.changePassword(passwordChangeDto.getCurrentPassword(), passwordChangeDto.getNewPassword());
     }
 
@@ -195,19 +177,10 @@ public class AccountResource {
      */
     @PostMapping(path = "/account/reset-password/finish")
     public void finishPasswordReset(@Valid @RequestBody KeyAndPasswordVM keyAndPassword) {
-        if (!isPasswordValid(keyAndPassword.getNewPassword())) {
-            throw new InvalidPasswordException();
-        }
         Optional<User> user = userService.completePasswordReset(keyAndPassword.getNewPassword(), keyAndPassword.getKey());
 
         if (!user.isPresent()) {
             throw new AccountResourceException("No user was found for this reset key");
         }
-    }
-
-    private static boolean isPasswordValid(String password) {
-        //PasswordConstraintValidator passwordValidator = new PasswordConstraintValidator();
-        return true;
-        //return (passwordValidator.isValid(password, Class<ConstraintValidatorContext> context));
     }
 }
