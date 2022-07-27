@@ -68,7 +68,7 @@ export const PasswordPage = () => {
                 minLength: { value: 4, message: translate('global.messages.validate.newpassword.minlength') },
                 maxLength: { value: 50, message: translate('global.messages.validate.newpassword.maxlength') },
                 pattern: { 
-					value: /(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[!\"#$%&'()*+,-.\/:;<=>?@[\\\]^_`{|}~])/, 
+					        value: /(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[!"#$%&'()*+,-./:;<=>?@[\\\]^_`{|}~])/, 
                 	message: translate('global.messages.validate.newpassword.pattern') 
                 }
               }}
