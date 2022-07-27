@@ -135,7 +135,7 @@ public class UserService {
                 }
             });
 
-        if (!userDUADTO.getActive() || !userDUADTO.getAgeAttested()) {
+        if (userDUADTO == null || !userDUADTO.getActive() || !userDUADTO.getAgeAttested()) {
             throw new InvalidDUAException();
         }
 

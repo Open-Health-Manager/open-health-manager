@@ -63,7 +63,7 @@ public class AccountResource {
 
         UserDUADTO userDUADTO = duaManagedUserVM.getUserDUADTO();
 
-        if (userDUADTO.getId() != null) {
+        if (userDUADTO != null && userDUADTO.getId() != null) {
             throw new BadRequestAlertException("A new userDUA cannot already have an ID", "userDUA", "idexists");
         }
         
