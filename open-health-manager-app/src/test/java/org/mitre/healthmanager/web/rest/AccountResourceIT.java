@@ -43,8 +43,6 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.MethodMode;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.annotation.DirtiesContext.MethodMode;
 
 import ca.uhn.fhir.jpa.api.dao.DaoRegistry;
 import ca.uhn.fhir.jpa.api.dao.IFhirResourceDao;
@@ -307,7 +305,7 @@ class AccountResourceIT {
 
     @Test
     @Transactional("jhipsterTransactionManager")
-    void testRegisterInvalidPassword() throws Exception {
+    void testRegisterInvalidPasswordLength() throws Exception {
         DUAManagedUserVM invalidUser = new DUAManagedUserVM();
         invalidUser.setLogin("bob");
         invalidUser.setPassword("123"); // password with only 3 digits
@@ -328,7 +326,102 @@ class AccountResourceIT {
 
         restAccountMockMvc
             .perform(post("/api/register").contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(invalidUser)))
-            .andExpect(status().isBadRequest());
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.fieldErrors[?(@.message=='TOO_SHORT')]").exists());
+
+        Optional<User> user = userRepository.findOneByLogin("bob");
+        assertThat(user).isEmpty();
+    }
+
+    @Test
+    @Transactional("jhipsterTransactionManager")
+    void testRegisterInvalidPasswordNoDigitsNoUppercaseNoSpecial() throws Exception {
+        DUAManagedUserVM invalidUser = new DUAManagedUserVM();
+        invalidUser.setLogin("bob");
+        invalidUser.setPassword("password");
+        invalidUser.setFirstName("Bob");
+        invalidUser.setLastName("Green");
+        invalidUser.setEmail("bob@example.com");
+        invalidUser.setActivated(true);
+        invalidUser.setImageUrl("http://placehold.it/50x50");
+        invalidUser.setLangKey(Constants.DEFAULT_LANGUAGE);
+        invalidUser.setAuthorities(Collections.singleton(AuthoritiesConstants.USER));
+
+        UserDUADTO userDUADTO = new UserDUADTO();
+        userDUADTO.setActive(true);
+        userDUADTO.setVersion("v2020-03-21");
+        userDUADTO.setAgeAttested(true);
+
+        invalidUser.setUserDUADTO(userDUADTO);
+
+        restAccountMockMvc
+            .perform(post("/api/register").contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(invalidUser)))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.fieldErrors[?(@.message=='INSUFFICIENT_DIGIT')]").exists())
+            .andExpect(jsonPath("$.fieldErrors[?(@.message=='INSUFFICIENT_UPPERCASE')]").exists())
+            .andExpect(jsonPath("$.fieldErrors[?(@.message=='INSUFFICIENT_SPECIAL')]").exists());
+
+        Optional<User> user = userRepository.findOneByLogin("bob");
+        assertThat(user).isEmpty();
+    }
+
+    @Test
+    @Transactional("jhipsterTransactionManager")
+    void testRegisterInvalidPasswordNoLowercase() throws Exception {
+        DUAManagedUserVM invalidUser = new DUAManagedUserVM();
+        invalidUser.setLogin("bob");
+        invalidUser.setPassword("PASSWORD12*");
+        invalidUser.setFirstName("Bob");
+        invalidUser.setLastName("Green");
+        invalidUser.setEmail("bob@example.com");
+        invalidUser.setActivated(true);
+        invalidUser.setImageUrl("http://placehold.it/50x50");
+        invalidUser.setLangKey(Constants.DEFAULT_LANGUAGE);
+        invalidUser.setAuthorities(Collections.singleton(AuthoritiesConstants.USER));
+
+        UserDUADTO userDUADTO = new UserDUADTO();
+        userDUADTO.setActive(true);
+        userDUADTO.setVersion("v2020-03-21");
+        userDUADTO.setAgeAttested(true);
+
+        invalidUser.setUserDUADTO(userDUADTO);
+
+        restAccountMockMvc
+            .perform(post("/api/register").contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(invalidUser)))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.fieldErrors[0].message").value("INSUFFICIENT_LOWERCASE"));
+
+        Optional<User> user = userRepository.findOneByLogin("bob");
+        assertThat(user).isEmpty();
+    }
+
+    @Test
+    @Transactional("jhipsterTransactionManager")
+    void testRegisterInvalidPasswordWhitespaceIllegalSequences() throws Exception {
+        DUAManagedUserVM invalidUser = new DUAManagedUserVM();
+        invalidUser.setLogin("bob");
+        invalidUser.setPassword("Password 123456ABCDEF*");
+        invalidUser.setFirstName("Bob");
+        invalidUser.setLastName("Green");
+        invalidUser.setEmail("bob@example.com");
+        invalidUser.setActivated(true);
+        invalidUser.setImageUrl("http://placehold.it/50x50");
+        invalidUser.setLangKey(Constants.DEFAULT_LANGUAGE);
+        invalidUser.setAuthorities(Collections.singleton(AuthoritiesConstants.USER));
+
+        UserDUADTO userDUADTO = new UserDUADTO();
+        userDUADTO.setActive(true);
+        userDUADTO.setVersion("v2020-03-21");
+        userDUADTO.setAgeAttested(true);
+
+        invalidUser.setUserDUADTO(userDUADTO);
+
+        restAccountMockMvc
+            .perform(post("/api/register").contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(invalidUser)))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.fieldErrors[?(@.message=='ILLEGAL_WHITESPACE')]").exists())
+            .andExpect(jsonPath("$.fieldErrors[?(@.message=='ILLEGAL_ALPHABETICAL_SEQUENCE')]").exists())
+            .andExpect(jsonPath("$.fieldErrors[?(@.message=='ILLEGAL_NUMERICAL_SEQUENCE')]").exists());
 
         Optional<User> user = userRepository.findOneByLogin("bob");
         assertThat(user).isEmpty();
@@ -913,7 +1006,8 @@ class AccountResourceIT {
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(TestUtil.convertObjectToJsonBytes(new PasswordChangeDTO(currentPassword, newPassword)))
             )
-            .andExpect(status().isBadRequest());
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.fieldErrors[?(@.message=='TOO_SHORT')]").exists());;
 
         User updatedUser = userRepository.findOneByLogin("change-password-too-small").orElse(null);
         assertThat(updatedUser.getPassword()).isEqualTo(user.getPassword());
@@ -938,9 +1032,38 @@ class AccountResourceIT {
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(TestUtil.convertObjectToJsonBytes(new PasswordChangeDTO(currentPassword, newPassword)))
             )
-            .andExpect(status().isBadRequest());
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.fieldErrors[?(@.message=='TOO_LONG')]").exists());
 
         User updatedUser = userRepository.findOneByLogin("change-password-too-long").orElse(null);
+        assertThat(updatedUser.getPassword()).isEqualTo(user.getPassword());
+    }
+
+    @Test
+    @Transactional("jhipsterTransactionManager")
+    @WithMockUser("change-password-invalid")
+    void testChangePasswordInvalidPassword() throws Exception {
+        User user = new User();
+        String currentPassword = RandomStringUtils.random(60);
+        user.setPassword(passwordEncoder.encode(currentPassword));
+        user.setLogin("change-password-invalid");
+        user.setEmail("change-password-invalid@example.com");
+        userRepository.saveAndFlush(user);
+
+        String newPassword = "password";
+
+        restAccountMockMvc
+            .perform(
+                post("/api/account/change-password")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(TestUtil.convertObjectToJsonBytes(new PasswordChangeDTO(currentPassword, newPassword)))
+            )
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.fieldErrors[?(@.message=='INSUFFICIENT_UPPERCASE')]").exists())
+            .andExpect(jsonPath("$.fieldErrors[?(@.message=='INSUFFICIENT_DIGIT')]").exists())
+            .andExpect(jsonPath("$.fieldErrors[?(@.message=='INSUFFICIENT_SPECIAL')]").exists());
+
+        User updatedUser = userRepository.findOneByLogin("change-password-invalid").orElse(null);
         assertThat(updatedUser.getPassword()).isEqualTo(user.getPassword());
     }
 
