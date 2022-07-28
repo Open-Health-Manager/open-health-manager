@@ -1,0 +1,38 @@
+{
+  "applications": ["OpenHealthManagerApp"],
+  "changelogDate": "20220728180919",
+  "dto": "mapstruct",
+  "embedded": false,
+  "entityTableName": "fhir_patient_consent",
+  "fields": [
+    {
+      "fieldName": "fhirResource",
+      "fieldType": "byte[]",
+      "fieldTypeBlobContent": "text",
+      "fieldValidateRules": ["required"]
+    }
+  ],
+  "fluentMethods": true,
+  "jpaMetamodelFiltering": false,
+  "name": "FHIRPatientConsent",
+  "pagination": "pagination",
+  "readOnly": true,
+  "relationships": [
+    {
+      "otherEntityField": "login",
+      "otherEntityName": "user",
+      "otherEntityRelationshipName": "fHIRPatientConsent",
+      "relationshipName": "user",
+      "relationshipType": "many-to-one",
+      "relationshipValidateRules": "required"
+    },
+    {
+      "otherEntityField": "name",
+      "otherEntityName": "fHIRClient",
+      "otherEntityRelationshipName": "fHIRPatientConsent",
+      "relationshipName": "client",
+      "relationshipType": "many-to-one"
+    }
+  ],
+  "service": "serviceClass"
+}

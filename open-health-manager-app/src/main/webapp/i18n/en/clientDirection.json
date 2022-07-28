@@ -1,0 +1,10 @@
+{
+  "openHealthManagerApp": {
+    "ClientDirection": {
+      "null": "",
+      "OUTBOUND": "Outbound",
+      "INBOUND": "Inbound",
+      "BIDIRECTIONAL": "Bidirectional"
+    }
+  }
+}

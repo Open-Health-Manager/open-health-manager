@@ -1,0 +1,18 @@
+{
+  "openHealthManagerApp": {
+    "fHIRPatientConsent": {
+      "home": {
+        "title": "FHIR Patient Consents",
+        "refreshListLabel": "Refresh list",
+        "notFound": "No FHIR Patient Consents found"
+      },
+      "detail": {
+        "title": "FHIR Patient Consent"
+      },
+      "id": "ID",
+      "fhirResource": "Fhir Resource",
+      "user": "User",
+      "client": "Client"
+    }
+  }
+}
