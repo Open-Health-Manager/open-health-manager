@@ -1,7 +1,5 @@
 package org.mitre.healthmanager.service.dto;
 
-import org.mitre.healthmanager.web.rest.vm.ValidPassword;
-
 /**
  * A DTO representing a password change required data - current and new password.
  */

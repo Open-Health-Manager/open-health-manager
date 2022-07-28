@@ -31,8 +31,8 @@ import org.mitre.healthmanager.service.UserService;
 import org.mitre.healthmanager.service.dto.AdminUserDTO;
 import org.mitre.healthmanager.service.dto.UserDUADTO;
 import org.mitre.healthmanager.service.dto.PasswordChangeDTO;
+import org.mitre.healthmanager.service.dto.PasswordConstraintValidator;
 import org.mitre.healthmanager.web.rest.vm.KeyAndPasswordVM;
-import org.mitre.healthmanager.web.rest.vm.ManagedUserVM;
 import org.mitre.healthmanager.web.rest.vm.DUAManagedUserVM;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -998,7 +998,7 @@ class AccountResourceIT {
         user.setEmail("change-password-too-small@example.com");
         userRepository.saveAndFlush(user);
 
-        String newPassword = RandomStringUtils.random(ManagedUserVM.PASSWORD_MIN_LENGTH - 1);
+        String newPassword = RandomStringUtils.random(PasswordConstraintValidator.PASSWORD_MIN_LENGTH - 1);
 
         restAccountMockMvc
             .perform(
@@ -1024,7 +1024,7 @@ class AccountResourceIT {
         user.setEmail("change-password-too-long@example.com");
         userRepository.saveAndFlush(user);
 
-        String newPassword = RandomStringUtils.random(ManagedUserVM.PASSWORD_MAX_LENGTH + 1);
+        String newPassword = RandomStringUtils.random(PasswordConstraintValidator.PASSWORD_MAX_LENGTH + 1);
 
         restAccountMockMvc
             .perform(

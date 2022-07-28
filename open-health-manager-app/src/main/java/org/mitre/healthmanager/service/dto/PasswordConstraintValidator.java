@@ -1,4 +1,4 @@
-package org.mitre.healthmanager.web.rest.vm;
+package org.mitre.healthmanager.service.dto;
 
 import java.util.Arrays;
 
@@ -17,6 +17,9 @@ import org.passay.IllegalSequenceRule;
 
 
 public class PasswordConstraintValidator implements ConstraintValidator<ValidPassword, String> {
+    public static final int PASSWORD_MIN_LENGTH = 6;
+
+    public static final int PASSWORD_MAX_LENGTH = 50;
 
     @Override
     public void initialize(ValidPassword arg0) {
@@ -33,7 +36,7 @@ public class PasswordConstraintValidator implements ConstraintValidator<ValidPas
         }
         PasswordValidator validator = new PasswordValidator(Arrays.asList(
             // length between 4 and 100 characters
-            new LengthRule(6, 50),
+            new LengthRule(PASSWORD_MIN_LENGTH, PASSWORD_MAX_LENGTH),
             // at least one upper-case character
             new CharacterRule(EnglishCharacterData.UpperCase, 1),
             // at least one lower-case character

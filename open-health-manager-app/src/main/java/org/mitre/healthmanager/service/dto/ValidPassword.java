@@ -1,4 +1,4 @@
-package org.mitre.healthmanager.web.rest.vm;
+package org.mitre.healthmanager.service.dto;
 
 import static java.lang.annotation.ElementType.ANNOTATION_TYPE;
 import static java.lang.annotation.ElementType.FIELD;
