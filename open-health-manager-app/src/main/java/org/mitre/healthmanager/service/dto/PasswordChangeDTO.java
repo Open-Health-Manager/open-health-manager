@@ -6,6 +6,8 @@ package org.mitre.healthmanager.service.dto;
 public class PasswordChangeDTO {
 
     private String currentPassword;
+
+    @ValidPassword
     private String newPassword;
 
     public PasswordChangeDTO() {

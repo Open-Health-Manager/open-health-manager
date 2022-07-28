@@ -82,8 +82,12 @@ export const RegisterPage = () => {
               onChange={updatePassword}
               validate={{
                 required: { value: true, message: translate('global.messages.validate.newpassword.required') },
-                minLength: { value: 4, message: translate('global.messages.validate.newpassword.minlength') },
-                maxLength: { value: 50, message: translate('global.messages.validate.newpassword.maxlength') },
+	            minLength: { value: 6, message: translate('global.messages.validate.newpassword.minlength') },
+	            maxLength: { value: 50, message: translate('global.messages.validate.newpassword.maxlength') },
+	            pattern: { 
+					value: /(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[!"#$%&'()*+,-./:;<=>?@[\\\]^_`{|}~])/, 
+					message: translate('global.messages.validate.newpassword.pattern') 
+				}
               }}
               data-cy="firstPassword"
             />
@@ -95,8 +99,6 @@ export const RegisterPage = () => {
               type="password"
               validate={{
                 required: { value: true, message: translate('global.messages.validate.confirmpassword.required') },
-                minLength: { value: 4, message: translate('global.messages.validate.confirmpassword.minlength') },
-                maxLength: { value: 50, message: translate('global.messages.validate.confirmpassword.maxlength') },
                 validate: v => v === password || translate('global.messages.error.dontmatch'),
               }}
               data-cy="secondPassword"

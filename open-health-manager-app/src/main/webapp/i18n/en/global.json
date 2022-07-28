@@ -66,9 +66,10 @@
       "validate": {
         "newpassword": {
           "required": "Your password is required.",
-          "minlength": "Your password is required to be at least 4 characters.",
+          "minlength": "Your password is required to be at least 6 characters.",
           "maxlength": "Your password cannot be longer than 50 characters.",
-          "strength": "Password strength:"
+          "strength": "Password strength:",
+          "pattern": "Your password must contain at least 1 uppercase character, lowercase character, number and special character."
         },
         "confirmpassword": {
           "required": "Your confirmation password is required.",
@@ -139,7 +140,16 @@
     "file": {
       "could.not.extract": "Could not extract file",
       "not.image": "File was expected to be an image but was found to be \"{{ fileType }}\""
-    }
+    },
+    "INSUFFICIENT_SPECIAL": "Password must contain 1 or more special characters.",
+    "TOO_SHORT": "Password must be 4 or more characters in length.",
+    "TOO_LONG": "Password must be 60 or less characters in length",
+    "INSUFFICIENT_DIGIT": "Password must contain 1 or more digit characters.",
+    "INSUFFICIENT_UPPERCASE": "Password must contain 1 or more uppercase characters.",
+    "INSUFFICIENT_LOWERCASE": "Password must contain 1 or more lowercase characters.",
+    "ILLEGAL_WHITESPACE": "Password contains a whitespace character",
+    "ILLEGAL_ALPHABETICAL_SEQUENCE": "Password contains an illegal alphabetical sequence of 5 or more consecutive letters",
+    "ILLEGAL_NUMERICAL_SEQUENCE": "Password contains an illegal numerical sequence of 5 or more consecutive digits"
   },
   "footer": "Copyright 2022 The MITRE Corporation"
 }

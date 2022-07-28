@@ -31,8 +31,8 @@ import org.mitre.healthmanager.service.UserService;
 import org.mitre.healthmanager.service.dto.AdminUserDTO;
 import org.mitre.healthmanager.service.dto.UserDUADTO;
 import org.mitre.healthmanager.service.dto.PasswordChangeDTO;
+import org.mitre.healthmanager.service.dto.PasswordConstraintValidator;
 import org.mitre.healthmanager.web.rest.vm.KeyAndPasswordVM;
-import org.mitre.healthmanager.web.rest.vm.ManagedUserVM;
 import org.mitre.healthmanager.web.rest.vm.DUAManagedUserVM;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -43,8 +43,6 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.MethodMode;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.annotation.DirtiesContext.MethodMode;
 
 import ca.uhn.fhir.jpa.api.dao.DaoRegistry;
 import ca.uhn.fhir.jpa.api.dao.IFhirResourceDao;
@@ -148,7 +146,7 @@ class AccountResourceIT {
     void testRegisterValid() throws Exception {
         DUAManagedUserVM validUser = new DUAManagedUserVM();
         validUser.setLogin("test-register-valid");
-        validUser.setPassword("password");
+        validUser.setPassword("Password135*");
         validUser.setFirstName("Alice");
         validUser.setLastName("Test");
         validUser.setEmail("test-register-valid@example.com");
@@ -192,7 +190,7 @@ class AccountResourceIT {
     void testRegisterInactiveDUA() throws Exception {
         DUAManagedUserVM invalidUser = new DUAManagedUserVM();
         invalidUser.setLogin("test-register-invalid");
-        invalidUser.setPassword("password");
+        invalidUser.setPassword("Password135*");
         invalidUser.setFirstName("Alice");
         invalidUser.setLastName("Test");
         invalidUser.setEmail("test-register-invalid@example.com");
@@ -222,7 +220,7 @@ class AccountResourceIT {
     void testRegisterAgeNotAttestedDUA() throws Exception {
         DUAManagedUserVM invalidUser = new DUAManagedUserVM();
         invalidUser.setLogin("test-register-invalid");
-        invalidUser.setPassword("password");
+        invalidUser.setPassword("Password135*");
         invalidUser.setFirstName("Alice");
         invalidUser.setLastName("Test");
         invalidUser.setEmail("test-register-invalid@example.com");
@@ -252,7 +250,7 @@ class AccountResourceIT {
     void testRegisterInvalidLogin() throws Exception {
         DUAManagedUserVM invalidUser = new DUAManagedUserVM();
         invalidUser.setLogin("funky-log(n"); // <-- invalid
-        invalidUser.setPassword("password");
+        invalidUser.setPassword("Password135*");
         invalidUser.setFirstName("Funky");
         invalidUser.setLastName("One");
         invalidUser.setEmail("funky@example.com");
@@ -281,7 +279,7 @@ class AccountResourceIT {
     void testRegisterInvalidEmail() throws Exception {
         DUAManagedUserVM invalidUser = new DUAManagedUserVM();
         invalidUser.setLogin("bob");
-        invalidUser.setPassword("password");
+        invalidUser.setPassword("Password135*");
         invalidUser.setFirstName("Bob");
         invalidUser.setLastName("Green");
         invalidUser.setEmail("invalid"); // <-- invalid
@@ -307,7 +305,7 @@ class AccountResourceIT {
 
     @Test
     @Transactional("jhipsterTransactionManager")
-    void testRegisterInvalidPassword() throws Exception {
+    void testRegisterInvalidPasswordLength() throws Exception {
         DUAManagedUserVM invalidUser = new DUAManagedUserVM();
         invalidUser.setLogin("bob");
         invalidUser.setPassword("123"); // password with only 3 digits
@@ -328,7 +326,102 @@ class AccountResourceIT {
 
         restAccountMockMvc
             .perform(post("/api/register").contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(invalidUser)))
-            .andExpect(status().isBadRequest());
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.fieldErrors[?(@.message=='TOO_SHORT')]").exists());
+
+        Optional<User> user = userRepository.findOneByLogin("bob");
+        assertThat(user).isEmpty();
+    }
+
+    @Test
+    @Transactional("jhipsterTransactionManager")
+    void testRegisterInvalidPasswordNoDigitsNoUppercaseNoSpecial() throws Exception {
+        DUAManagedUserVM invalidUser = new DUAManagedUserVM();
+        invalidUser.setLogin("bob");
+        invalidUser.setPassword("password");
+        invalidUser.setFirstName("Bob");
+        invalidUser.setLastName("Green");
+        invalidUser.setEmail("bob@example.com");
+        invalidUser.setActivated(true);
+        invalidUser.setImageUrl("http://placehold.it/50x50");
+        invalidUser.setLangKey(Constants.DEFAULT_LANGUAGE);
+        invalidUser.setAuthorities(Collections.singleton(AuthoritiesConstants.USER));
+
+        UserDUADTO userDUADTO = new UserDUADTO();
+        userDUADTO.setActive(true);
+        userDUADTO.setVersion("v2020-03-21");
+        userDUADTO.setAgeAttested(true);
+
+        invalidUser.setUserDUADTO(userDUADTO);
+
+        restAccountMockMvc
+            .perform(post("/api/register").contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(invalidUser)))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.fieldErrors[?(@.message=='INSUFFICIENT_DIGIT')]").exists())
+            .andExpect(jsonPath("$.fieldErrors[?(@.message=='INSUFFICIENT_UPPERCASE')]").exists())
+            .andExpect(jsonPath("$.fieldErrors[?(@.message=='INSUFFICIENT_SPECIAL')]").exists());
+
+        Optional<User> user = userRepository.findOneByLogin("bob");
+        assertThat(user).isEmpty();
+    }
+
+    @Test
+    @Transactional("jhipsterTransactionManager")
+    void testRegisterInvalidPasswordNoLowercase() throws Exception {
+        DUAManagedUserVM invalidUser = new DUAManagedUserVM();
+        invalidUser.setLogin("bob");
+        invalidUser.setPassword("PASSWORD12*");
+        invalidUser.setFirstName("Bob");
+        invalidUser.setLastName("Green");
+        invalidUser.setEmail("bob@example.com");
+        invalidUser.setActivated(true);
+        invalidUser.setImageUrl("http://placehold.it/50x50");
+        invalidUser.setLangKey(Constants.DEFAULT_LANGUAGE);
+        invalidUser.setAuthorities(Collections.singleton(AuthoritiesConstants.USER));
+
+        UserDUADTO userDUADTO = new UserDUADTO();
+        userDUADTO.setActive(true);
+        userDUADTO.setVersion("v2020-03-21");
+        userDUADTO.setAgeAttested(true);
+
+        invalidUser.setUserDUADTO(userDUADTO);
+
+        restAccountMockMvc
+            .perform(post("/api/register").contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(invalidUser)))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.fieldErrors[0].message").value("INSUFFICIENT_LOWERCASE"));
+
+        Optional<User> user = userRepository.findOneByLogin("bob");
+        assertThat(user).isEmpty();
+    }
+
+    @Test
+    @Transactional("jhipsterTransactionManager")
+    void testRegisterInvalidPasswordWhitespaceIllegalSequences() throws Exception {
+        DUAManagedUserVM invalidUser = new DUAManagedUserVM();
+        invalidUser.setLogin("bob");
+        invalidUser.setPassword("Password 123456ABCDEF*");
+        invalidUser.setFirstName("Bob");
+        invalidUser.setLastName("Green");
+        invalidUser.setEmail("bob@example.com");
+        invalidUser.setActivated(true);
+        invalidUser.setImageUrl("http://placehold.it/50x50");
+        invalidUser.setLangKey(Constants.DEFAULT_LANGUAGE);
+        invalidUser.setAuthorities(Collections.singleton(AuthoritiesConstants.USER));
+
+        UserDUADTO userDUADTO = new UserDUADTO();
+        userDUADTO.setActive(true);
+        userDUADTO.setVersion("v2020-03-21");
+        userDUADTO.setAgeAttested(true);
+
+        invalidUser.setUserDUADTO(userDUADTO);
+
+        restAccountMockMvc
+            .perform(post("/api/register").contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(invalidUser)))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.fieldErrors[?(@.message=='ILLEGAL_WHITESPACE')]").exists())
+            .andExpect(jsonPath("$.fieldErrors[?(@.message=='ILLEGAL_ALPHABETICAL_SEQUENCE')]").exists())
+            .andExpect(jsonPath("$.fieldErrors[?(@.message=='ILLEGAL_NUMERICAL_SEQUENCE')]").exists());
 
         Optional<User> user = userRepository.findOneByLogin("bob");
         assertThat(user).isEmpty();
@@ -369,7 +462,7 @@ class AccountResourceIT {
         // First registration
         DUAManagedUserVM firstUser = new DUAManagedUserVM();
         firstUser.setLogin("alice");
-        firstUser.setPassword("password");
+        firstUser.setPassword("Password135*");
         firstUser.setFirstName("Alice");
         firstUser.setLastName("Something");
         firstUser.setEmail("alice@example.com");
@@ -436,7 +529,7 @@ class AccountResourceIT {
         // First user
         DUAManagedUserVM firstUser = new DUAManagedUserVM();
         firstUser.setLogin("test-register-duplicate-email");
-        firstUser.setPassword("password");
+        firstUser.setPassword("Password135*");
         firstUser.setFirstName("Alice");
         firstUser.setLastName("Test");
         firstUser.setEmail("test-register-duplicate-email@example.com");
@@ -500,13 +593,14 @@ class AccountResourceIT {
     @Test
     @DirtiesContext(methodMode = MethodMode.AFTER_METHOD)
     void testRegisterDuplicateEmailUppercase() throws Exception {
+
         // First user
         DUAManagedUserVM firstUser = new DUAManagedUserVM();
-        firstUser.setLogin("test-register-duplicate-email");
-        firstUser.setPassword("password");
+        firstUser.setLogin("test-register-duplicate-email-uppercase");
+        firstUser.setPassword("Password135*");
         firstUser.setFirstName("Alice");
         firstUser.setLastName("Test");
-        firstUser.setEmail("test-register-duplicate-email@example.com");
+        firstUser.setEmail("test-register-duplicate-email-uppercase@example.com");
         firstUser.setImageUrl("http://placehold.it/50x50");
         firstUser.setLangKey(Constants.DEFAULT_LANGUAGE);
         firstUser.setAuthorities(Collections.singleton(AuthoritiesConstants.USER));
@@ -523,17 +617,17 @@ class AccountResourceIT {
             .perform(post("/api/register").contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(firstUser)))
             .andExpect(status().isCreated());
 
-        Optional<User> testUser1 = userRepository.findOneByLogin("test-register-duplicate-email");
+        Optional<User> testUser1 = userRepository.findOneByLogin("test-register-duplicate-email-uppercase");
         assertThat(testUser1).isPresent();
 
         // Duplicate email - with uppercase email address
         DUAManagedUserVM userWithUpperCaseEmail = new DUAManagedUserVM();
         userWithUpperCaseEmail.setId(firstUser.getId());
-        userWithUpperCaseEmail.setLogin("test-register-duplicate-email-3");
+        userWithUpperCaseEmail.setLogin("test-register-duplicate-email-uppercase-2");
         userWithUpperCaseEmail.setPassword(firstUser.getPassword());
         userWithUpperCaseEmail.setFirstName(firstUser.getFirstName());
         userWithUpperCaseEmail.setLastName(firstUser.getLastName());
-        userWithUpperCaseEmail.setEmail("TEST-register-duplicate-email@example.com");
+        userWithUpperCaseEmail.setEmail("TEST-register-duplicate-email-uppercase@example.com");
         userWithUpperCaseEmail.setImageUrl(firstUser.getImageUrl());
         userWithUpperCaseEmail.setLangKey(firstUser.getLangKey());
         userWithUpperCaseEmail.setAuthorities(new HashSet<>(firstUser.getAuthorities()));
@@ -555,12 +649,12 @@ class AccountResourceIT {
             .andExpect(status().is5xxServerError());
 
        
-        Optional<User> testUser3 = userRepository.findOneByLogin("test-register-duplicate-email-3");
+        Optional<User> testUser3 = userRepository.findOneByLogin("test-register-duplicate-email-uppercase-2");
         assertThat(testUser3).isEmpty();
 
-        Optional<User> testUser2 = userRepository.findOneByLogin("test-register-duplicate-email");
+        Optional<User> testUser2 = userRepository.findOneByLogin("test-register-duplicate-email-uppercase");
         assertThat(testUser2).isPresent();
-        assertThat(testUser2.get().getEmail()).isEqualTo("test-register-duplicate-email@example.com");
+        assertThat(testUser2.get().getEmail()).isEqualTo("test-register-duplicate-email-uppercase@example.com");
     }
 
     @Test
@@ -568,7 +662,7 @@ class AccountResourceIT {
     void testRegisterAdminIsIgnored() throws Exception {
         DUAManagedUserVM validUser = new DUAManagedUserVM();
         validUser.setLogin("badguy");
-        validUser.setPassword("password");
+        validUser.setPassword("Password135*");
         validUser.setFirstName("Bad");
         validUser.setLastName("Guy");
         validUser.setEmail("badguy@example.com");
@@ -636,7 +730,7 @@ class AccountResourceIT {
         // attempt to re-register email with a different login
         DUAManagedUserVM secondUser = new DUAManagedUserVM();
         secondUser.setLogin("to-re-register-2");
-        secondUser.setPassword("password");
+        secondUser.setPassword("Password135*");
         secondUser.setEmail("to-re-register@example.com");
 
         UserDUADTO secondUserDUADTO = new UserDUADTO();
@@ -653,7 +747,7 @@ class AccountResourceIT {
         // attempt to re-register login with a different email
         DUAManagedUserVM thirdUser = new DUAManagedUserVM();
         thirdUser.setLogin("to-re-register");
-        thirdUser.setPassword("password");
+        thirdUser.setPassword("Password135*");
         thirdUser.setEmail("to-re-register-2@example.com");
 
         UserDUADTO thirdUserDUADTO = new UserDUADTO();
@@ -861,12 +955,12 @@ class AccountResourceIT {
             .perform(
                 post("/api/account/change-password")
                     .contentType(MediaType.APPLICATION_JSON)
-                    .content(TestUtil.convertObjectToJsonBytes(new PasswordChangeDTO("1" + currentPassword, "new password")))
+                    .content(TestUtil.convertObjectToJsonBytes(new PasswordChangeDTO("1" + currentPassword, "Password135*")))
             )
             .andExpect(status().isBadRequest());
 
         User updatedUser = userRepository.findOneByLogin("change-password-wrong-existing-password").orElse(null);
-        assertThat(passwordEncoder.matches("new password", updatedUser.getPassword())).isFalse();
+        assertThat(passwordEncoder.matches("Password135*", updatedUser.getPassword())).isFalse();
         assertThat(passwordEncoder.matches(currentPassword, updatedUser.getPassword())).isTrue();
     }
 
@@ -885,12 +979,12 @@ class AccountResourceIT {
             .perform(
                 post("/api/account/change-password")
                     .contentType(MediaType.APPLICATION_JSON)
-                    .content(TestUtil.convertObjectToJsonBytes(new PasswordChangeDTO(currentPassword, "new password")))
+                    .content(TestUtil.convertObjectToJsonBytes(new PasswordChangeDTO(currentPassword, "Password135*")))
             )
             .andExpect(status().isOk());
 
         User updatedUser = userRepository.findOneByLogin("change-password").orElse(null);
-        assertThat(passwordEncoder.matches("new password", updatedUser.getPassword())).isTrue();
+        assertThat(passwordEncoder.matches("Password135*", updatedUser.getPassword())).isTrue();
     }
 
     @Test
@@ -904,7 +998,7 @@ class AccountResourceIT {
         user.setEmail("change-password-too-small@example.com");
         userRepository.saveAndFlush(user);
 
-        String newPassword = RandomStringUtils.random(ManagedUserVM.PASSWORD_MIN_LENGTH - 1);
+        String newPassword = RandomStringUtils.random(PasswordConstraintValidator.PASSWORD_MIN_LENGTH - 1);
 
         restAccountMockMvc
             .perform(
@@ -912,7 +1006,8 @@ class AccountResourceIT {
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(TestUtil.convertObjectToJsonBytes(new PasswordChangeDTO(currentPassword, newPassword)))
             )
-            .andExpect(status().isBadRequest());
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.fieldErrors[?(@.message=='TOO_SHORT')]").exists());;
 
         User updatedUser = userRepository.findOneByLogin("change-password-too-small").orElse(null);
         assertThat(updatedUser.getPassword()).isEqualTo(user.getPassword());
@@ -929,7 +1024,7 @@ class AccountResourceIT {
         user.setEmail("change-password-too-long@example.com");
         userRepository.saveAndFlush(user);
 
-        String newPassword = RandomStringUtils.random(ManagedUserVM.PASSWORD_MAX_LENGTH + 1);
+        String newPassword = RandomStringUtils.random(PasswordConstraintValidator.PASSWORD_MAX_LENGTH + 1);
 
         restAccountMockMvc
             .perform(
@@ -937,9 +1032,38 @@ class AccountResourceIT {
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(TestUtil.convertObjectToJsonBytes(new PasswordChangeDTO(currentPassword, newPassword)))
             )
-            .andExpect(status().isBadRequest());
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.fieldErrors[?(@.message=='TOO_LONG')]").exists());
 
         User updatedUser = userRepository.findOneByLogin("change-password-too-long").orElse(null);
+        assertThat(updatedUser.getPassword()).isEqualTo(user.getPassword());
+    }
+
+    @Test
+    @Transactional("jhipsterTransactionManager")
+    @WithMockUser("change-password-invalid")
+    void testChangePasswordInvalidPassword() throws Exception {
+        User user = new User();
+        String currentPassword = RandomStringUtils.random(60);
+        user.setPassword(passwordEncoder.encode(currentPassword));
+        user.setLogin("change-password-invalid");
+        user.setEmail("change-password-invalid@example.com");
+        userRepository.saveAndFlush(user);
+
+        String newPassword = "password";
+
+        restAccountMockMvc
+            .perform(
+                post("/api/account/change-password")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(TestUtil.convertObjectToJsonBytes(new PasswordChangeDTO(currentPassword, newPassword)))
+            )
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.fieldErrors[?(@.message=='INSUFFICIENT_UPPERCASE')]").exists())
+            .andExpect(jsonPath("$.fieldErrors[?(@.message=='INSUFFICIENT_DIGIT')]").exists())
+            .andExpect(jsonPath("$.fieldErrors[?(@.message=='INSUFFICIENT_SPECIAL')]").exists());
+
+        User updatedUser = userRepository.findOneByLogin("change-password-invalid").orElse(null);
         assertThat(updatedUser.getPassword()).isEqualTo(user.getPassword());
     }
 
@@ -1016,7 +1140,7 @@ class AccountResourceIT {
 
         KeyAndPasswordVM keyAndPassword = new KeyAndPasswordVM();
         keyAndPassword.setKey(user.getResetKey());
-        keyAndPassword.setNewPassword("new password");
+        keyAndPassword.setNewPassword("Password135*");
 
         restAccountMockMvc
             .perform(
@@ -1062,7 +1186,7 @@ class AccountResourceIT {
     void testFinishPasswordResetWrongKey() throws Exception {
         KeyAndPasswordVM keyAndPassword = new KeyAndPasswordVM();
         keyAndPassword.setKey("wrong reset key");
-        keyAndPassword.setNewPassword("new password");
+        keyAndPassword.setNewPassword("Password135*");
 
         restAccountMockMvc
             .perform(

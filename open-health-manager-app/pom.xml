@@ -405,6 +405,11 @@
             <artifactId>postgresql</artifactId>
             <scope>provided</scope>
         </dependency>
+		<dependency>
+			<groupId>org.passay</groupId>
+			<artifactId>passay</artifactId>
+			<version>1.6.1</version>
+		</dependency>
         <!-- jhipster-needle-maven-add-dependency -->
     </dependencies>
 
