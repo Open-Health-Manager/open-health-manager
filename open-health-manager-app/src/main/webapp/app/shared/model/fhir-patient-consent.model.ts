@@ -3,9 +3,12 @@ import { IFHIRClient } from 'app/shared/model/fhir-client.model';
 
 export interface IFHIRPatientConsent {
   id?: number;
-  fhirResource?: string;
+  approve?: boolean | null;
+  fhirResource?: string | null;
   user?: IUser;
   client?: IFHIRClient | null;
 }
 
-export const defaultValue: Readonly<IFHIRPatientConsent> = {};
+export const defaultValue: Readonly<IFHIRPatientConsent> = {
+  approve: false,
+};

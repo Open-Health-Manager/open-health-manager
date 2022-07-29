@@ -1,15 +1,18 @@
 {
   "applications": ["OpenHealthManagerApp"],
   "changelogDate": "20220728180919",
-  "dto": "mapstruct",
+  "dto": "no",
   "embedded": false,
   "entityTableName": "fhir_patient_consent",
   "fields": [
     {
+      "fieldName": "approve",
+      "fieldType": "Boolean"
+    },
+    {
       "fieldName": "fhirResource",
       "fieldType": "byte[]",
-      "fieldTypeBlobContent": "text",
-      "fieldValidateRules": ["required"]
+      "fieldTypeBlobContent": "text"
     }
   ],
   "fluentMethods": true,

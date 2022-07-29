@@ -31,6 +31,12 @@ export const FHIRPatientConsentDetail = (props: RouteComponentProps<{ id: string
           </dt>
           <dd>{fHIRPatientConsentEntity.id}</dd>
           <dt>
+            <span id="approve">
+              <Translate contentKey="openHealthManagerApp.fHIRPatientConsent.approve">Approve</Translate>
+            </span>
+          </dt>
+          <dd>{fHIRPatientConsentEntity.approve ? 'true' : 'false'}</dd>
+          <dt>
             <span id="fhirResource">
               <Translate contentKey="openHealthManagerApp.fHIRPatientConsent.fhirResource">Fhir Resource</Translate>
             </span>

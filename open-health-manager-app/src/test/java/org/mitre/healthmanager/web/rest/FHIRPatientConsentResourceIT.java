@@ -19,8 +19,6 @@ import org.mitre.healthmanager.domain.FHIRPatientConsent;
 import org.mitre.healthmanager.domain.User;
 import org.mitre.healthmanager.repository.FHIRPatientConsentRepository;
 import org.mitre.healthmanager.service.FHIRPatientConsentService;
-import org.mitre.healthmanager.service.dto.FHIRPatientConsentDTO;
-import org.mitre.healthmanager.service.mapper.FHIRPatientConsentMapper;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +40,9 @@ import org.springframework.util.Base64Utils;
 @WithMockUser
 class FHIRPatientConsentResourceIT {
 
+    private static final Boolean DEFAULT_APPROVE = false;
+    private static final Boolean UPDATED_APPROVE = true;
+
     private static final String DEFAULT_FHIR_RESOURCE = "AAAAAAAAAA";
     private static final String UPDATED_FHIR_RESOURCE = "BBBBBBBBBB";
 
@@ -56,9 +57,6 @@ class FHIRPatientConsentResourceIT {
 
     @Mock
     private FHIRPatientConsentRepository fHIRPatientConsentRepositoryMock;
-
-    @Autowired
-    private FHIRPatientConsentMapper fHIRPatientConsentMapper;
 
     @Mock
     private FHIRPatientConsentService fHIRPatientConsentServiceMock;
@@ -78,7 +76,7 @@ class FHIRPatientConsentResourceIT {
      * if they test an entity which requires the current entity.
      */
     public static FHIRPatientConsent createEntity(EntityManager em) {
-        FHIRPatientConsent fHIRPatientConsent = new FHIRPatientConsent().fhirResource(DEFAULT_FHIR_RESOURCE);
+        FHIRPatientConsent fHIRPatientConsent = new FHIRPatientConsent().approve(DEFAULT_APPROVE).fhirResource(DEFAULT_FHIR_RESOURCE);
         // Add required entity
         User user = UserResourceIT.createEntity(em);
         em.persist(user);
@@ -94,7 +92,7 @@ class FHIRPatientConsentResourceIT {
      * if they test an entity which requires the current entity.
      */
     public static FHIRPatientConsent createUpdatedEntity(EntityManager em) {
-        FHIRPatientConsent fHIRPatientConsent = new FHIRPatientConsent().fhirResource(UPDATED_FHIR_RESOURCE);
+        FHIRPatientConsent fHIRPatientConsent = new FHIRPatientConsent().approve(UPDATED_APPROVE).fhirResource(UPDATED_FHIR_RESOURCE);
         // Add required entity
         User user = UserResourceIT.createEntity(em);
         em.persist(user);
@@ -120,6 +118,7 @@ class FHIRPatientConsentResourceIT {
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("$.[*].id").value(hasItem(fHIRPatientConsent.getId().intValue())))
+            .andExpect(jsonPath("$.[*].approve").value(hasItem(DEFAULT_APPROVE.booleanValue())))
             .andExpect(jsonPath("$.[*].fhirResource").value(hasItem(DEFAULT_FHIR_RESOURCE.toString())));
     }
 
@@ -153,6 +152,7 @@ class FHIRPatientConsentResourceIT {
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("$.id").value(fHIRPatientConsent.getId().intValue()))
+            .andExpect(jsonPath("$.approve").value(DEFAULT_APPROVE.booleanValue()))
             .andExpect(jsonPath("$.fhirResource").value(DEFAULT_FHIR_RESOURCE.toString()));
     }
 

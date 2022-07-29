@@ -23,9 +23,12 @@ public class FHIRPatientConsent implements Serializable {
     @Column(name = "id")
     private Long id;
 
+    @Column(name = "approve")
+    private Boolean approve;
+
     @Lob
     @Type(type = "org.hibernate.type.TextType")
-    @Column(name = "fhir_resource", nullable = false)
+    @Column(name = "fhir_resource")
     private String fhirResource;
 
     @ManyToOne(optional = false)
@@ -48,6 +51,19 @@ public class FHIRPatientConsent implements Serializable {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Boolean getApprove() {
+        return this.approve;
+    }
+
+    public FHIRPatientConsent approve(Boolean approve) {
+        this.setApprove(approve);
+        return this;
+    }
+
+    public void setApprove(Boolean approve) {
+        this.approve = approve;
     }
 
     public String getFhirResource() {
@@ -113,6 +129,7 @@ public class FHIRPatientConsent implements Serializable {
     public String toString() {
         return "FHIRPatientConsent{" +
             "id=" + getId() +
+            ", approve='" + getApprove() + "'" +
             ", fhirResource='" + getFhirResource() + "'" +
             "}";
     }

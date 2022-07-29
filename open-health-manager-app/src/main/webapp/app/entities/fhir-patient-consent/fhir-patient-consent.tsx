@@ -99,6 +99,10 @@ export const FHIRPatientConsent = (props: RouteComponentProps<{ url: string }>) 
                 <th className="hand" onClick={sort('id')}>
                   <Translate contentKey="openHealthManagerApp.fHIRPatientConsent.id">ID</Translate> <FontAwesomeIcon icon="sort" />
                 </th>
+                <th className="hand" onClick={sort('approve')}>
+                  <Translate contentKey="openHealthManagerApp.fHIRPatientConsent.approve">Approve</Translate>{' '}
+                  <FontAwesomeIcon icon="sort" />
+                </th>
                 <th className="hand" onClick={sort('fhirResource')}>
                   <Translate contentKey="openHealthManagerApp.fHIRPatientConsent.fhirResource">Fhir Resource</Translate>{' '}
                   <FontAwesomeIcon icon="sort" />
@@ -120,6 +124,7 @@ export const FHIRPatientConsent = (props: RouteComponentProps<{ url: string }>) 
                       {fHIRPatientConsent.id}
                     </Button>
                   </td>
+                  <td>{fHIRPatientConsent.approve ? 'true' : 'false'}</td>
                   <td>{fHIRPatientConsent.fhirResource}</td>
                   <td>{fHIRPatientConsent.user ? fHIRPatientConsent.user.login : ''}</td>
                   <td>

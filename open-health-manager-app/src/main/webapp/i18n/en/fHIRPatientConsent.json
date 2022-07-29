@@ -10,6 +10,7 @@
         "title": "FHIR Patient Consent"
       },
       "id": "ID",
+      "approve": "Approve",
       "fhirResource": "Fhir Resource",
       "user": "User",
       "client": "Client"

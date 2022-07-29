@@ -6,9 +6,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import javax.validation.Valid;
+import org.mitre.healthmanager.domain.FHIRPatientConsent;
 import org.mitre.healthmanager.repository.FHIRPatientConsentRepository;
 import org.mitre.healthmanager.service.FHIRPatientConsentService;
-import org.mitre.healthmanager.service.dto.FHIRPatientConsentDTO;
 import org.mitre.healthmanager.web.rest.errors.BadRequestAlertException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,12 +53,12 @@ public class FHIRPatientConsentResource {
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and the list of fHIRPatientConsents in body.
      */
     @GetMapping("/fhir-patient-consents")
-    public ResponseEntity<List<FHIRPatientConsentDTO>> getAllFHIRPatientConsents(
+    public ResponseEntity<List<FHIRPatientConsent>> getAllFHIRPatientConsents(
         @org.springdoc.api.annotations.ParameterObject Pageable pageable,
         @RequestParam(required = false, defaultValue = "true") boolean eagerload
     ) {
         log.debug("REST request to get a page of FHIRPatientConsents");
-        Page<FHIRPatientConsentDTO> page;
+        Page<FHIRPatientConsent> page;
         if (eagerload) {
             page = fHIRPatientConsentService.findAllWithEagerRelationships(pageable);
         } else {
@@ -71,13 +71,13 @@ public class FHIRPatientConsentResource {
     /**
      * {@code GET  /fhir-patient-consents/:id} : get the "id" fHIRPatientConsent.
      *
-     * @param id the id of the fHIRPatientConsentDTO to retrieve.
-     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the fHIRPatientConsentDTO, or with status {@code 404 (Not Found)}.
+     * @param id the id of the fHIRPatientConsent to retrieve.
+     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the fHIRPatientConsent, or with status {@code 404 (Not Found)}.
      */
     @GetMapping("/fhir-patient-consents/{id}")
-    public ResponseEntity<FHIRPatientConsentDTO> getFHIRPatientConsent(@PathVariable Long id) {
+    public ResponseEntity<FHIRPatientConsent> getFHIRPatientConsent(@PathVariable Long id) {
         log.debug("REST request to get FHIRPatientConsent : {}", id);
-        Optional<FHIRPatientConsentDTO> fHIRPatientConsentDTO = fHIRPatientConsentService.findOne(id);
-        return ResponseUtil.wrapOrNotFound(fHIRPatientConsentDTO);
+        Optional<FHIRPatientConsent> fHIRPatientConsent = fHIRPatientConsentService.findOne(id);
+        return ResponseUtil.wrapOrNotFound(fHIRPatientConsent);
     }
 }

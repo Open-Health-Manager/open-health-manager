@@ -3,8 +3,6 @@ package org.mitre.healthmanager.service;
 import java.util.Optional;
 import org.mitre.healthmanager.domain.FHIRPatientConsent;
 import org.mitre.healthmanager.repository.FHIRPatientConsentRepository;
-import org.mitre.healthmanager.service.dto.FHIRPatientConsentDTO;
-import org.mitre.healthmanager.service.mapper.FHIRPatientConsentMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -23,60 +21,54 @@ public class FHIRPatientConsentService {
 
     private final FHIRPatientConsentRepository fHIRPatientConsentRepository;
 
-    private final FHIRPatientConsentMapper fHIRPatientConsentMapper;
-
-    public FHIRPatientConsentService(
-        FHIRPatientConsentRepository fHIRPatientConsentRepository,
-        FHIRPatientConsentMapper fHIRPatientConsentMapper
-    ) {
+    public FHIRPatientConsentService(FHIRPatientConsentRepository fHIRPatientConsentRepository) {
         this.fHIRPatientConsentRepository = fHIRPatientConsentRepository;
-        this.fHIRPatientConsentMapper = fHIRPatientConsentMapper;
     }
 
     /**
      * Save a fHIRPatientConsent.
      *
-     * @param fHIRPatientConsentDTO the entity to save.
+     * @param fHIRPatientConsent the entity to save.
      * @return the persisted entity.
      */
-    public FHIRPatientConsentDTO save(FHIRPatientConsentDTO fHIRPatientConsentDTO) {
-        log.debug("Request to save FHIRPatientConsent : {}", fHIRPatientConsentDTO);
-        FHIRPatientConsent fHIRPatientConsent = fHIRPatientConsentMapper.toEntity(fHIRPatientConsentDTO);
-        fHIRPatientConsent = fHIRPatientConsentRepository.save(fHIRPatientConsent);
-        return fHIRPatientConsentMapper.toDto(fHIRPatientConsent);
+    public FHIRPatientConsent save(FHIRPatientConsent fHIRPatientConsent) {
+        log.debug("Request to save FHIRPatientConsent : {}", fHIRPatientConsent);
+        return fHIRPatientConsentRepository.save(fHIRPatientConsent);
     }
 
     /**
      * Update a fHIRPatientConsent.
      *
-     * @param fHIRPatientConsentDTO the entity to save.
+     * @param fHIRPatientConsent the entity to save.
      * @return the persisted entity.
      */
-    public FHIRPatientConsentDTO update(FHIRPatientConsentDTO fHIRPatientConsentDTO) {
-        log.debug("Request to save FHIRPatientConsent : {}", fHIRPatientConsentDTO);
-        FHIRPatientConsent fHIRPatientConsent = fHIRPatientConsentMapper.toEntity(fHIRPatientConsentDTO);
-        fHIRPatientConsent = fHIRPatientConsentRepository.save(fHIRPatientConsent);
-        return fHIRPatientConsentMapper.toDto(fHIRPatientConsent);
+    public FHIRPatientConsent update(FHIRPatientConsent fHIRPatientConsent) {
+        log.debug("Request to save FHIRPatientConsent : {}", fHIRPatientConsent);
+        return fHIRPatientConsentRepository.save(fHIRPatientConsent);
     }
 
     /**
      * Partially update a fHIRPatientConsent.
      *
-     * @param fHIRPatientConsentDTO the entity to update partially.
+     * @param fHIRPatientConsent the entity to update partially.
      * @return the persisted entity.
      */
-    public Optional<FHIRPatientConsentDTO> partialUpdate(FHIRPatientConsentDTO fHIRPatientConsentDTO) {
-        log.debug("Request to partially update FHIRPatientConsent : {}", fHIRPatientConsentDTO);
+    public Optional<FHIRPatientConsent> partialUpdate(FHIRPatientConsent fHIRPatientConsent) {
+        log.debug("Request to partially update FHIRPatientConsent : {}", fHIRPatientConsent);
 
         return fHIRPatientConsentRepository
-            .findById(fHIRPatientConsentDTO.getId())
+            .findById(fHIRPatientConsent.getId())
             .map(existingFHIRPatientConsent -> {
-                fHIRPatientConsentMapper.partialUpdate(existingFHIRPatientConsent, fHIRPatientConsentDTO);
+                if (fHIRPatientConsent.getApprove() != null) {
+                    existingFHIRPatientConsent.setApprove(fHIRPatientConsent.getApprove());
+                }
+                if (fHIRPatientConsent.getFhirResource() != null) {
+                    existingFHIRPatientConsent.setFhirResource(fHIRPatientConsent.getFhirResource());
+                }
 
                 return existingFHIRPatientConsent;
             })
-            .map(fHIRPatientConsentRepository::save)
-            .map(fHIRPatientConsentMapper::toDto);
+            .map(fHIRPatientConsentRepository::save);
     }
 
     /**
@@ -86,9 +78,9 @@ public class FHIRPatientConsentService {
      * @return the list of entities.
      */
     @Transactional(readOnly = true)
-    public Page<FHIRPatientConsentDTO> findAll(Pageable pageable) {
+    public Page<FHIRPatientConsent> findAll(Pageable pageable) {
         log.debug("Request to get all FHIRPatientConsents");
-        return fHIRPatientConsentRepository.findAll(pageable).map(fHIRPatientConsentMapper::toDto);
+        return fHIRPatientConsentRepository.findAll(pageable);
     }
 
     /**
@@ -96,8 +88,8 @@ public class FHIRPatientConsentService {
      *
      * @return the list of entities.
      */
-    public Page<FHIRPatientConsentDTO> findAllWithEagerRelationships(Pageable pageable) {
-        return fHIRPatientConsentRepository.findAllWithEagerRelationships(pageable).map(fHIRPatientConsentMapper::toDto);
+    public Page<FHIRPatientConsent> findAllWithEagerRelationships(Pageable pageable) {
+        return fHIRPatientConsentRepository.findAllWithEagerRelationships(pageable);
     }
 
     /**
@@ -107,9 +99,9 @@ public class FHIRPatientConsentService {
      * @return the entity.
      */
     @Transactional(readOnly = true)
-    public Optional<FHIRPatientConsentDTO> findOne(Long id) {
+    public Optional<FHIRPatientConsent> findOne(Long id) {
         log.debug("Request to get FHIRPatientConsent : {}", id);
-        return fHIRPatientConsentRepository.findOneWithEagerRelationships(id).map(fHIRPatientConsentMapper::toDto);
+        return fHIRPatientConsentRepository.findOneWithEagerRelationships(id);
     }
 
     /**
