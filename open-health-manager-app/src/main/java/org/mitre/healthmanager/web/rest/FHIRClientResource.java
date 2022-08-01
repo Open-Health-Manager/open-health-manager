@@ -34,109 +34,15 @@ public class FHIRClientResource {
 
     private final Logger log = LoggerFactory.getLogger(FHIRClientResource.class);
 
-    private static final String ENTITY_NAME = "fHIRClient";
-
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
     private final FHIRClientService fHIRClientService;
 
-    private final FHIRClientRepository fHIRClientRepository;
-
     public FHIRClientResource(FHIRClientService fHIRClientService, FHIRClientRepository fHIRClientRepository) {
         this.fHIRClientService = fHIRClientService;
-        this.fHIRClientRepository = fHIRClientRepository;
     }
 
-    /**
-     * {@code POST  /fhir-clients} : Create a new fHIRClient.
-     *
-     * @param fHIRClientDTO the fHIRClientDTO to create.
-     * @return the {@link ResponseEntity} with status {@code 201 (Created)} and with body the new fHIRClientDTO, or with status {@code 400 (Bad Request)} if the fHIRClient has already an ID.
-     * @throws URISyntaxException if the Location URI syntax is incorrect.
-     */
-    @PostMapping("/fhir-clients")
-    public ResponseEntity<FHIRClientDTO> createFHIRClient(@Valid @RequestBody FHIRClientDTO fHIRClientDTO) throws URISyntaxException {
-        log.debug("REST request to save FHIRClient : {}", fHIRClientDTO);
-        if (fHIRClientDTO.getId() != null) {
-            throw new BadRequestAlertException("A new fHIRClient cannot already have an ID", ENTITY_NAME, "idexists");
-        }
-        FHIRClientDTO result = fHIRClientService.save(fHIRClientDTO);
-        return ResponseEntity
-            .created(new URI("/api/fhir-clients/" + result.getId()))
-            .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString()))
-            .body(result);
-    }
-
-    /**
-     * {@code PUT  /fhir-clients/:id} : Updates an existing fHIRClient.
-     *
-     * @param id the id of the fHIRClientDTO to save.
-     * @param fHIRClientDTO the fHIRClientDTO to update.
-     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the updated fHIRClientDTO,
-     * or with status {@code 400 (Bad Request)} if the fHIRClientDTO is not valid,
-     * or with status {@code 500 (Internal Server Error)} if the fHIRClientDTO couldn't be updated.
-     * @throws URISyntaxException if the Location URI syntax is incorrect.
-     */
-    @PutMapping("/fhir-clients/{id}")
-    public ResponseEntity<FHIRClientDTO> updateFHIRClient(
-        @PathVariable(value = "id", required = false) final Long id,
-        @Valid @RequestBody FHIRClientDTO fHIRClientDTO
-    ) throws URISyntaxException {
-        log.debug("REST request to update FHIRClient : {}, {}", id, fHIRClientDTO);
-        if (fHIRClientDTO.getId() == null) {
-            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
-        }
-        if (!Objects.equals(id, fHIRClientDTO.getId())) {
-            throw new BadRequestAlertException("Invalid ID", ENTITY_NAME, "idinvalid");
-        }
-
-        if (!fHIRClientRepository.existsById(id)) {
-            throw new BadRequestAlertException("Entity not found", ENTITY_NAME, "idnotfound");
-        }
-
-        FHIRClientDTO result = fHIRClientService.update(fHIRClientDTO);
-        return ResponseEntity
-            .ok()
-            .headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, fHIRClientDTO.getId().toString()))
-            .body(result);
-    }
-
-    /**
-     * {@code PATCH  /fhir-clients/:id} : Partial updates given fields of an existing fHIRClient, field will ignore if it is null
-     *
-     * @param id the id of the fHIRClientDTO to save.
-     * @param fHIRClientDTO the fHIRClientDTO to update.
-     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the updated fHIRClientDTO,
-     * or with status {@code 400 (Bad Request)} if the fHIRClientDTO is not valid,
-     * or with status {@code 404 (Not Found)} if the fHIRClientDTO is not found,
-     * or with status {@code 500 (Internal Server Error)} if the fHIRClientDTO couldn't be updated.
-     * @throws URISyntaxException if the Location URI syntax is incorrect.
-     */
-    @PatchMapping(value = "/fhir-clients/{id}", consumes = { "application/json", "application/merge-patch+json" })
-    public ResponseEntity<FHIRClientDTO> partialUpdateFHIRClient(
-        @PathVariable(value = "id", required = false) final Long id,
-        @NotNull @RequestBody FHIRClientDTO fHIRClientDTO
-    ) throws URISyntaxException {
-        log.debug("REST request to partial update FHIRClient partially : {}, {}", id, fHIRClientDTO);
-        if (fHIRClientDTO.getId() == null) {
-            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
-        }
-        if (!Objects.equals(id, fHIRClientDTO.getId())) {
-            throw new BadRequestAlertException("Invalid ID", ENTITY_NAME, "idinvalid");
-        }
-
-        if (!fHIRClientRepository.existsById(id)) {
-            throw new BadRequestAlertException("Entity not found", ENTITY_NAME, "idnotfound");
-        }
-
-        Optional<FHIRClientDTO> result = fHIRClientService.partialUpdate(fHIRClientDTO);
-
-        return ResponseUtil.wrapOrNotFound(
-            result,
-            HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, fHIRClientDTO.getId().toString())
-        );
-    }
 
     /**
      * {@code GET  /fhir-clients} : get all the fHIRClients.
@@ -163,21 +69,5 @@ public class FHIRClientResource {
         log.debug("REST request to get FHIRClient : {}", id);
         Optional<FHIRClientDTO> fHIRClientDTO = fHIRClientService.findOne(id);
         return ResponseUtil.wrapOrNotFound(fHIRClientDTO);
-    }
-
-    /**
-     * {@code DELETE  /fhir-clients/:id} : delete the "id" fHIRClient.
-     *
-     * @param id the id of the fHIRClientDTO to delete.
-     * @return the {@link ResponseEntity} with status {@code 204 (NO_CONTENT)}.
-     */
-    @DeleteMapping("/fhir-clients/{id}")
-    public ResponseEntity<Void> deleteFHIRClient(@PathVariable Long id) {
-        log.debug("REST request to delete FHIRClient : {}", id);
-        fHIRClientService.delete(id);
-        return ResponseEntity
-            .noContent()
-            .headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString()))
-            .build();
     }
 }
