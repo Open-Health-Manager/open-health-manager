@@ -2,6 +2,7 @@ package org.mitre.healthmanager.service.mapper;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.CodeableConcept;
@@ -12,6 +13,7 @@ import org.hl7.fhir.r4.model.IdType;
 import org.hl7.fhir.r4.model.Identifier;
 import org.hl7.fhir.r4.model.Period;
 import org.hl7.fhir.r4.model.Consent.ConsentProvisionType;
+import org.hl7.fhir.r4.model.Consent.provisionActorComponent;
 import org.mapstruct.AfterMapping;
 import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
@@ -53,18 +55,18 @@ public abstract class FHIRPatientConsentMapper {
 	@Mapping(source = "patient", target = "user", qualifiedByName="patientToUser", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 	@Mapping(source = "provision.actor", target = "client", qualifiedByName="actorToFhirClient", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(source = "idElement.idPart", target = "id")
-	@Mapping(source = "provision.type", target = "approve", qualifiedByName = "consentProvisionTypeToBoolean")
+	@Mapping(source = "provision.type", target = "approve", qualifiedByName = "consentProvisionTypeToBoolean", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 	public abstract FHIRPatientConsentDTO toDtoEagerLoad(Consent s);
 	
 	@BeanMapping(ignoreByDefault = true)
     @Mapping(source = "idElement.idPart", target = "id")
-	@Mapping(source = "provision.type", target = "approve", qualifiedByName = "consentProvisionTypeToBoolean")
+	@Mapping(source = "provision.type", target = "approve", qualifiedByName = "consentProvisionTypeToBoolean", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 	public abstract void updateDto(@MappingTarget FHIRPatientConsentDTO fhirPatientConsentDTO, Consent consent);
 
 	@BeanMapping(ignoreByDefault = true)
 	@Mapping(source = "user", target = "patient", qualifiedByName="userToPatient", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 	@Mapping(target = "organization", constant="urn:mitre:healthmanager", qualifiedByName="urnToOrganization")
-	@Mapping(source = "approve", target = "provision.type", qualifiedByName = "approveToConsentProvisionType")
+	@Mapping(source = "approve", target = "provision.type", qualifiedByName = "approveToConsentProvisionType", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 	public abstract Consent toConsent(FHIRPatientConsentDTO fhirPatientConsentDTO);
 
     @Named("userLogin")
@@ -95,14 +97,19 @@ public abstract class FHIRPatientConsentMapper {
     @Named("actorToFhirClient")
 	public FHIRClientDTO actorToFhirClient(List<Consent.provisionActorComponent> actors) {
     	if(actors.get(0) != null) {
-    		String organizationId = actors.get(0).getReference().getReferenceElement().getIdPart();	
-        	return fhirClientRepository.findByFhirOrganizationId(organizationId)
-        		.stream()
-        		.findFirst()
-        		.map(fhirClient -> toDtoFHIRClient(fhirClient))
-        		.get(); 
+    		return referenceToFhirClient(actors.get(0).getReference());
     	}
 		return null;
+    }
+    
+    @Named("referenceToFhirClient")
+	public FHIRClientDTO referenceToFhirClient(Reference organization) {
+    	String organizationId = organization.getReferenceElement().getIdPart();	
+        return fhirClientRepository.findByFhirOrganizationId(organizationId)
+        	.stream()
+        	.findFirst()
+       		.map(fhirClient -> toDtoFHIRClient(fhirClient))
+       		.orElse(null);
     }
     
     @Named("fhirClientToReference")
@@ -144,12 +151,15 @@ public abstract class FHIRPatientConsentMapper {
         // Consent.provision.period.start
         provision.setPeriod(new Period().setStartElement(DateTimeType.now()));
         // Consent.provision.actor.role
+        Consent.provisionActorComponent actor = new Consent.provisionActorComponent();
+        provision.addActor(actor);
         CodeableConcept role = new CodeableConcept().addCoding(
-        		new Coding(PROVISION_ACTOR_ROLE_SYSTEM, PROVISION_ACTOR_ROLE_VALUE, null)); 
+        		new Coding(PROVISION_ACTOR_ROLE_SYSTEM, PROVISION_ACTOR_ROLE_VALUE, null));   
+        actor.setRole(role);
         // Consent.provision.actor.reference
-        String fhirOrganizationId = fhirClientRepository.getById(fhirPatientConsentDTO.getClient().getId()).getFhirOrganizationId();
-        provision.addActor(new Consent.provisionActorComponent(
-        		role, 
-        		new Reference().setReferenceElement(new IdType("Organization", fhirOrganizationId))));    
+        if(!Objects.isNull(fhirPatientConsentDTO.getClient()) && !Objects.isNull(fhirPatientConsentDTO.getClient().getId())) {
+            String fhirOrganizationId = fhirClientRepository.getById(fhirPatientConsentDTO.getClient().getId()).getFhirOrganizationId();
+            actor.setReference(new Reference().setReferenceElement(new IdType("Organization", fhirOrganizationId)));  	
+        }  
     }
 }

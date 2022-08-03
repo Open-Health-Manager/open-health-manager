@@ -168,6 +168,19 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
     }
     
     @ExceptionHandler
+    public ResponseEntity<Problem> handleInvalidConsentException(
+        org.mitre.healthmanager.service.InvalidConsentException ex,
+        NativeWebRequest request
+    ) {
+    	InvalidConsentException problem = new InvalidConsentException();
+        return create(
+            problem,
+            request,
+            HeaderUtil.createFailureAlert(applicationName, true, problem.getEntityName(), problem.getErrorKey(), problem.getMessage())
+        );
+    }
+    
+    @ExceptionHandler
     public ResponseEntity<Problem> handleInvalidDuaException(
         org.mitre.healthmanager.service.InvalidDUAException ex,
         NativeWebRequest request

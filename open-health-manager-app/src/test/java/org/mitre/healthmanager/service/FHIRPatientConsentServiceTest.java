@@ -135,4 +135,17 @@ class FHIRPatientConsentServiceTest {
 		assertTrue(actualConsent.getProvision().getPeriod().getStartElement().after(originalDateTimeType));
 	}
 
+	@Test
+	void testFindActiveByUser() {
+		FHIRPatientConsentDTO fhirPatientConsentDTO = setupDefaultPatientClient();
+		Consent consent = fhirPatientConsentMapper.toConsent(fhirPatientConsentDTO);
+		IBundleProvider bundle = BundleProviders.newList(consent);
+		when(myDaoRegistry.getResourceDao(Consent.class)).thenReturn(consentDAO);	
+		when(consentDAO.search(any(SearchParameterMap.class), any(RequestDetails.class))).thenReturn(bundle);
+		
+		ArgumentCaptor<SearchParameterMap> captor = ArgumentCaptor.forClass(SearchParameterMap.class);
+		fhirPatientConsentService.findActiveByUser(fhirPatientConsentDTO.getUser());
+		verify(consentDAO).search(captor.capture(), any(RequestDetails.class));
+		assertEquals("fhirPatient", fhirPatientConsentMapper.userToPatient(fhirPatientConsentDTO.getUser()).getReferenceElement().getIdPart());
+	}
 }

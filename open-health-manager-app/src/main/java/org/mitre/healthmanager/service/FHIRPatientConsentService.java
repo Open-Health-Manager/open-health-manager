@@ -30,7 +30,7 @@ import ca.uhn.fhir.jpa.searchparam.SearchParameterMap;
 import ca.uhn.fhir.rest.api.server.IBundleProvider;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
 import ca.uhn.fhir.rest.param.ReferenceParam;
-import ca.uhn.fhir.rest.param.StringParam;
+import ca.uhn.fhir.rest.param.TokenParam;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 
 /**
@@ -60,12 +60,25 @@ public class FHIRPatientConsentService {
      */
     public FHIRPatientConsentDTO save(FHIRPatientConsentDTO fHIRPatientConsentDTO) {
         log.debug("Request to save FHIRPatientConsent : {}", fHIRPatientConsentDTO);
+        if(Objects.isNull(fHIRPatientConsentDTO.getClient()) || Objects.isNull(fHIRPatientConsentDTO.getClient().getId())) {
+        	throw new InvalidConsentException("Missing required client.");	
+        }
+        //disallow duplicate user and client
+        if(findActiveConsentByUserAndClient(fHIRPatientConsentDTO.getUser(), fHIRPatientConsentDTO.getClient())
+        		.get().stream().findFirst().isPresent()) {
+        	throw new InvalidConsentException("Active consent exists for user and client.");	
+        }
+        
         Consent consent = fhirPatientConsentMapper.toConsent(fHIRPatientConsentDTO);      
+        if(consent.getProvision().getActorFirstRep().getReference() == null) {
+        	throw new InvalidConsentException("Missing required fhir organization resource.");	
+        }
+        
         IFhirResourceDao<Consent> resourceDAO = myDaoRegistry.getResourceDao(Consent.class);
         RequestDetails requestDetails = SystemRequestDetails.forAllPartition();
         DaoMethodOutcome resp = resourceDAO.create(consent, requestDetails);
         if (!resp.getCreated()) {
-            throw new RuntimeException("FHIR Consent creation failed");
+            throw new InvalidConsentException("FHIR Consent creation failed");
         }
         fhirPatientConsentMapper.updateDto(fHIRPatientConsentDTO, (Consent) resp.getResource());            
         return fHIRPatientConsentDTO;
@@ -92,17 +105,14 @@ public class FHIRPatientConsentService {
     			consent.getProvision().getTypeElement() != null){
         	Boolean consentApprove = consent.getProvision().getType().equals(Consent.ConsentProvisionType.PERMIT);	
         	if(consentApprove != fHIRPatientConsentDTO.getApprove()) {
-        		//change in approve/deny, set period start
-        		consent.getProvision().setType(fHIRPatientConsentDTO.getApprove() ? Consent.ConsentProvisionType.PERMIT : Consent.ConsentProvisionType.DENY);
+        		//change in approve/deny, set new period start
+        		consent.getProvision().setType(fhirPatientConsentMapper.approveToConsentProvisionType(fHIRPatientConsentDTO.getApprove()));
         		consent.getProvision().setPeriod(new Period().setStartElement(DateTimeType.now()));
         	}
     	}
         IFhirResourceDao<Consent> resourceDAO = myDaoRegistry.getResourceDao(Consent.class);
         RequestDetails requestDetails = SystemRequestDetails.forAllPartition();
         DaoMethodOutcome resp = resourceDAO.update(consent, requestDetails);
-        if (!resp.getCreated()) {
-            throw new RuntimeException("FHIR Consent creation failed");
-        }
         fhirPatientConsentMapper.updateDto(fHIRPatientConsentDTO, (Consent) resp.getResource()); 
         return fHIRPatientConsentDTO;
     }
@@ -114,30 +124,22 @@ public class FHIRPatientConsentService {
     */
     public Page<FHIRPatientConsentDTO> findAllWithEagerRelationships(Pageable pageable) {
         log.debug("Request to get all FHIRPatientConsents");
-        IFhirResourceDao<Consent> resourceDAO = myDaoRegistry.getResourceDao(Consent.class);
-        RequestDetails requestDetails = SystemRequestDetails.forAllPartition();
-        // reference:identifier search does not seem to work, for now manually filter
-        //SearchParameterMap searchParameterMap = new SearchParameterMap("organization", new ReferenceParam("identifier", "urn:mitre:healthmanager|"));
-        		//.add(Constants.PARAM_OFFSET, new NumberParam(pageable.getPageNumber())) not available
-        		//.add(Constants.PARAM_COUNT, new NumberParam(pageable.getPageSize()));
-        SearchParameterMap searchParameterMap = new SearchParameterMap();
-        IBundleProvider results = resourceDAO.search(searchParameterMap, requestDetails);
+        List<FHIRPatientConsentDTO> results = findAll();
         
-        List<FHIRPatientConsentDTO> pageList = results.getAllResources()
-        		.stream()
-        		.map(resource -> (Consent) resource)
-        		.filter(consent -> consent.getOrganizationFirstRep() != null)
-        		.filter(consent -> consent.getOrganizationFirstRep().getIdentifier() != null)
-        		.filter(consent -> consent.getOrganizationFirstRep().getIdentifier().getSystem() != null)
-        		.filter(consent -> consent.getOrganizationFirstRep().getIdentifier().getSystem().equals("urn:mitre:healthmanager"))
-        	    .skip(pageable.getPageSize() * pageable.getPageNumber())
-        	    .limit(pageable.getPageSize())
-        	    .map(consent -> {
-        	    	return fhirPatientConsentMapper.toDtoEagerLoad(consent);          	    	
-        	    })
-        	    .collect(Collectors.toList());
+        List<FHIRPatientConsentDTO> list = results
+        	.stream()
+            .skip(pageable.getPageSize() * pageable.getPageNumber())
+       	    .limit(pageable.getPageSize())
+       	    .map(fHIRPatientConsentDTO -> {
+       	    	Consent consent = (Consent) FhirContext.forR4().newJsonParser().parseResource(fHIRPatientConsentDTO.getFhirResource());
+       	    	fHIRPatientConsentDTO.setUser(fhirPatientConsentMapper.patientToUser(consent.getPatient()));
+       	    	fHIRPatientConsentDTO.setClient(fhirPatientConsentMapper.referenceToFhirClient(
+       	    		consent.getProvision().getActorFirstRep().getReference()));
+       	    	return fHIRPatientConsentDTO;          	    	
+       	    })
+       	    .collect(Collectors.toList());
 
-        return new PageImpl<>(pageList, pageable, results.getAllResources().size());
+        return new PageImpl<>(list, pageable, results.size());
     }
 
 
@@ -148,27 +150,46 @@ public class FHIRPatientConsentService {
      * @return the list of entities.
      */
     public Page<FHIRPatientConsentDTO> findAll(Pageable pageable) {
+    	List<FHIRPatientConsentDTO> results = findAll();
+        
+        List<FHIRPatientConsentDTO> list = results
+        	.stream()
+            .skip(pageable.getPageSize() * pageable.getPageNumber())
+       	    .limit(pageable.getPageSize())
+       	    .collect(Collectors.toList());
+
+        return new PageImpl<>(list, pageable, results.size());
+    }
+    
+    /**
+     * Get all the fHIRPatientConsents.
+     *
+     * @return the list of entities.
+     */
+    public List<FHIRPatientConsentDTO> findAll() {
         log.debug("Request to get all FHIRPatientConsents");
         IFhirResourceDao<Consent> resourceDAO = myDaoRegistry.getResourceDao(Consent.class);
         RequestDetails requestDetails = SystemRequestDetails.forAllPartition();
         SearchParameterMap searchParameterMap = new SearchParameterMap();
+        // reference:identifier search does not seem to work, for now manually filter
+        //SearchParameterMap searchParameterMap = new SearchParameterMap("organization", new ReferenceParam("identifier", "urn:mitre:healthmanager|"));
+        		//.add(Constants.PARAM_OFFSET, new NumberParam(pageable.getPageNumber())) not available
+        		//.add(Constants.PARAM_COUNT, new NumberParam(pageable.getPageSize()));
         IBundleProvider results = resourceDAO.search(searchParameterMap, requestDetails);
         
-        List<FHIRPatientConsentDTO> pageList = results.getAllResources()
+        List<FHIRPatientConsentDTO> list = results.getAllResources()
         		.stream()
         		.map(resource -> (Consent) resource)
         		.filter(consent -> consent.getOrganizationFirstRep() != null)
         		.filter(consent -> consent.getOrganizationFirstRep().getIdentifier() != null)
         		.filter(consent -> consent.getOrganizationFirstRep().getIdentifier().getSystem() != null)
         		.filter(consent -> consent.getOrganizationFirstRep().getIdentifier().getSystem().equals("urn:mitre:healthmanager"))
-        	    .skip(pageable.getPageSize() * pageable.getPageNumber())
-        	    .limit(pageable.getPageSize())
         	    .map(consent -> {
         	    	return fhirPatientConsentMapper.toDto(consent);          	    	
         	    })
         	    .collect(Collectors.toList());
 
-        return new PageImpl<>(pageList, pageable, results.getAllResources().size());
+        return list;
     }
 
     /**
@@ -184,7 +205,7 @@ public class FHIRPatientConsentService {
     	try {
     		consent = resourceDAO.read(new IdType(id));
     	} catch(ResourceNotFoundException rnfe) {    		
-			throw new RuntimeException("Consent resource does not exist.");
+			throw new InvalidConsentException("Consent resource does not exist.");
 		}
     	
     	FHIRPatientConsentDTO consentDTO = fhirPatientConsentMapper.toDtoEagerLoad(consent);  
@@ -217,7 +238,7 @@ public class FHIRPatientConsentService {
         // reference:identifier search does not seem to work, for now manually filter
         //SearchParameterMap searchParameterMap = new SearchParameterMap("organization", new ReferenceParam("identifier", "urn:mitre:healthmanager|"));
         SearchParameterMap searchParameterMap = new SearchParameterMap();
-        searchParameterMap.add("active", new StringParam("true"));
+        searchParameterMap.add("status", new TokenParam("active"));
         searchParameterMap.add("patient", new ReferenceParam().setValue(fhirPatientConsentMapper.userToPatient(userDTO).getReference()));
         IBundleProvider results = resourceDAO.search(searchParameterMap, requestDetails);
         
@@ -241,7 +262,7 @@ public class FHIRPatientConsentService {
         IFhirResourceDao<Consent> resourceDAO = myDaoRegistry.getResourceDao(Consent.class);
         RequestDetails requestDetails = SystemRequestDetails.forAllPartition();
         SearchParameterMap searchParameterMap = new SearchParameterMap();
-        searchParameterMap.add("active", new StringParam("true"));
+        searchParameterMap.add("status", new TokenParam("active"));
         searchParameterMap.add("patient", new ReferenceParam().setValue(fhirPatientConsentMapper.userToPatient(userDTO).getReference()));
         IBundleProvider results = resourceDAO.search(searchParameterMap, requestDetails);
         

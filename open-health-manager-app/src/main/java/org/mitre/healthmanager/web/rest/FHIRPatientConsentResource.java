@@ -98,7 +98,12 @@ public class FHIRPatientConsentResource {
     public ResponseEntity<List<FHIRPatientConsentDTO>> getActiveUserFHIRPatientConsents() {
         log.debug("REST request to get user FHIRPatientConsents");
         User user = userService.getUserWithAuthorities().get();
-        Optional<List<FHIRPatientConsentDTO>> list = fHIRPatientConsentService.findActiveByUser(new UserDTO(user));
+        Optional<List<FHIRPatientConsentDTO>> list;
+        if(isAdmin(user)) {
+            list = Optional.ofNullable(fHIRPatientConsentService.findAll());
+        } else {
+        	list = fHIRPatientConsentService.findActiveByUser(new UserDTO(user));
+        }
         return ResponseUtil.wrapOrNotFound(list);
     }
 
