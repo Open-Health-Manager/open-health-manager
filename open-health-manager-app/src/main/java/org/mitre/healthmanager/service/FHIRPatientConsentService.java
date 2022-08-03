@@ -96,12 +96,9 @@ public class FHIRPatientConsentService {
     public FHIRPatientConsentDTO update(FHIRPatientConsentDTO fHIRPatientConsentDTO) {
         log.debug("Request to save FHIRPatientConsent : {}", fHIRPatientConsentDTO);
         
-        Consent consent;
-        if(Objects.isNull(fHIRPatientConsentDTO.getFhirResource())) {
-        	consent = findActiveConsentByUserAndClient(fHIRPatientConsentDTO.getUser(), fHIRPatientConsentDTO.getClient())
-        		.get().stream().findFirst().get();
-        }else {
-        	consent = (Consent) FhirContext.forR4().newJsonParser().parseResource(fHIRPatientConsentDTO.getFhirResource());
+        Consent consent = findById(fHIRPatientConsentDTO.getId());        
+        if(Objects.isNull(consent)) {
+        	throw new InvalidConsentException("Consent resource not found.");
         }
         
     	if(consent.getProvision() != null &&
@@ -111,6 +108,9 @@ public class FHIRPatientConsentService {
         		//change in approve/deny, set new period start
         		consent.getProvision().setType(fhirPatientConsentMapper.approveToConsentProvisionType(fHIRPatientConsentDTO.getApprove()));
         		consent.getProvision().setPeriod(new Period().setStartElement(DateTimeType.now()));
+        	} else {
+        		// approve/deny is only allowed update operation
+        		throw new InvalidConsentException("FHIR Consent update not allowed except for provision type.");
         	}
     	}
         IFhirResourceDao<Consent> resourceDAO = myDaoRegistry.getResourceDao(Consent.class);
@@ -203,16 +203,8 @@ public class FHIRPatientConsentService {
      */
     public Optional<FHIRPatientConsentDTO> findOne(String id) {
         log.debug("Request to get FHIRPatientConsent : {}", id);
-    	IFhirResourceDao<Consent> resourceDAO = myDaoRegistry.getResourceDao(Consent.class);
-    	Consent consent = null;
-    	try {
-    		consent = resourceDAO.read(new IdType(id));
-    	} catch(ResourceNotFoundException rnfe) {    		
-			throw new InvalidConsentException("Consent resource does not exist.");
-		}
-    	
-    	FHIRPatientConsentDTO consentDTO = fhirPatientConsentMapper.toDtoEagerLoad(consent);  
-    	
+    	Consent consent = findById(id);    
+    	FHIRPatientConsentDTO consentDTO = fhirPatientConsentMapper.toDtoEagerLoad(consent);      	
     	return Optional.of(consentDTO);
     }
 
@@ -258,6 +250,19 @@ public class FHIRPatientConsentService {
         	    .collect(Collectors.toList());  
     	
     	return Optional.of(filteredList);
+    }
+    
+    public Consent findById(String id) {
+        log.debug("Request to get FHIRPatientConsent : {}", id);
+    	IFhirResourceDao<Consent> resourceDAO = myDaoRegistry.getResourceDao(Consent.class);
+    	Consent consent = null;
+    	try {
+    		consent = resourceDAO.read(new IdType(id));
+    	} catch(ResourceNotFoundException rnfe) {    		
+			throw new InvalidConsentException("Consent resource does not exist.");
+		}
+    	    	     
+    	return consent;
     }
     
     private Optional<List<Consent>> findActiveConsentByUserAndClient(UserDTO userDTO, FHIRClientDTO fhirClientDTO) {

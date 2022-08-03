@@ -37,6 +37,8 @@ import ca.uhn.fhir.context.FhirContext;
  */
 @Mapper(componentModel = "spring")
 public abstract class FHIRPatientConsentMapper {
+    public static final String SCOPE_SYSTEM = "http://terminology.hl7.org/CodeSystem/consentscope";
+    public static final String SCOPE_VALUE =  "patient-privacy";
     public static final String PROVISION_ACTOR_ROLE_SYSTEM = "http://terminology.hl7.org/CodeSystem/v3-RoleCode";
     public static final String PROVISION_ACTOR_ROLE_VALUE =  "DELEGATEE";
     
@@ -146,6 +148,9 @@ public abstract class FHIRPatientConsentMapper {
     public void updateDefaultConsent(FHIRPatientConsentDTO fhirPatientConsentDTO,  @MappingTarget Consent consent) {        
         // Consent.status
         consent.setStatus(Consent.ConsentState.ACTIVE);
+        // Consent.scope
+        consent.setScope(new CodeableConcept().addCoding(
+        		new Coding(SCOPE_SYSTEM, SCOPE_VALUE, null)));
         // Consent.provision
         Consent.provisionComponent provision = consent.getProvision();
         // Consent.provision.period.start
@@ -153,9 +158,8 @@ public abstract class FHIRPatientConsentMapper {
         // Consent.provision.actor.role
         Consent.provisionActorComponent actor = new Consent.provisionActorComponent();
         provision.addActor(actor);
-        CodeableConcept role = new CodeableConcept().addCoding(
-        		new Coding(PROVISION_ACTOR_ROLE_SYSTEM, PROVISION_ACTOR_ROLE_VALUE, null));   
-        actor.setRole(role);
+        actor.setRole(new CodeableConcept().addCoding(
+        		new Coding(PROVISION_ACTOR_ROLE_SYSTEM, PROVISION_ACTOR_ROLE_VALUE, null)));
         // Consent.provision.actor.reference
         if(!Objects.isNull(fhirPatientConsentDTO.getClient()) && !Objects.isNull(fhirPatientConsentDTO.getClient().getId())) {
             String fhirOrganizationId = fhirClientRepository.getById(fhirPatientConsentDTO.getClient().getId()).getFhirOrganizationId();
