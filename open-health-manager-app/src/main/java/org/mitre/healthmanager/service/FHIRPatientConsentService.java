@@ -55,11 +55,14 @@ public class FHIRPatientConsentService {
     /**
      * Save a fHIRPatientConsent.
      *
-     * @param fHIRPatientConsentDTO the patient and client for which to create new consent reource to save.
+     * @param fHIRPatientConsentDTO the patient and client for which to create new consent resource to save.
      * @return the persisted resource.
      */
     public FHIRPatientConsentDTO save(FHIRPatientConsentDTO fHIRPatientConsentDTO) {
         log.debug("Request to save FHIRPatientConsent : {}", fHIRPatientConsentDTO);
+        if(Objects.isNull(fHIRPatientConsentDTO.getUser()) || Objects.isNull(fHIRPatientConsentDTO.getUser().getId())) {
+        	throw new InvalidConsentException("Missing required user.");	
+        }
         if(Objects.isNull(fHIRPatientConsentDTO.getClient()) || Objects.isNull(fHIRPatientConsentDTO.getClient().getId())) {
         	throw new InvalidConsentException("Missing required client.");	
         }
