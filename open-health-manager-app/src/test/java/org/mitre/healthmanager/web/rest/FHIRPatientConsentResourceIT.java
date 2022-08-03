@@ -1,35 +1,39 @@
 package org.mitre.healthmanager.web.rest;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicLong;
+
 import javax.persistence.EntityManager;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mitre.healthmanager.IntegrationTest;
-import org.mitre.healthmanager.domain.FHIRPatientConsent;
 import org.mitre.healthmanager.domain.User;
-import org.mitre.healthmanager.repository.FHIRPatientConsentRepository;
 import org.mitre.healthmanager.service.FHIRPatientConsentService;
+import org.mitre.healthmanager.service.dto.FHIRPatientConsentDTO;
+import org.mitre.healthmanager.service.dto.UserDTO;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.Base64Utils;
 
 /**
  * Integration tests for the {@link FHIRPatientConsentResource} REST controller.
@@ -53,21 +57,19 @@ class FHIRPatientConsentResourceIT {
     private static AtomicLong count = new AtomicLong(random.nextInt() + (2 * Integer.MAX_VALUE));
 
     @Autowired
-    private FHIRPatientConsentRepository fHIRPatientConsentRepository;
-
-    @Mock
-    private FHIRPatientConsentRepository fHIRPatientConsentRepositoryMock;
+    private FHIRPatientConsentService fHIRPatientConsentService;
 
     @Mock
     private FHIRPatientConsentService fHIRPatientConsentServiceMock;
 
     @Autowired
+    @Qualifier("jhipsterEntityManagerFactory")
     private EntityManager em;
 
     @Autowired
     private MockMvc restFHIRPatientConsentMockMvc;
 
-    private FHIRPatientConsent fHIRPatientConsent;
+    private FHIRPatientConsentDTO fHIRPatientConsentDTO;
 
     /**
      * Create an entity for this test.
@@ -75,14 +77,16 @@ class FHIRPatientConsentResourceIT {
      * This is a static method, as tests for other entities might also need it,
      * if they test an entity which requires the current entity.
      */
-    public static FHIRPatientConsent createEntity(EntityManager em) {
-        FHIRPatientConsent fHIRPatientConsent = new FHIRPatientConsent().approve(DEFAULT_APPROVE).fhirResource(DEFAULT_FHIR_RESOURCE);
+    public static FHIRPatientConsentDTO createEntity(EntityManager em) {
+    	FHIRPatientConsentDTO fHIRPatientConsentDTO = new FHIRPatientConsentDTO();
+    	fHIRPatientConsentDTO.setApprove(DEFAULT_APPROVE);
+    	fHIRPatientConsentDTO.setFhirResource(DEFAULT_FHIR_RESOURCE);
         // Add required entity
         User user = UserResourceIT.createEntity(em);
         em.persist(user);
         em.flush();
-        fHIRPatientConsent.setUser(user);
-        return fHIRPatientConsent;
+        fHIRPatientConsentDTO.setUser(new UserDTO(user));
+        return fHIRPatientConsentDTO;
     }
 
     /**
@@ -91,33 +95,35 @@ class FHIRPatientConsentResourceIT {
      * This is a static method, as tests for other entities might also need it,
      * if they test an entity which requires the current entity.
      */
-    public static FHIRPatientConsent createUpdatedEntity(EntityManager em) {
-        FHIRPatientConsent fHIRPatientConsent = new FHIRPatientConsent().approve(UPDATED_APPROVE).fhirResource(UPDATED_FHIR_RESOURCE);
+    public static FHIRPatientConsentDTO createUpdatedEntity(EntityManager em) {
+    	FHIRPatientConsentDTO fHIRPatientConsentDTO = new FHIRPatientConsentDTO();
+    	fHIRPatientConsentDTO.setApprove(UPDATED_APPROVE);
+    	fHIRPatientConsentDTO.setFhirResource(UPDATED_FHIR_RESOURCE);
         // Add required entity
         User user = UserResourceIT.createEntity(em);
         em.persist(user);
         em.flush();
-        fHIRPatientConsent.setUser(user);
-        return fHIRPatientConsent;
+        fHIRPatientConsentDTO.setUser(new UserDTO(user));
+        return fHIRPatientConsentDTO;
     }
 
     @BeforeEach
     public void initTest() {
-        fHIRPatientConsent = createEntity(em);
+    	fHIRPatientConsentDTO = createEntity(em);
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void getAllFHIRPatientConsents() throws Exception {
         // Initialize the database
-        fHIRPatientConsentRepository.saveAndFlush(fHIRPatientConsent);
+    	fHIRPatientConsentService.save(fHIRPatientConsentDTO);
 
         // Get all the fHIRPatientConsentList
         restFHIRPatientConsentMockMvc
             .perform(get(ENTITY_API_URL + "?sort=id,desc"))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("$.[*].id").value(hasItem(fHIRPatientConsent.getId().intValue())))
+            .andExpect(jsonPath("$.[*].id").value(hasItem(fHIRPatientConsentDTO.getId())))
             .andExpect(jsonPath("$.[*].approve").value(hasItem(DEFAULT_APPROVE.booleanValue())))
             .andExpect(jsonPath("$.[*].fhirResource").value(hasItem(DEFAULT_FHIR_RESOURCE.toString())));
     }
@@ -141,23 +147,23 @@ class FHIRPatientConsentResourceIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void getFHIRPatientConsent() throws Exception {
         // Initialize the database
-        fHIRPatientConsentRepository.saveAndFlush(fHIRPatientConsent);
+    	fHIRPatientConsentService.save(fHIRPatientConsentDTO);
 
         // Get the fHIRPatientConsent
         restFHIRPatientConsentMockMvc
-            .perform(get(ENTITY_API_URL_ID, fHIRPatientConsent.getId()))
+            .perform(get(ENTITY_API_URL_ID, fHIRPatientConsentDTO.getId()))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("$.id").value(fHIRPatientConsent.getId().intValue()))
+            .andExpect(jsonPath("$.id").value(fHIRPatientConsentDTO.getId()))
             .andExpect(jsonPath("$.approve").value(DEFAULT_APPROVE.booleanValue()))
             .andExpect(jsonPath("$.fhirResource").value(DEFAULT_FHIR_RESOURCE.toString()));
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void getNonExistingFHIRPatientConsent() throws Exception {
         // Get the fHIRPatientConsent
         restFHIRPatientConsentMockMvc.perform(get(ENTITY_API_URL_ID, Long.MAX_VALUE)).andExpect(status().isNotFound());

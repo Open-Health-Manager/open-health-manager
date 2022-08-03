@@ -1,5 +1,7 @@
 package org.mitre.healthmanager.repository;
 
+import java.util.List;
+
 import org.mitre.healthmanager.domain.FHIRClient;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.stereotype.Repository;
@@ -9,4 +11,6 @@ import org.springframework.stereotype.Repository;
  */
 @SuppressWarnings("unused")
 @Repository
-public interface FHIRClientRepository extends JpaRepository<FHIRClient, Long> {}
+public interface FHIRClientRepository extends JpaRepository<FHIRClient, Long> {
+	List<FHIRClient> findByFhirOrganizationId(String fhirOrganizationId);
+}

@@ -40,4 +40,6 @@ public interface FHIRPatientRepository extends JpaRepository<FHIRPatient, Long> 
     
     @Query("select fHIRPatient from FHIRPatient fHIRPatient where user_id =:id")
     Optional<FHIRPatient> findOneForUser(@Param("id") Long id);
+    
+    List<FHIRPatient> findByFhirId(String fhirId);
 }

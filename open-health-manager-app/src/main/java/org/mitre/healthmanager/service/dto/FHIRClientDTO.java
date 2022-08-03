@@ -12,15 +12,12 @@ public class FHIRClientDTO implements Serializable {
 
     private Long id;
 
-    @NotNull
     private String name;
 
-    @NotNull
     private String displayName;
 
     private String uri;
 
-    @NotNull
     private String fhirOrganizationId;
 
     private ClientDirection clientDirection;

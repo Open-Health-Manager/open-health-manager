@@ -2,31 +2,40 @@ package org.mitre.healthmanager.service.dto;
 
 import java.io.Serializable;
 import java.util.Objects;
-import javax.persistence.Lob;
-import javax.validation.constraints.*;
 
 /**
  * A DTO for the {@link org.mitre.healthmanager.domain.FHIRPatientConsent} entity.
  */
 public class FHIRPatientConsentDTO implements Serializable {
 
-    private Long id;
+    private static final long serialVersionUID = 1L;
 
-    @Lob
+	private String id;
+
+    private Boolean approve;
+    
     private String fhirResource;
 
     private UserDTO user;
 
     private FHIRClientDTO client;
 
-    public Long getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(String id) {
         this.id = id;
     }
 
+    public Boolean getApprove() {
+        return this.approve;
+    }
+
+    public void setApprove(Boolean approve) {
+        this.approve = approve;
+    }
+    
     public String getFhirResource() {
         return fhirResource;
     }
