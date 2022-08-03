@@ -1,6 +1,6 @@
 {
   "applications": ["OpenHealthManagerApp"],
-  "changelogDate": "20220728180919",
+  "changelogDate": "20220803164731",
   "dto": "no",
   "embedded": false,
   "entityTableName": "fhir_patient_consent",
@@ -19,7 +19,7 @@
   "jpaMetamodelFiltering": false,
   "name": "FHIRPatientConsent",
   "pagination": "pagination",
-  "readOnly": true,
+  "readOnly": false,
   "relationships": [
     {
       "otherEntityField": "login",

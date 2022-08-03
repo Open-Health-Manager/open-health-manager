@@ -4,7 +4,15 @@
       "home": {
         "title": "FHIR Patient Consents",
         "refreshListLabel": "Refresh list",
+        "createLabel": "Create a new FHIR Patient Consent",
+        "createOrEditLabel": "Create or edit a FHIR Patient Consent",
         "notFound": "No FHIR Patient Consents found"
+      },
+      "created": "A new FHIR Patient Consent is created with identifier {{ param }}",
+      "updated": "A FHIR Patient Consent is updated with identifier {{ param }}",
+      "deleted": "A FHIR Patient Consent is deleted with identifier {{ param }}",
+      "delete": {
+        "question": "Are you sure you want to delete FHIR Patient Consent {{ id }}?"
       },
       "detail": {
         "title": "FHIR Patient Consent"

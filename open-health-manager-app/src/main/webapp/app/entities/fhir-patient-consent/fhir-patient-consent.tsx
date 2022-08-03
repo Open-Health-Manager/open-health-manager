@@ -89,6 +89,16 @@ export const FHIRPatientConsent = (props: RouteComponentProps<{ url: string }>) 
             <FontAwesomeIcon icon="sync" spin={loading} />{' '}
             <Translate contentKey="openHealthManagerApp.fHIRPatientConsent.home.refreshListLabel">Refresh List</Translate>
           </Button>
+          <Link
+            to="/fhir-patient-consent/new"
+            className="btn btn-primary jh-create-entity"
+            id="jh-create-entity"
+            data-cy="entityCreateButton"
+          >
+            <FontAwesomeIcon icon="plus" />
+            &nbsp;
+            <Translate contentKey="openHealthManagerApp.fHIRPatientConsent.home.createLabel">Create new FHIR Patient Consent</Translate>
+          </Link>
         </div>
       </h2>
       <div className="table-responsive">
@@ -146,6 +156,30 @@ export const FHIRPatientConsent = (props: RouteComponentProps<{ url: string }>) 
                         <FontAwesomeIcon icon="eye" />{' '}
                         <span className="d-none d-md-inline">
                           <Translate contentKey="entity.action.view">View</Translate>
+                        </span>
+                      </Button>
+                      <Button
+                        tag={Link}
+                        to={`/fhir-patient-consent/${fHIRPatientConsent.id}/edit?page=${paginationState.activePage}&sort=${paginationState.sort},${paginationState.order}`}
+                        color="primary"
+                        size="sm"
+                        data-cy="entityEditButton"
+                      >
+                        <FontAwesomeIcon icon="pencil-alt" />{' '}
+                        <span className="d-none d-md-inline">
+                          <Translate contentKey="entity.action.edit">Edit</Translate>
+                        </span>
+                      </Button>
+                      <Button
+                        tag={Link}
+                        to={`/fhir-patient-consent/${fHIRPatientConsent.id}/delete?page=${paginationState.activePage}&sort=${paginationState.sort},${paginationState.order}`}
+                        color="danger"
+                        size="sm"
+                        data-cy="entityDeleteButton"
+                      >
+                        <FontAwesomeIcon icon="trash" />{' '}
+                        <span className="d-none d-md-inline">
+                          <Translate contentKey="entity.action.delete">Delete</Translate>
                         </span>
                       </Button>
                     </div>
