@@ -28,6 +28,7 @@ import ca.uhn.fhir.jpa.partition.SystemRequestDetails;
 import ca.uhn.fhir.jpa.searchparam.SearchParameterMap;
 import ca.uhn.fhir.rest.api.server.IBundleProvider;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
+import ca.uhn.fhir.rest.param.StringParam;
 import ca.uhn.fhir.rest.param.TokenParam;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 
@@ -64,14 +65,16 @@ public class FHIRClientService {
     public FHIRClientDTO save(FHIRClientDTO fHIRClientDTO) {
         log.debug("Request to save FHIRClient : {}", fHIRClientDTO);
         FHIRClient fHIRClient = fHIRClientMapper.toEntity(fHIRClientDTO);
-        fHIRClient = fHIRClientRepository.save(fHIRClient);
 
         // create the organization resource
         Organization organizationFHIR = new Organization();
         organizationFHIR.setName(fHIRClient.getName());
 
-
-        fHIRClient.fhirOrganizationId(saveOrganizationResource(organizationFHIR, fHIRClient));
+        if (fHIRClient.getFhirOrganizationId() != null && fHIRClient.getFhirOrganizationId().length() > 0) {
+            updateFHIROrganization(fHIRClient);
+        } else {
+            fHIRClient.fhirOrganizationId(saveOrganizationResource(organizationFHIR, fHIRClient));
+        }
         fHIRClient = fHIRClientRepository.save(fHIRClient);
         return fHIRClientMapper.toDto(fHIRClient);
     }
@@ -85,6 +88,7 @@ public class FHIRClientService {
     public FHIRClientDTO update(FHIRClientDTO fHIRClientDTO) {
         log.debug("Request to save FHIRClient : {}", fHIRClientDTO);
         FHIRClient fHIRClient = fHIRClientMapper.toEntity(fHIRClientDTO);
+        fHIRClient.fhirOrganizationId(updateFHIROrganization(fHIRClient));
         fHIRClient = fHIRClientRepository.save(fHIRClient);
         return fHIRClientMapper.toDto(fHIRClient);
     }
@@ -102,7 +106,7 @@ public class FHIRClientService {
             .findById(fHIRClientDTO.getId())
             .map(existingFHIRClient -> {
                 fHIRClientMapper.partialUpdate(existingFHIRClient, fHIRClientDTO);
-
+                existingFHIRClient.fhirOrganizationId(updateFHIROrganization(existingFHIRClient));
                 return existingFHIRClient;
             })
             .map(fHIRClientRepository::save)
@@ -143,21 +147,16 @@ public class FHIRClientService {
         fHIRClientRepository.deleteById(id);
     }
 
-    // internal save or update
-    // need to manually unlink organization resource identifiers for now in case of failures
-    private void saveFHIROrganization(FHIRClient fhirClient) {
+    // Update the FHIR Organization if the FHIR client's name differs from the FHIR Organization's name
+    private String updateFHIROrganization(FHIRClient fhirClient) {
     	if(fhirClient.getFhirOrganizationId() != null) { // existing record  	
-        	// fail if existing record has a client resource link already    		
-            if (getExistingFhirOrganizationResources(String.valueOf(fhirClient.getId()), fhirClient.getFhirOrganizationId()).size() > 0) {
-                throw new FHIRPatientResourceException("Existing link between organization resource and fhir client.");
+        	// fail if fhirOrganizationID is linked to another client resource already  
+            if (fHIRClientRepository.findAllForFhirOrganizationID(fhirClient.getFhirOrganizationId()).stream()
+            .filter(client -> !client.getId().equals(fhirClient.getId()))
+    		.count() > 0) {
+                throw new FHIROrganizationResourceException("Existing link between organization resource and a different fhir client.");
             }
-    	}
-
-    	// fail if user account has any other linked patient resources
-    	if(getExistingFhirOrganizationResources(String.valueOf(fhirClient.getId()), null).stream()
-    			.filter(resource -> !resource.getIdElement().getIdPart().equals(fhirClient.getFhirOrganizationId()))
-    			.count() > 0) {
-    		throw new FHIRPatientResourceException("User account already linked to another patient resource.");
+            
     	}
     	
     	// fail if organization resource does not exist
@@ -166,26 +165,33 @@ public class FHIRClientService {
     	try {
     		organizationFHIR = organizationDAO.read(new IdType(fhirClient.getFhirOrganizationId()));
     	} catch(ResourceNotFoundException rnfe) {    		
-			throw new FHIRPatientResourceException("Organization resource does not exist.");
+			throw new FHIROrganizationResourceException("Organization resource does not exist.");
 		}
-		
-		// fail if organization resource linked to another client account
-		if(hasExistingClientIdentifier(organizationFHIR, fhirClient)) {
-			throw new FHIRPatientResourceException("Organization resource already linked to another client.");
-		}
-		
-		saveOrganizationResource(organizationFHIR, fhirClient);
+
+        if (organizationFHIR.getName() != fhirClient.getName()) {
+            organizationFHIR.setName(fhirClient.getName());
+            return updateOrganizationResource(organizationFHIR, fhirClient);
+        }
+
+        return fhirClient.getFhirOrganizationId();
     }
 
+    private String updateOrganizationResource(Organization organizationFHIR, FHIRClient fhirClient) {
+        
+        IFhirResourceDao<Organization> organizationDAO = myDaoRegistry.getResourceDao(Organization.class);
+        RequestDetails requestDetails = SystemRequestDetails.forAllPartition();
+        DaoMethodOutcome resp = null;
+        try {
+            resp = organizationDAO.update(organizationFHIR, requestDetails); //fires interceptors
+        } catch(Exception e) {
+            throw new FHIROrganizationResourceException("Organization resource does not exist.");
+        }
+        return resp.getId().getIdPart();
+    }
+
+
+
     private String saveOrganizationResource(Organization organizationFHIR, FHIRClient fhirClient) {
-    	if(organizationFHIR.getIdentifier().stream()
-				.filter(identifier -> identifier.getSystem().equals(FHIR_CLIENT_SYSTEM) 
-						&& identifier.getValue().equals(String.valueOf(fhirClient.getId())))
-				.count() == 0) {
-            organizationFHIR.addIdentifier()
-            	.setSystem(FHIR_CLIENT_SYSTEM)
-            	.setValue(String.valueOf(fhirClient.getId()));		
-    	}
         
         IFhirResourceDao<Organization> organizationDAO = myDaoRegistry.getResourceDao(Organization.class);
         RequestDetails requestDetails = SystemRequestDetails.forAllPartition();
@@ -195,36 +201,6 @@ public class FHIRClientService {
         }
         
         return resp.getId().getIdPart();
-    }
-
-    private List<IBaseResource> getExistingFhirOrganizationResources(String fhirClientID, String fhirOrganizationID) {
-        IFhirResourceDao<Organization> organizationDAO = myDaoRegistry.getResourceDao(Organization.class);
-        SystemRequestDetails searchRequestDetails = SystemRequestDetails.forAllPartition();
-        searchRequestDetails.addHeader("Cache-Control", "no-cache");
-        IBundleProvider searchResults = 
-        organizationDAO.search(
-                new SearchParameterMap(
-                    "identifier", 
-                    new TokenParam(FHIR_CLIENT_SYSTEM, String.valueOf(fhirClientID))
-                ),
-                searchRequestDetails
-            );
-        if (!searchResults.isEmpty()) {
-            if(fhirOrganizationID == null) return searchResults.getAllResources();
-        	return searchResults.getAllResources().stream()
-        			.filter(resource -> resource.getIdElement().getIdPart().equals(fhirOrganizationID))
-        			.collect(Collectors.toList());
-        }
-        return searchResults.getAllResources();
-    }
-
-    // check if Organization resource has a client identifier for another client
-    private boolean hasExistingClientIdentifier(Organization organizationFHIR, FHIRClient fhirClient) {
-    	return organizationFHIR != null && 
-        organizationFHIR.getIdentifier().stream()
-				.filter(identifier -> identifier.getSystem().equals(FHIR_CLIENT_SYSTEM) 
-						&& !identifier.getValue().equals(String.valueOf(fhirClient.getId())))
-				.count() > 0;
     }
 
 }
