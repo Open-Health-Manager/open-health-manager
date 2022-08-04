@@ -10,6 +10,7 @@ import java.util.Random;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.mitre.healthmanager.IntegrationTest;
 import org.mitre.healthmanager.domain.FHIRClient;
@@ -18,18 +19,28 @@ import org.mitre.healthmanager.repository.FHIRClientRepository;
 import org.mitre.healthmanager.service.dto.FHIRClientDTO;
 import org.mitre.healthmanager.service.mapper.FHIRClientMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
+import org.mitre.healthmanager.security.AuthoritiesConstants;
+
+import ca.uhn.fhir.jpa.api.dao.IFhirResourceDao;
+import org.hl7.fhir.r4.model.Organization;
+import ca.uhn.fhir.rest.api.server.RequestDetails;
+import ca.uhn.fhir.jpa.api.model.DaoMethodOutcome;
+import ca.uhn.fhir.jpa.partition.SystemRequestDetails;
+import ca.uhn.fhir.jpa.api.dao.DaoRegistry;
+import org.hl7.fhir.r4.model.IdType;
 
 /**
  * Integration tests for the {@link FHIRClientResource} REST controller.
  */
 @IntegrationTest
 @AutoConfigureMockMvc
-@WithMockUser
+@WithMockUser(authorities = AuthoritiesConstants.ADMIN)
 class FHIRClientResourceIT {
 
     private static final String DEFAULT_NAME = "AAAAAAAAAA";
@@ -41,14 +52,16 @@ class FHIRClientResourceIT {
     private static final String DEFAULT_URI = "AAAAAAAAAA";
     private static final String UPDATED_URI = "BBBBBBBBBB";
 
-    private static final String DEFAULT_FHIR_ORGANIZATION_ID = "AAAAAAAAAA";
-    private static final String UPDATED_FHIR_ORGANIZATION_ID = "BBBBBBBBBB";
+    private static final String DEFAULT_FHIR_ORGANIZATION_ID = "1";
+    private static final String UPDATED_FHIR_ORGANIZATION_ID = "2";
 
     private static final ClientDirection DEFAULT_CLIENT_DIRECTION = ClientDirection.OUTBOUND;
     private static final ClientDirection UPDATED_CLIENT_DIRECTION = ClientDirection.INBOUND;
 
     private static final String ENTITY_API_URL = "/api/fhir-clients";
+    private static final String ADMIN_ENTITY_API_URL = "/api/admin/fhir-clients";
     private static final String ENTITY_API_URL_ID = ENTITY_API_URL + "/{id}";
+    private static final String ADMIN_ENTITY_API_URL_ID = ADMIN_ENTITY_API_URL + "/{id}";
 
     private static Random random = new Random();
     private static AtomicLong count = new AtomicLong(random.nextInt() + (2 * Integer.MAX_VALUE));
@@ -60,10 +73,14 @@ class FHIRClientResourceIT {
     private FHIRClientMapper fHIRClientMapper;
 
     @Autowired
+    @Qualifier("jhipsterEntityManagerFactory")
     private EntityManager em;
 
     @Autowired
     private MockMvc restFHIRClientMockMvc;
+
+    @Autowired
+	private DaoRegistry myDaoRegistry;
 
     private FHIRClient fHIRClient;
 
@@ -77,8 +94,8 @@ class FHIRClientResourceIT {
         FHIRClient fHIRClient = new FHIRClient()
             .name(DEFAULT_NAME)
             .displayName(DEFAULT_DISPLAY_NAME)
-            .uri(DEFAULT_URI)
             .fhirOrganizationId(DEFAULT_FHIR_ORGANIZATION_ID)
+            .uri(DEFAULT_URI)
             .clientDirection(DEFAULT_CLIENT_DIRECTION);
         return fHIRClient;
     }
@@ -93,15 +110,32 @@ class FHIRClientResourceIT {
         FHIRClient fHIRClient = new FHIRClient()
             .name(UPDATED_NAME)
             .displayName(UPDATED_DISPLAY_NAME)
-            .uri(UPDATED_URI)
             .fhirOrganizationId(UPDATED_FHIR_ORGANIZATION_ID)
+            .uri(UPDATED_URI)
             .clientDirection(UPDATED_CLIENT_DIRECTION);
+
         return fHIRClient;
     }
 
     @BeforeEach
     public void initTest() {
         fHIRClient = createEntity(em);
+
+        Organization organizationFHIR = new Organization();
+        organizationFHIR.setName(fHIRClient.getName());
+
+        IFhirResourceDao<Organization> organizationDAO = myDaoRegistry.getResourceDao(Organization.class);
+        RequestDetails requestDetails = SystemRequestDetails.forAllPartition();
+        DaoMethodOutcome resp = organizationDAO.create(organizationFHIR, requestDetails); //fires interceptors
+        assertThat(resp.getCreated());
+        
+        fHIRClient.fhirOrganizationId(resp.getId().getIdPart());
+    }
+
+    @AfterEach
+    public void afterTest() {
+        IFhirResourceDao<Organization> organizationDAO = myDaoRegistry.getResourceDao(Organization.class);
+        organizationDAO.delete(new IdType(fHIRClient.getFhirOrganizationId())); 
     }
 
     @Test
@@ -111,7 +145,7 @@ class FHIRClientResourceIT {
         // Create the FHIRClient
         FHIRClientDTO fHIRClientDTO = fHIRClientMapper.toDto(fHIRClient);
         restFHIRClientMockMvc
-            .perform(post(ENTITY_API_URL).contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(fHIRClientDTO)))
+            .perform(post(ADMIN_ENTITY_API_URL).contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(fHIRClientDTO)))
             .andExpect(status().isCreated());
 
         // Validate the FHIRClient in the database
@@ -121,7 +155,7 @@ class FHIRClientResourceIT {
         assertThat(testFHIRClient.getName()).isEqualTo(DEFAULT_NAME);
         assertThat(testFHIRClient.getDisplayName()).isEqualTo(DEFAULT_DISPLAY_NAME);
         assertThat(testFHIRClient.getUri()).isEqualTo(DEFAULT_URI);
-        assertThat(testFHIRClient.getFhirOrganizationId()).isEqualTo(DEFAULT_FHIR_ORGANIZATION_ID);
+        assertThat(testFHIRClient.getFhirOrganizationId()).isEqualTo(fHIRClientDTO.getFhirOrganizationId());
         assertThat(testFHIRClient.getClientDirection()).isEqualTo(DEFAULT_CLIENT_DIRECTION);
     }
 
@@ -136,7 +170,7 @@ class FHIRClientResourceIT {
 
         // An entity with an existing ID cannot be created, so this API call must fail
         restFHIRClientMockMvc
-            .perform(post(ENTITY_API_URL).contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(fHIRClientDTO)))
+            .perform(post(ADMIN_ENTITY_API_URL).contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(fHIRClientDTO)))
             .andExpect(status().isBadRequest());
 
         // Validate the FHIRClient in the database
@@ -155,7 +189,7 @@ class FHIRClientResourceIT {
         FHIRClientDTO fHIRClientDTO = fHIRClientMapper.toDto(fHIRClient);
 
         restFHIRClientMockMvc
-            .perform(post(ENTITY_API_URL).contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(fHIRClientDTO)))
+            .perform(post(ADMIN_ENTITY_API_URL).contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(fHIRClientDTO)))
             .andExpect(status().isBadRequest());
 
         List<FHIRClient> fHIRClientList = fHIRClientRepository.findAll();
@@ -173,25 +207,7 @@ class FHIRClientResourceIT {
         FHIRClientDTO fHIRClientDTO = fHIRClientMapper.toDto(fHIRClient);
 
         restFHIRClientMockMvc
-            .perform(post(ENTITY_API_URL).contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(fHIRClientDTO)))
-            .andExpect(status().isBadRequest());
-
-        List<FHIRClient> fHIRClientList = fHIRClientRepository.findAll();
-        assertThat(fHIRClientList).hasSize(databaseSizeBeforeTest);
-    }
-
-    @Test
-    @Transactional
-    void checkFhirOrganizationIdIsRequired() throws Exception {
-        int databaseSizeBeforeTest = fHIRClientRepository.findAll().size();
-        // set the field null
-        fHIRClient.setFhirOrganizationId(null);
-
-        // Create the FHIRClient, which fails.
-        FHIRClientDTO fHIRClientDTO = fHIRClientMapper.toDto(fHIRClient);
-
-        restFHIRClientMockMvc
-            .perform(post(ENTITY_API_URL).contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(fHIRClientDTO)))
+            .perform(post(ADMIN_ENTITY_API_URL).contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(fHIRClientDTO)))
             .andExpect(status().isBadRequest());
 
         List<FHIRClient> fHIRClientList = fHIRClientRepository.findAll();
@@ -213,7 +229,7 @@ class FHIRClientResourceIT {
             .andExpect(jsonPath("$.[*].name").value(hasItem(DEFAULT_NAME)))
             .andExpect(jsonPath("$.[*].displayName").value(hasItem(DEFAULT_DISPLAY_NAME)))
             .andExpect(jsonPath("$.[*].uri").value(hasItem(DEFAULT_URI)))
-            .andExpect(jsonPath("$.[*].fhirOrganizationId").value(hasItem(DEFAULT_FHIR_ORGANIZATION_ID)))
+            .andExpect(jsonPath("$.[*].fhirOrganizationId").value(hasItem(fHIRClient.getFhirOrganizationId())))
             .andExpect(jsonPath("$.[*].clientDirection").value(hasItem(DEFAULT_CLIENT_DIRECTION.toString())));
     }
 
@@ -232,7 +248,7 @@ class FHIRClientResourceIT {
             .andExpect(jsonPath("$.name").value(DEFAULT_NAME))
             .andExpect(jsonPath("$.displayName").value(DEFAULT_DISPLAY_NAME))
             .andExpect(jsonPath("$.uri").value(DEFAULT_URI))
-            .andExpect(jsonPath("$.fhirOrganizationId").value(DEFAULT_FHIR_ORGANIZATION_ID))
+            .andExpect(jsonPath("$.fhirOrganizationId").value(fHIRClient.getFhirOrganizationId()))
             .andExpect(jsonPath("$.clientDirection").value(DEFAULT_CLIENT_DIRECTION.toString()));
     }
 
@@ -255,17 +271,17 @@ class FHIRClientResourceIT {
         FHIRClient updatedFHIRClient = fHIRClientRepository.findById(fHIRClient.getId()).get();
         // Disconnect from session so that the updates on updatedFHIRClient are not directly saved in db
         em.detach(updatedFHIRClient);
+        
         updatedFHIRClient
             .name(UPDATED_NAME)
             .displayName(UPDATED_DISPLAY_NAME)
             .uri(UPDATED_URI)
-            .fhirOrganizationId(UPDATED_FHIR_ORGANIZATION_ID)
             .clientDirection(UPDATED_CLIENT_DIRECTION);
         FHIRClientDTO fHIRClientDTO = fHIRClientMapper.toDto(updatedFHIRClient);
 
         restFHIRClientMockMvc
             .perform(
-                put(ENTITY_API_URL_ID, fHIRClientDTO.getId())
+                put(ADMIN_ENTITY_API_URL_ID, fHIRClientDTO.getId())
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(TestUtil.convertObjectToJsonBytes(fHIRClientDTO))
             )
@@ -278,7 +294,7 @@ class FHIRClientResourceIT {
         assertThat(testFHIRClient.getName()).isEqualTo(UPDATED_NAME);
         assertThat(testFHIRClient.getDisplayName()).isEqualTo(UPDATED_DISPLAY_NAME);
         assertThat(testFHIRClient.getUri()).isEqualTo(UPDATED_URI);
-        assertThat(testFHIRClient.getFhirOrganizationId()).isEqualTo(UPDATED_FHIR_ORGANIZATION_ID);
+        assertThat(testFHIRClient.getFhirOrganizationId()).isEqualTo(fHIRClient.getFhirOrganizationId());
         assertThat(testFHIRClient.getClientDirection()).isEqualTo(UPDATED_CLIENT_DIRECTION);
     }
 
@@ -294,7 +310,7 @@ class FHIRClientResourceIT {
         // If the entity doesn't have an ID, it will throw BadRequestAlertException
         restFHIRClientMockMvc
             .perform(
-                put(ENTITY_API_URL_ID, fHIRClientDTO.getId())
+                put(ADMIN_ENTITY_API_URL_ID, fHIRClientDTO.getId())
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(TestUtil.convertObjectToJsonBytes(fHIRClientDTO))
             )
@@ -317,7 +333,7 @@ class FHIRClientResourceIT {
         // If url ID doesn't match entity ID, it will throw BadRequestAlertException
         restFHIRClientMockMvc
             .perform(
-                put(ENTITY_API_URL_ID, count.incrementAndGet())
+                put(ADMIN_ENTITY_API_URL_ID, count.incrementAndGet())
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(TestUtil.convertObjectToJsonBytes(fHIRClientDTO))
             )
@@ -339,7 +355,7 @@ class FHIRClientResourceIT {
 
         // If url ID doesn't match entity ID, it will throw BadRequestAlertException
         restFHIRClientMockMvc
-            .perform(put(ENTITY_API_URL).contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(fHIRClientDTO)))
+            .perform(put(ADMIN_ENTITY_API_URL).contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(fHIRClientDTO)))
             .andExpect(status().isMethodNotAllowed());
 
         // Validate the FHIRClient in the database
@@ -359,11 +375,11 @@ class FHIRClientResourceIT {
         FHIRClient partialUpdatedFHIRClient = new FHIRClient();
         partialUpdatedFHIRClient.setId(fHIRClient.getId());
 
-        partialUpdatedFHIRClient.fhirOrganizationId(UPDATED_FHIR_ORGANIZATION_ID).clientDirection(UPDATED_CLIENT_DIRECTION);
+        partialUpdatedFHIRClient.clientDirection(UPDATED_CLIENT_DIRECTION);
 
         restFHIRClientMockMvc
             .perform(
-                patch(ENTITY_API_URL_ID, partialUpdatedFHIRClient.getId())
+                patch(ADMIN_ENTITY_API_URL_ID, partialUpdatedFHIRClient.getId())
                     .contentType("application/merge-patch+json")
                     .content(TestUtil.convertObjectToJsonBytes(partialUpdatedFHIRClient))
             )
@@ -376,7 +392,7 @@ class FHIRClientResourceIT {
         assertThat(testFHIRClient.getName()).isEqualTo(DEFAULT_NAME);
         assertThat(testFHIRClient.getDisplayName()).isEqualTo(DEFAULT_DISPLAY_NAME);
         assertThat(testFHIRClient.getUri()).isEqualTo(DEFAULT_URI);
-        assertThat(testFHIRClient.getFhirOrganizationId()).isEqualTo(UPDATED_FHIR_ORGANIZATION_ID);
+        assertThat(testFHIRClient.getFhirOrganizationId()).isEqualTo(fHIRClient.getFhirOrganizationId());
         assertThat(testFHIRClient.getClientDirection()).isEqualTo(UPDATED_CLIENT_DIRECTION);
     }
 
@@ -396,12 +412,11 @@ class FHIRClientResourceIT {
             .name(UPDATED_NAME)
             .displayName(UPDATED_DISPLAY_NAME)
             .uri(UPDATED_URI)
-            .fhirOrganizationId(UPDATED_FHIR_ORGANIZATION_ID)
             .clientDirection(UPDATED_CLIENT_DIRECTION);
 
         restFHIRClientMockMvc
             .perform(
-                patch(ENTITY_API_URL_ID, partialUpdatedFHIRClient.getId())
+                patch(ADMIN_ENTITY_API_URL_ID, partialUpdatedFHIRClient.getId())
                     .contentType("application/merge-patch+json")
                     .content(TestUtil.convertObjectToJsonBytes(partialUpdatedFHIRClient))
             )
@@ -414,7 +429,7 @@ class FHIRClientResourceIT {
         assertThat(testFHIRClient.getName()).isEqualTo(UPDATED_NAME);
         assertThat(testFHIRClient.getDisplayName()).isEqualTo(UPDATED_DISPLAY_NAME);
         assertThat(testFHIRClient.getUri()).isEqualTo(UPDATED_URI);
-        assertThat(testFHIRClient.getFhirOrganizationId()).isEqualTo(UPDATED_FHIR_ORGANIZATION_ID);
+        assertThat(testFHIRClient.getFhirOrganizationId()).isEqualTo(fHIRClient.getFhirOrganizationId());
         assertThat(testFHIRClient.getClientDirection()).isEqualTo(UPDATED_CLIENT_DIRECTION);
     }
 
@@ -430,7 +445,7 @@ class FHIRClientResourceIT {
         // If the entity doesn't have an ID, it will throw BadRequestAlertException
         restFHIRClientMockMvc
             .perform(
-                patch(ENTITY_API_URL_ID, fHIRClientDTO.getId())
+                patch(ADMIN_ENTITY_API_URL_ID, fHIRClientDTO.getId())
                     .contentType("application/merge-patch+json")
                     .content(TestUtil.convertObjectToJsonBytes(fHIRClientDTO))
             )
@@ -453,7 +468,7 @@ class FHIRClientResourceIT {
         // If url ID doesn't match entity ID, it will throw BadRequestAlertException
         restFHIRClientMockMvc
             .perform(
-                patch(ENTITY_API_URL_ID, count.incrementAndGet())
+                patch(ADMIN_ENTITY_API_URL_ID, count.incrementAndGet())
                     .contentType("application/merge-patch+json")
                     .content(TestUtil.convertObjectToJsonBytes(fHIRClientDTO))
             )
@@ -476,7 +491,7 @@ class FHIRClientResourceIT {
         // If url ID doesn't match entity ID, it will throw BadRequestAlertException
         restFHIRClientMockMvc
             .perform(
-                patch(ENTITY_API_URL).contentType("application/merge-patch+json").content(TestUtil.convertObjectToJsonBytes(fHIRClientDTO))
+                patch(ADMIN_ENTITY_API_URL).contentType("application/merge-patch+json").content(TestUtil.convertObjectToJsonBytes(fHIRClientDTO))
             )
             .andExpect(status().isMethodNotAllowed());
 
@@ -495,7 +510,7 @@ class FHIRClientResourceIT {
 
         // Delete the fHIRClient
         restFHIRClientMockMvc
-            .perform(delete(ENTITY_API_URL_ID, fHIRClient.getId()).accept(MediaType.APPLICATION_JSON))
+            .perform(delete(ADMIN_ENTITY_API_URL_ID, fHIRClient.getId()).accept(MediaType.APPLICATION_JSON))
             .andExpect(status().isNoContent());
 
         // Validate the database contains one less item
