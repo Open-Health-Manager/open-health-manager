@@ -117,6 +117,11 @@ class FHIRClientResourceIT {
         return fHIRClient;
     }
 
+    public void deleteFHIROrganization(String id) {
+        IFhirResourceDao<Organization> organizationDAO = myDaoRegistry.getResourceDao(Organization.class);
+        organizationDAO.delete(new IdType(id)); 
+    }
+
     @BeforeEach
     public void initTest() {
         fHIRClient = createEntity(em);
@@ -134,8 +139,7 @@ class FHIRClientResourceIT {
 
     @AfterEach
     public void afterTest() {
-        IFhirResourceDao<Organization> organizationDAO = myDaoRegistry.getResourceDao(Organization.class);
-        organizationDAO.delete(new IdType(fHIRClient.getFhirOrganizationId())); 
+        deleteFHIROrganization(fHIRClient.getFhirOrganizationId()); 
     }
 
     @Test
@@ -144,6 +148,10 @@ class FHIRClientResourceIT {
         int databaseSizeBeforeCreate = fHIRClientRepository.findAll().size();
         // Create the FHIRClient
         FHIRClientDTO fHIRClientDTO = fHIRClientMapper.toDto(fHIRClient);
+        
+        // Set the fhir organization id to null to make sure that a new fhir organization is created
+        fHIRClientDTO.setFhirOrganizationId(null);
+        
         restFHIRClientMockMvc
             .perform(post(ADMIN_ENTITY_API_URL).contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(fHIRClientDTO)))
             .andExpect(status().isCreated());
@@ -155,8 +163,10 @@ class FHIRClientResourceIT {
         assertThat(testFHIRClient.getName()).isEqualTo(DEFAULT_NAME);
         assertThat(testFHIRClient.getDisplayName()).isEqualTo(DEFAULT_DISPLAY_NAME);
         assertThat(testFHIRClient.getUri()).isEqualTo(DEFAULT_URI);
-        assertThat(testFHIRClient.getFhirOrganizationId()).isEqualTo(fHIRClientDTO.getFhirOrganizationId());
+        assertThat(testFHIRClient.getFhirOrganizationId()).isNotBlank();
         assertThat(testFHIRClient.getClientDirection()).isEqualTo(DEFAULT_CLIENT_DIRECTION);
+
+        deleteFHIROrganization(testFHIRClient.getFhirOrganizationId());
     }
 
     @Test
