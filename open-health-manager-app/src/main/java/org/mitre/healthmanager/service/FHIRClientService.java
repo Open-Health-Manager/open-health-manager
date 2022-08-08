@@ -143,6 +143,20 @@ public class FHIRClientService {
      * @param id the id of the entity.
      */
     public void delete(Long id) {
+        FHIRClientDTO fhirClientDTO = new FHIRClientDTO();
+        Optional<FHIRClientDTO> fhirClient = fHIRClientRepository.findById(id).map(fHIRClientMapper::toDto);
+        if (fhirClient.isPresent()) {
+            fhirClientDTO = fhirClient.get();
+        }
+
+        IFhirResourceDao<Organization> organizationDAO = myDaoRegistry.getResourceDao(Organization.class);
+
+    	try {
+    		organizationDAO.delete(new IdType(fhirClientDTO.getFhirOrganizationId()));
+    	} catch(ResourceNotFoundException rnfe) {    		
+			throw new FHIROrganizationResourceException("Organization resource does not exist.");
+		}
+
         log.debug("Request to delete FHIRClient : {}", id);
         fHIRClientRepository.deleteById(id);
     }
