@@ -1,6 +1,7 @@
 package org.mitre.healthmanager.web.rest;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.hamcrest.Matchers.hasItem;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -34,6 +35,7 @@ import ca.uhn.fhir.jpa.api.model.DaoMethodOutcome;
 import ca.uhn.fhir.jpa.partition.SystemRequestDetails;
 import ca.uhn.fhir.jpa.api.dao.DaoRegistry;
 import org.hl7.fhir.r4.model.IdType;
+import ca.uhn.fhir.rest.server.exceptions.ResourceGoneException;
 
 /**
  * Integration tests for the {@link FHIRClientResource} REST controller.
@@ -122,6 +124,12 @@ class FHIRClientResourceIT {
         organizationDAO.delete(new IdType(id)); 
     }
 
+    public Organization getFHIROrganization(String id) {
+        IFhirResourceDao<Organization> organizationDAO = myDaoRegistry.getResourceDao(Organization.class);
+        Organization organizationFHIR = organizationDAO.read(new IdType(id));
+        return organizationFHIR;
+    }
+
     @BeforeEach
     public void initTest() {
         fHIRClient = createEntity(em);
@@ -129,8 +137,9 @@ class FHIRClientResourceIT {
         Organization organizationFHIR = new Organization();
         organizationFHIR.setName(fHIRClient.getName());
 
-        IFhirResourceDao<Organization> organizationDAO = myDaoRegistry.getResourceDao(Organization.class);
         RequestDetails requestDetails = SystemRequestDetails.forAllPartition();
+        IFhirResourceDao<Organization> organizationDAO = myDaoRegistry.getResourceDao(Organization.class);
+
         DaoMethodOutcome resp = organizationDAO.create(organizationFHIR, requestDetails); //fires interceptors
         assertThat(resp.getCreated());
         
@@ -139,7 +148,9 @@ class FHIRClientResourceIT {
 
     @AfterEach
     public void afterTest() {
-        deleteFHIROrganization(fHIRClient.getFhirOrganizationId()); 
+        if (fHIRClient.getFhirOrganizationId() != null) {
+            deleteFHIROrganization(fHIRClient.getFhirOrganizationId()); 
+        }
     }
 
     @Test
@@ -166,7 +177,30 @@ class FHIRClientResourceIT {
         assertThat(testFHIRClient.getFhirOrganizationId()).isNotBlank();
         assertThat(testFHIRClient.getClientDirection()).isEqualTo(DEFAULT_CLIENT_DIRECTION);
 
+        Organization FHIROrganization = getFHIROrganization(testFHIRClient.getFhirOrganizationId());
+        assertThat(FHIROrganization.getIdElement().getIdPart()).isEqualTo(testFHIRClient.getFhirOrganizationId());
+        assertThat(FHIROrganization.getName()).isEqualTo(testFHIRClient.getName());
+
         deleteFHIROrganization(testFHIRClient.getFhirOrganizationId());
+    }
+
+    @Test
+    @Transactional
+    void createFHIRClientNoExistingFHIROrganization() throws Exception {
+        int databaseSizeBeforeCreate = fHIRClientRepository.findAll().size();
+        // Create the FHIRClient
+        FHIRClientDTO fHIRClientDTO = fHIRClientMapper.toDto(fHIRClient);
+        
+        // Set the fhir organization id to fak fhir organization id that does not exist
+        fHIRClientDTO.setFhirOrganizationId("fakeOrganizationID");
+        
+        restFHIRClientMockMvc
+            .perform(post(ADMIN_ENTITY_API_URL).contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(fHIRClientDTO)))
+            .andExpect(status().is5xxServerError());
+
+        // Validate the FHIRClient was not added to the database
+        List<FHIRClient> fHIRClientList = fHIRClientRepository.findAll();
+        assertThat(fHIRClientList).hasSize(databaseSizeBeforeCreate);
     }
 
     @Test
@@ -306,6 +340,11 @@ class FHIRClientResourceIT {
         assertThat(testFHIRClient.getUri()).isEqualTo(UPDATED_URI);
         assertThat(testFHIRClient.getFhirOrganizationId()).isEqualTo(fHIRClient.getFhirOrganizationId());
         assertThat(testFHIRClient.getClientDirection()).isEqualTo(UPDATED_CLIENT_DIRECTION);
+
+        Organization FHIROrganization = getFHIROrganization(updatedFHIRClient.getFhirOrganizationId());
+        assertThat(FHIROrganization.getIdElement().getIdPart()).isEqualTo(updatedFHIRClient.getFhirOrganizationId());
+        assertThat(FHIROrganization.getName()).isEqualTo(updatedFHIRClient.getName());
+
     }
 
     @Test
@@ -387,11 +426,13 @@ class FHIRClientResourceIT {
 
         partialUpdatedFHIRClient.clientDirection(UPDATED_CLIENT_DIRECTION);
 
+        FHIRClientDTO fHIRClientDTO = fHIRClientMapper.toDto(partialUpdatedFHIRClient);
+
         restFHIRClientMockMvc
             .perform(
                 patch(ADMIN_ENTITY_API_URL_ID, partialUpdatedFHIRClient.getId())
                     .contentType("application/merge-patch+json")
-                    .content(TestUtil.convertObjectToJsonBytes(partialUpdatedFHIRClient))
+                    .content(TestUtil.convertObjectToJsonBytes(fHIRClientDTO))
             )
             .andExpect(status().isOk());
 
@@ -424,11 +465,13 @@ class FHIRClientResourceIT {
             .uri(UPDATED_URI)
             .clientDirection(UPDATED_CLIENT_DIRECTION);
 
+        FHIRClientDTO fHIRClientDTO = fHIRClientMapper.toDto(partialUpdatedFHIRClient);
+
         restFHIRClientMockMvc
             .perform(
                 patch(ADMIN_ENTITY_API_URL_ID, partialUpdatedFHIRClient.getId())
                     .contentType("application/merge-patch+json")
-                    .content(TestUtil.convertObjectToJsonBytes(partialUpdatedFHIRClient))
+                    .content(TestUtil.convertObjectToJsonBytes(fHIRClientDTO))
             )
             .andExpect(status().isOk());
 
@@ -526,5 +569,9 @@ class FHIRClientResourceIT {
         // Validate the database contains one less item
         List<FHIRClient> fHIRClientList = fHIRClientRepository.findAll();
         assertThat(fHIRClientList).hasSize(databaseSizeBeforeDelete - 1);
+
+        IFhirResourceDao<Organization> organizationDAO = myDaoRegistry.getResourceDao(Organization.class);
+        assertThrows(ResourceGoneException.class, () -> organizationDAO.read(new IdType(fHIRClient.getFhirOrganizationId())));
+
     }
 }
