@@ -1,3 +1,3 @@
 id;name;display_name;uri;fhir_organization_id;client_direction
-1;USPSTF Preventive Service API;USPSTF Preventive Service;https://www.uspreventiveservicestaskforce.org/;52;OUTBOUND
-2;Apple HealthKit;Apple HealthKit;;;OUTBOUND
+1;USPSTF Preventive Service API;USPSTF Preventive Service;https://www.uspreventiveservicestaskforce.org/;client-1;OUTBOUND
+2;Apple HealthKit;Apple HealthKit;https://developer.apple.com/health-fitness/;client-2;OUTBOUND
