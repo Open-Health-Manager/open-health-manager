@@ -1,0 +1,40 @@
+{
+  "applications": ["OpenHealthManagerApp"],
+  "changelogDate": "20220728180918",
+  "dto": "mapstruct",
+  "embedded": false,
+  "entityTableName": "fhir_client",
+  "fields": [
+    {
+      "fieldName": "name",
+      "fieldType": "String",
+      "fieldValidateRules": ["required"]
+    },
+    {
+      "fieldName": "displayName",
+      "fieldType": "String",
+      "fieldValidateRules": ["required"]
+    },
+    {
+      "fieldName": "uri",
+      "fieldType": "String"
+    },
+    {
+      "fieldName": "fhirOrganizationId",
+      "fieldType": "String",
+      "fieldValidateRules": ["required"]
+    },
+    {
+      "fieldName": "clientDirection",
+      "fieldType": "ClientDirection",
+      "fieldValues": "OUTBOUND (Outbound),INBOUND (Inbound),BIDIRECTIONAL (Bidirectional)"
+    }
+  ],
+  "fluentMethods": true,
+  "jpaMetamodelFiltering": false,
+  "name": "FHIRClient",
+  "pagination": "pagination",
+  "readOnly": false,
+  "relationships": [],
+  "service": "serviceClass"
+}

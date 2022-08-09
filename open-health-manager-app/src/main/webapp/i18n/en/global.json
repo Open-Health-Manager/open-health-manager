@@ -9,6 +9,8 @@
         "main": "Entities",
         "fhirPatient": "FHIR Patient",
         "userDua": "User DUA",
+        "fhirClient": "FHIR Client",
+        "fhirPatientConsent": "FHIR Patient Consent",
         "jhipster-needle-menu-add-entry": "JHipster will add additional entities here (do not translate!)"
       },
       "account": {

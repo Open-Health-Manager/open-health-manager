@@ -1,0 +1,10 @@
+{
+    "resourceType": "Patient",
+    "id": "user-2",
+    "identifier": [
+		{
+      		"system": "urn:mitre:healthmanager:account:username",
+      		"value": "user"
+    	}
+    ]
+  }

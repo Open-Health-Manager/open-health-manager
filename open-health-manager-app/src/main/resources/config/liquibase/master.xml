@@ -19,6 +19,7 @@
     <!-- jhipster-needle-liquibase-add-changelog - JHipster will add liquibase changelogs here -->
     <include file="config/liquibase/changelog/20220603163044_added_entity_constraints_FHIRPatient.xml" relativeToChangelogFile="false"/>
     <include file="config/liquibase/changelog/20220629182630_added_entity_UserDUA.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/changelog/20220728180918_added_entity_FHIRClient.xml" relativeToChangelogFile="false"/>
     <!-- jhipster-needle-liquibase-add-changelog - JHipster will add liquibase changelogs here -->
     <include file="config/liquibase/changelog/20220629182630_added_entity_constraints_UserDUA.xml" relativeToChangelogFile="false"/>
     <!-- jhipster-needle-liquibase-add-constraints-changelog - JHipster will add liquibase constraints changelogs here -->
