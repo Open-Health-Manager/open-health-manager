@@ -2,7 +2,8 @@ package org.mitre.healthmanager.service.dto;
 
 import java.io.Serializable;
 import java.util.Objects;
-import javax.validation.constraints.*;
+
+import org.mitre.healthmanager.domain.FHIRClient;
 import org.mitre.healthmanager.domain.enumeration.ClientDirection;
 
 /**
@@ -21,6 +22,19 @@ public class FHIRClientDTO implements Serializable {
     private String fhirOrganizationId;
 
     private ClientDirection clientDirection;
+    
+    public FHIRClientDTO() {
+    	
+    }
+    
+    public FHIRClientDTO(FHIRClient client) {
+        this.id = client.getId();        
+        this.name = client.getName();
+        this.displayName = client.getDisplayName();
+        this.uri = client.getUri();
+        this.fhirOrganizationId = client.getFhirOrganizationId();
+        this.clientDirection = client.getClientDirection();
+    }
 
     public Long getId() {
         return id;

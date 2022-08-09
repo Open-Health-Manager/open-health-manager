@@ -26,21 +26,24 @@ public class SampleDataConfiguration implements InitializingBean {
     
     @Value("classpath:config/liquibase/fake-data/fhir/**/*.json")
     private Resource[] files;
-    
-    private final FhirContext fhirContext = FhirContext.forR4();
 
     @Override
     public void afterPropertiesSet() throws Exception {    	
+    	loadFhirResources(files, myDaoRegistry);
+    }
+    
+    public static void loadFhirResources(Resource[] files, DaoRegistry myDaoRegistry) {
+    	FhirContext fhirContext = myDaoRegistry.getSystemDao().getContext();
         Arrays.asList(files)
-        	.stream()
-        	.forEach(file -> {            		
-        		try {
-					IBaseResource resource = fhirContext.newJsonParser().parseResource(file.getInputStream());
-					IFhirResourceDao<IBaseResource> dao = myDaoRegistry.getResourceDaoOrNull(resource.fhirType());
-					dao.update(resource);
-				} catch (ConfigurationException | DataFormatException | IOException e) {
-					throw new RuntimeException(e);
-				}        		
-        	});
+    	.stream()
+    	.forEach(file -> {            		
+    		try {
+				IBaseResource resource = fhirContext.newJsonParser().parseResource(file.getInputStream());
+				IFhirResourceDao<IBaseResource> dao = myDaoRegistry.getResourceDaoOrNull(resource.fhirType());
+				dao.update(resource);
+			} catch (ConfigurationException | DataFormatException | IOException e) {
+				throw new RuntimeException(e);
+			}        		
+    	});
     }
 }

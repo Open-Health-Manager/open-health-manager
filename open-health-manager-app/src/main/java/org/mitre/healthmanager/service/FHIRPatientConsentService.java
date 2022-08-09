@@ -203,9 +203,13 @@ public class FHIRPatientConsentService {
      */
     public Optional<FHIRPatientConsentDTO> findOne(String id) {
         log.debug("Request to get FHIRPatientConsent : {}", id);
-    	Consent consent = findById(id);    
-    	FHIRPatientConsentDTO consentDTO = fhirPatientConsentMapper.toDtoEagerLoad(consent);      	
-    	return Optional.of(consentDTO);
+        try {
+        	Consent consent = findById(id); 
+        	FHIRPatientConsentDTO consentDTO = fhirPatientConsentMapper.toDtoEagerLoad(consent);      	
+        	return Optional.of(consentDTO);
+        } catch (InvalidConsentException e) {
+        	return Optional.ofNullable(null);
+        }    	
     }
 
     /**
