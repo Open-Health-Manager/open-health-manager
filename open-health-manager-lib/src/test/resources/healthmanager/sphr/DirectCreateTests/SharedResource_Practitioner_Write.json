@@ -1,0 +1,13 @@
+{
+  "resourceType": "Practitioner",
+  "name": [
+    {
+      "given": [
+        "practitioner"
+      ],
+      "family": "test"
+    }
+  ],
+  "active": true,
+  "gender": "female"
+}

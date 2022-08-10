@@ -9,7 +9,7 @@
     <parent>
   		<artifactId>open-health-manager</artifactId>
   		<groupId>org.mitre.healthmanager</groupId>
-  		<version>0.0.1-SNAPSHOT</version>
+  		<version>0.2-SNAPSHOT</version>
 	</parent>
 	
 	<artifactId>open-health-manager-fhir</artifactId>
@@ -18,7 +18,6 @@
 	
 	<properties>
         <!-- Build properties -->
-        <hapi.fhir.version>5.7.0</hapi.fhir.version>
     </properties>
     
 	<dependencies>	
@@ -27,7 +26,7 @@
             <artifactId>hapi-fhir-jpaserver-starter</artifactId>
             <version>${hapi.fhir.version}</version>
             <exclusions>
-        		<exclusion>  <!-- declare the exclusion here -->
+        		<exclusion>
 	          		<groupId>org.springdoc</groupId>
 	          		<artifactId>springdoc-openapi-ui</artifactId>
         		</exclusion>
@@ -44,9 +43,136 @@
 			<version>${hapi.fhir.version}</version>
 		</dependency>	
         <dependency>
+            <groupId>ca.uhn.hapi.fhir</groupId>
+            <artifactId>hapi-fhir-testpage-overlay</artifactId>
+            <version>${hapi.fhir.version}</version>
+            <classifier>classes</classifier>
+	        </dependency>		
+        <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-webmvc-core</artifactId>
             <version>1.6.6</version>
+        </dependency>
+		<dependency>
+		    <groupId>org.springframework.boot</groupId>
+		    <artifactId>spring-boot-configuration-processor</artifactId>
+		    <version>${spring-boot.version}</version>
+		    <optional>true</optional>
+		</dependency>     
+        <!-- This dependency is used for the "FHIR Tester" web app overlay -->
+        <dependency>
+            <groupId>ca.uhn.hapi.fhir</groupId>
+            <artifactId>hapi-fhir-testpage-overlay</artifactId>
+            <version>${hapi.fhir.version}</version>
+            <type>war</type>
+            <scope>provided</scope>
         </dependency>		
+		<!-- webjars -->
+		<dependency>
+			<groupId>org.webjars.npm</groupId>
+			<artifactId>bootstrap</artifactId>
+			<version>4.5.2</version>
+		</dependency>
+		<dependency>
+			<groupId>org.webjars</groupId>
+			<artifactId>Eonasdan-bootstrap-datetimepicker</artifactId>
+			<version>4.17.47</version>
+			<exclusions>
+				<exclusion>
+					<groupId>*</groupId>
+					<artifactId>*</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>org.webjars</groupId>
+			<artifactId>font-awesome</artifactId>
+			<version>5.8.2</version>
+		</dependency>
+		<dependency>
+			<groupId>org.webjars.bower</groupId>
+			<artifactId>awesome-bootstrap-checkbox</artifactId>
+			<version>1.0.2</version>
+		</dependency>
+		<dependency>
+			<groupId>org.webjars</groupId>
+			<artifactId>jstimezonedetect</artifactId>
+			<version>1.0.6</version>
+		</dependency>
+		<dependency>
+			<groupId>org.webjars</groupId>
+			<artifactId>select2</artifactId>
+			<version>4.0.13</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.webjars</groupId>
+					<artifactId>jquery</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>org.webjars.bower</groupId>
+			<artifactId>jquery</artifactId>
+			<version>3.5.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.webjars.bower</groupId>
+			<artifactId>moment</artifactId>
+			<version>2.27.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.webjars.npm</groupId>
+			<artifactId>popper.js</artifactId>
+			<version>1.16.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.webjars</groupId>
+			<artifactId>swagger-ui</artifactId>
+			<version>4.1.3</version>
+		</dependency>		   
 	</dependencies>
+	
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>unpacktester</id>
+						<phase>compile</phase>
+						<goals>
+							<goal>unpack</goal>
+						</goals>
+						<configuration>
+							<artifactItems>
+								<artifactItem>
+									<groupId>ca.uhn.hapi.fhir</groupId>
+									<artifactId>hapi-fhir-testpage-overlay</artifactId>
+									<version>${hapi.fhir.version}</version>
+									<type>war</type>
+									<overWrite>true</overWrite>
+									<outputDirectory>${project.build.directory}/classes/META-INF/resources
+									</outputDirectory>
+									<includes>**/*.js,**/*.css,**/img/**</includes>
+								</artifactItem>
+								<artifactItem>
+									<groupId>ca.uhn.hapi.fhir</groupId>
+									<artifactId>hapi-fhir-testpage-overlay</artifactId>
+									<version>${hapi.fhir.version}</version>
+									<type>war</type>
+									<overWrite>true</overWrite>
+									<outputDirectory>${project.build.directory}/classes
+									</outputDirectory>
+									<includes>**/WEB-INF/templates/**</includes>
+								</artifactItem>								
+							</artifactItems>
+							<overWriteReleases>false</overWriteReleases>
+							<overWriteSnapshots>true</overWriteSnapshots>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin> 
+		</plugins>
+	</build>
 </project>

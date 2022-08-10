@@ -1,0 +1,28 @@
+{
+  "resourceType": "Bundle",
+  "type": "transaction",
+  "entry": [
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "identifier": [
+          {
+            "system": "urn:mitre:healthmanager:account:username",
+            "value": "naccount"
+          }
+        ],
+        "name": [
+          {
+            "family": "Account",
+            "given": [
+              "New"
+            ]
+          }]
+      },
+      "request": {
+        "method": "POST",
+        "url": "Patient"
+      }
+    }
+  ]
+}

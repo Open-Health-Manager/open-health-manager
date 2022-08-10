@@ -6,10 +6,16 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.util.Collections;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mitre.healthmanager.management.SecurityMetersService;
+import org.mitre.healthmanager.repository.FHIRPatientRepository;
+import org.mitre.healthmanager.repository.UserRepository;
 import org.mitre.healthmanager.security.AuthoritiesConstants;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -20,11 +26,18 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
 import tech.jhipster.config.JHipsterProperties;
 
+@ExtendWith(MockitoExtension.class)
 class JWTFilterTest {
 
     private TokenProvider tokenProvider;
 
     private JWTFilter jwtFilter;
+
+    @Mock
+    private FHIRPatientRepository fhirPatientRepositoryMock;
+
+    @Mock
+    private UserRepository userRepositoryMock;
 
     @BeforeEach
     public void setup() {
@@ -36,6 +49,8 @@ class JWTFilterTest {
 
         tokenProvider = new TokenProvider(jHipsterProperties, securityMetersService);
         ReflectionTestUtils.setField(tokenProvider, "key", Keys.hmacShaKeyFor(Decoders.BASE64.decode(base64Secret)));
+        ReflectionTestUtils.setField(tokenProvider, "userRepository", userRepositoryMock);
+        ReflectionTestUtils.setField(tokenProvider, "fhirPatientRepository", fhirPatientRepositoryMock);
 
         ReflectionTestUtils.setField(tokenProvider, "tokenValidityInMilliseconds", 60000);
         jwtFilter = new JWTFilter(tokenProvider);

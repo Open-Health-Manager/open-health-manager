@@ -1,0 +1,72 @@
+{
+  "resourceType": "Bundle",
+  "type": "transaction",
+  "meta": {
+    "source": "urn:mitre:healthmanager:test:source2"
+  },
+  "entry": [
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "id": "test-testTransactionAsPDR",
+        "identifier": [
+          {
+            "system": "urn:mitre:healthmanager:account:username",
+            "value": "testTransactionAsPDR"
+          }
+        ],
+        "name": [
+          {
+            "family": "testTransactionAsPDR",
+            "given": [
+              "theTest",
+              "M"
+            ]
+          }]
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Patient/test-testTransactionAsPDR"
+      }
+    },
+    {
+      "resource": {
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "laboratory"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "17856-6",
+              "display": "Hemoglobin A1c/Hemoglobin.total in Blood by HPLC"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/test-testTransactionAsPDR"
+        },
+        "effectiveDateTime": "2021-04-07T12:30:00",
+        "valueQuantity": {
+          "value": 8.1,
+          "unit": "%",
+          "system": "http://unitsofmeasure.org",
+          "code": "%"
+        },
+        "resourceType": "Observation"
+      },
+      "request": {
+        "method": "POST",
+        "url": "Observation"
+      }
+    }
+  ]
+}

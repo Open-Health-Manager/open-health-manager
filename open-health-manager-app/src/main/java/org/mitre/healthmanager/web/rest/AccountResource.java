@@ -1,9 +1,10 @@
 package org.mitre.healthmanager.web.rest;
 
-import java.util.*;
+import java.util.Optional;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
-import org.apache.commons.lang3.StringUtils;
+
 import org.mitre.healthmanager.domain.User;
 import org.mitre.healthmanager.repository.UserRepository;
 import org.mitre.healthmanager.security.SecurityUtils;
@@ -11,13 +12,24 @@ import org.mitre.healthmanager.service.MailService;
 import org.mitre.healthmanager.service.UserService;
 import org.mitre.healthmanager.service.dto.AdminUserDTO;
 import org.mitre.healthmanager.service.dto.PasswordChangeDTO;
-import org.mitre.healthmanager.web.rest.errors.*;
+import org.mitre.healthmanager.service.dto.UserDUADTO;
+import org.mitre.healthmanager.web.rest.errors.BadRequestAlertException;
+import org.mitre.healthmanager.web.rest.errors.EmailAlreadyUsedException;
+import org.mitre.healthmanager.web.rest.errors.InvalidPasswordException;
+import org.mitre.healthmanager.web.rest.errors.LoginAlreadyUsedException;
+import org.mitre.healthmanager.web.rest.vm.DUAManagedUserVM;
 import org.mitre.healthmanager.web.rest.vm.KeyAndPasswordVM;
-import org.mitre.healthmanager.web.rest.vm.ManagedUserVM;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
+
 
 /**
  * REST controller for managing the current user's account.
@@ -50,18 +62,23 @@ public class AccountResource {
     /**
      * {@code POST  /register} : register the user.
      *
-     * @param managedUserVM the managed user View Model.
+     * @param DUAmanagedUserVM the managed user View Model.
      * @throws InvalidPasswordException {@code 400 (Bad Request)} if the password is incorrect.
      * @throws EmailAlreadyUsedException {@code 400 (Bad Request)} if the email is already used.
      * @throws LoginAlreadyUsedException {@code 400 (Bad Request)} if the login is already used.
+     * @throws InvalidDUAException {@code 400 (Bad Request)} if DUA is not active and attested.
      */
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
-    public void registerAccount(@Valid @RequestBody ManagedUserVM managedUserVM) {
-        if (isPasswordLengthInvalid(managedUserVM.getPassword())) {
-            throw new InvalidPasswordException();
+    public void registerAccount(@Valid @RequestBody DUAManagedUserVM duaManagedUserVM) {
+
+        UserDUADTO userDUADTO = duaManagedUserVM.getUserDUADTO();
+
+        if (userDUADTO != null && userDUADTO.getId() != null) {
+            throw new BadRequestAlertException("A new userDUA cannot already have an ID", "userDUA", "idexists");
         }
-        User user = userService.registerUser(managedUserVM, managedUserVM.getPassword());
+        
+        User user = userService.registerUser(duaManagedUserVM, duaManagedUserVM.getPassword(), userDUADTO);
         mailService.sendActivationEmail(user);
     }
 
@@ -141,10 +158,7 @@ public class AccountResource {
      * @throws InvalidPasswordException {@code 400 (Bad Request)} if the new password is incorrect.
      */
     @PostMapping(path = "/account/change-password")
-    public void changePassword(@RequestBody PasswordChangeDTO passwordChangeDto) {
-        if (isPasswordLengthInvalid(passwordChangeDto.getNewPassword())) {
-            throw new InvalidPasswordException();
-        }
+    public void changePassword(@Valid @RequestBody PasswordChangeDTO passwordChangeDto) {
         userService.changePassword(passwordChangeDto.getCurrentPassword(), passwordChangeDto.getNewPassword());
     }
 
@@ -173,22 +187,11 @@ public class AccountResource {
      * @throws RuntimeException {@code 500 (Internal Server Error)} if the password could not be reset.
      */
     @PostMapping(path = "/account/reset-password/finish")
-    public void finishPasswordReset(@RequestBody KeyAndPasswordVM keyAndPassword) {
-        if (isPasswordLengthInvalid(keyAndPassword.getNewPassword())) {
-            throw new InvalidPasswordException();
-        }
+    public void finishPasswordReset(@Valid @RequestBody KeyAndPasswordVM keyAndPassword) {
         Optional<User> user = userService.completePasswordReset(keyAndPassword.getNewPassword(), keyAndPassword.getKey());
 
         if (!user.isPresent()) {
             throw new AccountResourceException("No user was found for this reset key");
         }
-    }
-
-    private static boolean isPasswordLengthInvalid(String password) {
-        return (
-            StringUtils.isEmpty(password) ||
-            password.length() < ManagedUserVM.PASSWORD_MIN_LENGTH ||
-            password.length() > ManagedUserVM.PASSWORD_MAX_LENGTH
-        );
     }
 }

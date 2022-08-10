@@ -1,5 +1,7 @@
 package org.mitre.healthmanager.web.rest.vm;
 
+import org.mitre.healthmanager.service.dto.ValidPassword;
+
 /**
  * View Model object for storing the user's key and password.
  */
@@ -7,6 +9,7 @@ public class KeyAndPasswordVM {
 
     private String key;
 
+    @ValidPassword
     private String newPassword;
 
     public String getKey() {

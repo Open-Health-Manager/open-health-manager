@@ -36,6 +36,7 @@ export const PasswordPage = () => {
     } else if (errorMessage) {
       toast.error(translate(errorMessage));
     }
+    dispatch(reset()); //reset in case use saves twice in a row
   }, [successMessage, errorMessage]);
 
   return (
@@ -65,8 +66,12 @@ export const PasswordPage = () => {
               type="password"
               validate={{
                 required: { value: true, message: translate('global.messages.validate.newpassword.required') },
-                minLength: { value: 4, message: translate('global.messages.validate.newpassword.minlength') },
+                minLength: { value: 6, message: translate('global.messages.validate.newpassword.minlength') },
                 maxLength: { value: 50, message: translate('global.messages.validate.newpassword.maxlength') },
+                pattern: { 
+					value: /(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[!"#$%&'()*+,-./:;<=>?@[\\\]^_`{|}~])/, 
+                	message: translate('global.messages.validate.newpassword.pattern') 
+                }
               }}
               onChange={updatePassword}
               data-cy="newPassword"
@@ -79,8 +84,6 @@ export const PasswordPage = () => {
               type="password"
               validate={{
                 required: { value: true, message: translate('global.messages.validate.confirmpassword.required') },
-                minLength: { value: 4, message: translate('global.messages.validate.confirmpassword.minlength') },
-                maxLength: { value: 50, message: translate('global.messages.validate.confirmpassword.maxlength') },
                 validate: v => v === password || translate('global.messages.error.dontmatch'),
               }}
               data-cy="confirmPassword"

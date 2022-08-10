@@ -55,7 +55,7 @@ class HibernateTimeZoneIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void storeInstantWithZoneIdConfigShouldBeStoredOnGMTTimeZone() {
         dateTimeWrapperRepository.saveAndFlush(dateTimeWrapper);
 
@@ -67,7 +67,7 @@ class HibernateTimeZoneIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void storeLocalDateTimeWithZoneIdConfigShouldBeStoredOnGMTTimeZone() {
         dateTimeWrapperRepository.saveAndFlush(dateTimeWrapper);
 
@@ -79,7 +79,7 @@ class HibernateTimeZoneIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void storeOffsetDateTimeWithZoneIdConfigShouldBeStoredOnGMTTimeZone() {
         dateTimeWrapperRepository.saveAndFlush(dateTimeWrapper);
 
@@ -91,7 +91,7 @@ class HibernateTimeZoneIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void storeZoneDateTimeWithZoneIdConfigShouldBeStoredOnGMTTimeZone() {
         dateTimeWrapperRepository.saveAndFlush(dateTimeWrapper);
 
@@ -103,7 +103,7 @@ class HibernateTimeZoneIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void storeLocalTimeWithZoneIdConfigShouldBeStoredOnGMTTimeZoneAccordingToHis1stJan1970Value() {
         dateTimeWrapperRepository.saveAndFlush(dateTimeWrapper);
 
@@ -119,7 +119,7 @@ class HibernateTimeZoneIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void storeOffsetTimeWithZoneIdConfigShouldBeStoredOnGMTTimeZoneAccordingToHis1stJan1970Value() {
         dateTimeWrapperRepository.saveAndFlush(dateTimeWrapper);
 
@@ -136,7 +136,7 @@ class HibernateTimeZoneIT {
     }
 
     @Test
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     void storeLocalDateWithZoneIdConfigShouldBeStoredWithoutTransformation() {
         dateTimeWrapperRepository.saveAndFlush(dateTimeWrapper);
 

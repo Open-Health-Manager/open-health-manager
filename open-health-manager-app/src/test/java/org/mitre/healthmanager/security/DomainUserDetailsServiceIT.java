@@ -18,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * Integrations tests for {@link DomainUserDetailsService}.
  */
-@Transactional
+@Transactional("jhipsterTransactionManager")
 @IntegrationTest
 class DomainUserDetailsServiceIT {
 

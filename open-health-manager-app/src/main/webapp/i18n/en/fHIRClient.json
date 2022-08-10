@@ -1,0 +1,28 @@
+{
+  "openHealthManagerApp": {
+    "fHIRClient": {
+      "home": {
+        "title": "FHIR Clients",
+        "refreshListLabel": "Refresh list",
+        "createLabel": "Create a new FHIR Client",
+        "createOrEditLabel": "Create or edit a FHIR Client",
+        "notFound": "No FHIR Clients found"
+      },
+      "created": "A new FHIR Client is created with identifier {{ param }}",
+      "updated": "A FHIR Client is updated with identifier {{ param }}",
+      "deleted": "A FHIR Client is deleted with identifier {{ param }}",
+      "delete": {
+        "question": "Are you sure you want to delete FHIR Client {{ id }}?"
+      },
+      "detail": {
+        "title": "FHIR Client"
+      },
+      "id": "ID",
+      "name": "Name",
+      "displayName": "Display Name",
+      "uri": "Uri",
+      "fhirOrganizationId": "Fhir Organization Id",
+      "clientDirection": "Client Direction"
+    }
+  }
+}

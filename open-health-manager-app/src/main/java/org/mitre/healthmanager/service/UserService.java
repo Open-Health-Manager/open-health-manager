@@ -2,19 +2,30 @@ package org.mitre.healthmanager.service;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
+
 import org.mitre.healthmanager.config.Constants;
 import org.mitre.healthmanager.domain.Authority;
+import org.mitre.healthmanager.domain.FHIRPatient;
 import org.mitre.healthmanager.domain.User;
+import org.mitre.healthmanager.service.dto.UserDUADTO;
+import org.mitre.healthmanager.service.mapper.UserMapper;
 import org.mitre.healthmanager.repository.AuthorityRepository;
 import org.mitre.healthmanager.repository.UserRepository;
 import org.mitre.healthmanager.security.AuthoritiesConstants;
 import org.mitre.healthmanager.security.SecurityUtils;
 import org.mitre.healthmanager.service.dto.AdminUserDTO;
 import org.mitre.healthmanager.service.dto.UserDTO;
+
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.CacheManager;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -22,6 +33,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import tech.jhipster.security.RandomUtil;
 
 /**
@@ -30,7 +42,6 @@ import tech.jhipster.security.RandomUtil;
 @Service
 @Transactional("jhipsterTransactionManager")
 public class UserService {
-
     private final Logger log = LoggerFactory.getLogger(UserService.class);
 
     private final UserRepository userRepository;
@@ -41,16 +52,27 @@ public class UserService {
 
     private final CacheManager cacheManager;
 
+    private final UserDUAService userDUAService;
+    
+    private final UserMapper userMapper;
+
+    @Autowired
+    private FHIRPatientService fhirPatientService;
+
     public UserService(
         UserRepository userRepository,
         PasswordEncoder passwordEncoder,
         AuthorityRepository authorityRepository,
-        CacheManager cacheManager
+        CacheManager cacheManager,
+        UserDUAService userDUAService,
+        UserMapper userMapper
     ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authorityRepository = authorityRepository;
         this.cacheManager = cacheManager;
+        this.userDUAService = userDUAService;
+        this.userMapper = userMapper;
     }
 
     public Optional<User> activateRegistration(String key) {
@@ -63,6 +85,8 @@ public class UserService {
                 user.setActivationKey(null);
                 this.clearUserCaches(user);
                 log.debug("Activated user: {}", user);
+
+                fhirPatientService.createFHIRPatientForUser(user);
                 return user;
             });
     }
@@ -93,7 +117,7 @@ public class UserService {
             });
     }
 
-    public User registerUser(AdminUserDTO userDTO, String password) {
+    public User registerUser(AdminUserDTO userDTO, String password, UserDUADTO userDUADTO) {
         userRepository
             .findOneByLogin(userDTO.getLogin().toLowerCase())
             .ifPresent(existingUser -> {
@@ -110,6 +134,11 @@ public class UserService {
                     throw new EmailAlreadyUsedException();
                 }
             });
+
+        if (userDUADTO == null || !userDUADTO.getActive() || !userDUADTO.getAgeAttested()) {
+            throw new InvalidDUAException();
+        }
+
         User newUser = new User();
         String encryptedPassword = passwordEncoder.encode(password);
         newUser.setLogin(userDTO.getLogin().toLowerCase());
@@ -129,16 +158,25 @@ public class UserService {
         Set<Authority> authorities = new HashSet<>();
         authorityRepository.findById(AuthoritiesConstants.USER).ifPresent(authorities::add);
         newUser.setAuthorities(authorities);
+        
         userRepository.save(newUser);
+
+        userDUADTO.setUser(userMapper.userToUserDTO(newUser));
+        userDUAService.save(userDUADTO);
+
         this.clearUserCaches(newUser);
         log.debug("Created Information for User: {}", newUser);
         return newUser;
     }
 
     private boolean removeNonActivatedUser(User existingUser) {
-        if (existingUser.isActivated()) {
+        // if currently or previously activated (has a FHIR patient tied to it)
+        // treat as activated and do not remove
+        // prevents change of login
+        if (existingUser.isActivated() || fhirPatientService.findOneForUser(existingUser.getId()).isPresent()) {
             return false;
         }
+
         userRepository.delete(existingUser);
         userRepository.flush();
         this.clearUserCaches(existingUser);
@@ -146,6 +184,7 @@ public class UserService {
     }
 
     public User createUser(AdminUserDTO userDTO) {
+       
         User user = new User();
         user.setLogin(userDTO.getLogin().toLowerCase());
         user.setFirstName(userDTO.getFirstName());
@@ -174,10 +213,21 @@ public class UserService {
                 .collect(Collectors.toSet());
             user.setAuthorities(authorities);
         }
+        
         userRepository.save(user);
         this.clearUserCaches(user);
         log.debug("Created Information for User: {}", user);
+
+        fhirPatientService.createFHIRPatientForUser(user);
+
         return user;
+    }
+
+    private void deleteFHIRPatient(User user) {
+        Optional<FHIRPatient> linkedFHIRPatient = fhirPatientService.findOneForUser(user.getId());
+        if (linkedFHIRPatient.isPresent()) {
+        	fhirPatientService.delete(linkedFHIRPatient.get().getId());
+        }
     }
 
     /**
@@ -193,6 +243,11 @@ public class UserService {
             .map(Optional::get)
             .map(user -> {
                 this.clearUserCaches(user);
+                String newLogin = userDTO.getLogin().toLowerCase();
+                if (!newLogin.equals(user.getLogin())) {
+                    throw new UsernameChangeException();
+                }
+                
                 user.setLogin(userDTO.getLogin().toLowerCase());
                 user.setFirstName(userDTO.getFirstName());
                 user.setLastName(userDTO.getLastName());
@@ -213,6 +268,10 @@ public class UserService {
                     .forEach(managedAuthorities::add);
                 this.clearUserCaches(user);
                 log.debug("Changed Information for User: {}", user);
+
+                
+                fhirPatientService.createFHIRPatientForUser(user);
+
                 return user;
             })
             .map(AdminUserDTO::new);
@@ -222,6 +281,7 @@ public class UserService {
         userRepository
             .findOneByLogin(login)
             .ifPresent(user -> {
+                deleteFHIRPatient(user);
                 userRepository.delete(user);
                 this.clearUserCaches(user);
                 log.debug("Deleted User: {}", user);
@@ -254,7 +314,7 @@ public class UserService {
             });
     }
 
-    @Transactional
+    @Transactional("jhipsterTransactionManager")
     public void changePassword(String currentClearTextPassword, String newPassword) {
         SecurityUtils
             .getCurrentUserLogin()
@@ -271,22 +331,22 @@ public class UserService {
             });
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly =  true, transactionManager = "jhipsterTransactionManager")
     public Page<AdminUserDTO> getAllManagedUsers(Pageable pageable) {
         return userRepository.findAll(pageable).map(AdminUserDTO::new);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly =  true, transactionManager = "jhipsterTransactionManager")
     public Page<UserDTO> getAllPublicUsers(Pageable pageable) {
         return userRepository.findAllByIdNotNullAndActivatedIsTrue(pageable).map(UserDTO::new);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly =  true, transactionManager = "jhipsterTransactionManager")
     public Optional<User> getUserWithAuthoritiesByLogin(String login) {
         return userRepository.findOneWithAuthoritiesByLogin(login);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly =  true, transactionManager = "jhipsterTransactionManager")
     public Optional<User> getUserWithAuthorities() {
         return SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findOneWithAuthoritiesByLogin);
     }
@@ -311,7 +371,7 @@ public class UserService {
      * Gets a list of all the authorities.
      * @return a list of all the authorities.
      */
-    @Transactional(readOnly = true)
+    @Transactional(readOnly =  true, transactionManager = "jhipsterTransactionManager")
     public List<String> getAuthorities() {
         return authorityRepository.findAll().stream().map(Authority::getName).collect(Collectors.toList());
     }

@@ -1,0 +1,40 @@
+{
+  "type": "message",
+  "entry": [
+    {
+      "resource": {
+        "extension": [
+          {
+            "url": "https://github.com/Open-Health-Manager/patient-data-receipt-ig/StructureDefinition/AccountExtension",
+            "valueString": "inferUsernameViaLink"
+          }
+        ],
+        "eventUri": "urn:mitre:healthmanager:pdr",
+        "source": {
+          "endpoint": "urn:mitre:healthmanager:testSystem1"
+        },
+        "resourceType": "MessageHeader"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "identifier": [
+          {
+            "system": "urn:mitre:healthmanager:account:username",
+            "value": "inferUsernameViaLink"
+          }
+        ],
+        "name": [
+          {
+            "family": "inferUsernameViaLink",
+            "given": [
+              "Test"
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "resourceType": "Bundle"
+}
