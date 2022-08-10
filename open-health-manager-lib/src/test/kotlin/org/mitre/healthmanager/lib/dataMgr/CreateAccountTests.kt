@@ -31,9 +31,14 @@ import org.junit.jupiter.api.BeforeEach
 import org.mitre.healthmanager.searchForPatientByUsername
 import org.mitre.healthmanager.getAdminAuthClient
 import org.mitre.healthmanager.TestUtils.mockAdminUser
+import org.mitre.healthmanager.getAdminAuthClient
+import org.mitre.healthmanager.TestUtils.mockAdminUser
 import org.slf4j.LoggerFactory
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.web.server.LocalServerPort
+import org.springframework.security.test.context.support.WithMockUser
+import org.springframework.test.context.ContextConfiguration
+import org.springframework.test.context.junit.jupiter.SpringExtension
 import org.springframework.security.test.context.support.WithMockUser
 import org.springframework.test.context.ContextConfiguration
 import org.springframework.test.context.junit.jupiter.SpringExtension
@@ -52,6 +57,8 @@ import org.springframework.test.context.junit.jupiter.SpringExtension
         "hapi.fhir.fhir_version=r4",
     ]
 )
+@ExtendWith(SpringExtension::class)
+@ContextConfiguration
 @ExtendWith(SpringExtension::class)
 @ContextConfiguration
 class CreateAccountTests {
