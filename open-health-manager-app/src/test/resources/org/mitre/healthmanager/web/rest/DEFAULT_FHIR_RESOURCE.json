@@ -1,0 +1,36 @@
+{
+  "resourceType": "Consent",
+  "id": "DEFAULT_FHIR_RESOURCE",
+  "status": "active",
+  "scope": {
+    "coding": [ {
+      "system": "http://terminology.hl7.org/CodeSystem/consentscope",
+      "code": "patient-privacy"
+    } ]
+  },
+  "patient": {
+    "reference": "Patient/user-2"
+  },
+  "organization": {        
+    "identifier": {
+        "system": "urn:mitre:healthmanager"
+    }  
+  },
+  "provision": {
+    "status": "permit",
+    "period": {
+      "start": "2022-07-29"
+    },
+    "actor": [ {
+      "role": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/v3-RoleCode",
+          "code": "DELEGATEE"
+        } ]
+      },
+      "reference": {
+        "reference": "Organization/FhirClientid"
+      }
+    }]
+  }
+}

@@ -132,8 +132,10 @@ public class FHIRPatientConsentResource {
     @PostMapping("/fhir-patient-consents")
     public ResponseEntity<FHIRPatientConsentDTO> createFhirPatientConsentForUser(@Valid @RequestBody FHIRPatientConsentDTO fhirPatientConsentDTO) throws URISyntaxException {
         log.debug("REST to create FhirPatientConsent for user");
-        checkUserAuthority(fhirPatientConsentDTO);
-        
+        if (fhirPatientConsentDTO.getId() != null) {
+            throw new BadRequestAlertException("A new fhirPatientConsentDTO cannot already have an ID", ENTITY_NAME, "idexists");
+        }
+        checkUserAuthority(fhirPatientConsentDTO);       
         FHIRPatientConsentDTO result = fHIRPatientConsentService.save(fhirPatientConsentDTO);
         return ResponseEntity
             .created(new URI("/api/fhir-patient-consents/" + result.getId()))
@@ -164,7 +166,7 @@ public class FHIRPatientConsentResource {
             throw new BadRequestAlertException("Invalid ID", ENTITY_NAME, "idinvalid");
         }
                 
-        FHIRPatientConsentDTO original = fHIRPatientConsentService.findOne(String.valueOf(id)).orElseGet(null);
+        FHIRPatientConsentDTO original = fHIRPatientConsentService.findOne(String.valueOf(id)).orElse(null);
         if (Objects.isNull(original)) {
         	throw new BadRequestAlertException("Entity not found", ENTITY_NAME, "idnotfound");
         }
@@ -187,7 +189,7 @@ public class FHIRPatientConsentResource {
     @DeleteMapping("/fhir-patient-consents/{id}")
     public ResponseEntity<Void> deleteFHIRPatientConsent(@PathVariable Long id) {
         log.debug("REST request to delete FHIRPatientConsent : {}", id);
-        FHIRPatientConsentDTO original = fHIRPatientConsentService.findOne(String.valueOf(id)).orElseGet(null);
+        FHIRPatientConsentDTO original = fHIRPatientConsentService.findOne(String.valueOf(id)).orElse(null);
         if (!Objects.isNull(original)) {
         	checkUserAuthority(original);
         }        
