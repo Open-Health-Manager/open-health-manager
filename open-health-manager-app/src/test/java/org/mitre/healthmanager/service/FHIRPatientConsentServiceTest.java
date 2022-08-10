@@ -2,6 +2,7 @@ package org.mitre.healthmanager.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
@@ -11,6 +12,7 @@ import java.util.Optional;
 
 import org.hl7.fhir.r4.model.Consent;
 import org.hl7.fhir.r4.model.DateTimeType;
+import org.hl7.fhir.r4.model.IdType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -88,7 +90,8 @@ class FHIRPatientConsentServiceTest {
 		ArgumentCaptor<Consent> consetCaptor = ArgumentCaptor.forClass(Consent.class);			
 		DaoMethodOutcome resp = new DaoMethodOutcome().setCreated(true);
 		resp.setResource(new Consent());
-		when(myDaoRegistry.getResourceDao(Consent.class)).thenReturn(consentDAO);	
+		when(myDaoRegistry.getResourceDao(Consent.class)).thenReturn(consentDAO);		
+		when(consentDAO.search(any(SearchParameterMap.class), any(RequestDetails.class))).thenReturn(BundleProviders.newEmptyList());
 		when(consentDAO.create(any(Consent.class), any(RequestDetails.class))).thenReturn(resp);
 		
 		FHIRPatientConsentDTO fhirPatientConsentDTO = setupDefaultPatientClient();
@@ -110,6 +113,60 @@ class FHIRPatientConsentServiceTest {
 	}
 	
 	@Test
+	void testSaveConsentNoUser() {	
+		FHIRPatientConsentDTO fhirPatientConsentDTO = new FHIRPatientConsentDTO();
+		fhirPatientConsentDTO.setApprove(true);		
+		FHIRClientDTO clientDTO = new FHIRClientDTO();
+		clientDTO.setId((long) 5678);
+		fhirPatientConsentDTO.setClient(clientDTO);
+		
+		assertThrows(InvalidConsentException.class, () -> {
+			fhirPatientConsentService.save(fhirPatientConsentDTO);
+		});
+	}
+	
+	@Test
+	void testSaveConsentUserIdMissing() {	
+		FHIRPatientConsentDTO fhirPatientConsentDTO = new FHIRPatientConsentDTO();
+		fhirPatientConsentDTO.setApprove(true);
+		fhirPatientConsentDTO.setUser(new UserDTO());
+		FHIRClientDTO clientDTO = new FHIRClientDTO();
+		clientDTO.setId((long) 5678);
+		fhirPatientConsentDTO.setClient(clientDTO);
+		
+		assertThrows(InvalidConsentException.class, () -> {
+			fhirPatientConsentService.save(fhirPatientConsentDTO);
+		});
+	}
+	
+	@Test
+	void testSaveConsentNoClient() {	
+		FHIRPatientConsentDTO fhirPatientConsentDTO = new FHIRPatientConsentDTO();
+		fhirPatientConsentDTO.setApprove(true);
+		UserDTO userDTO = new UserDTO();
+		userDTO.setId((long) 1234);
+		fhirPatientConsentDTO.setUser(userDTO);
+		
+		assertThrows(InvalidConsentException.class, () -> {
+			fhirPatientConsentService.save(fhirPatientConsentDTO);
+		});
+	}
+	
+	@Test
+	void testSaveConsentClientIdMissing() {	
+		FHIRPatientConsentDTO fhirPatientConsentDTO = new FHIRPatientConsentDTO();
+		fhirPatientConsentDTO.setApprove(true);
+		UserDTO userDTO = new UserDTO();
+		userDTO.setId((long) 1234);
+		fhirPatientConsentDTO.setUser(userDTO);
+		fhirPatientConsentDTO.setClient(new FHIRClientDTO());
+		
+		assertThrows(InvalidConsentException.class, () -> {
+			fhirPatientConsentService.save(fhirPatientConsentDTO);
+		});
+	}
+	
+	@Test
 	void testUpdateToggleApproval() {
 		DaoMethodOutcome resp = new DaoMethodOutcome().setCreated(true);
 		resp.setResource(new Consent());
@@ -121,10 +178,9 @@ class FHIRPatientConsentServiceTest {
 		consent.getProvision().setType(Consent.ConsentProvisionType.DENY);
 		DateTimeType originalDateTimeType = DateTimeType.now();
 		consent.getProvision().getPeriod().setStartElement(originalDateTimeType);
-		
-		IBundleProvider bundle = BundleProviders.newList(consent);
+				
 		when(myDaoRegistry.getResourceDao(Consent.class)).thenReturn(consentDAO);	
-		when(consentDAO.search(any(SearchParameterMap.class), any(RequestDetails.class))).thenReturn(bundle);
+		when(consentDAO.read(any(IdType.class))).thenReturn(consent);
 		
 		ArgumentCaptor<Consent> consetCaptor = ArgumentCaptor.forClass(Consent.class);
 		fhirPatientConsentService.update(fhirPatientConsentDTO);
