@@ -211,7 +211,7 @@ public class FHIRClientService {
         RequestDetails requestDetails = SystemRequestDetails.forAllPartition();
         DaoMethodOutcome resp = organizationDAO.create(organizationFHIR, requestDetails); //fires interceptors
         if (!resp.getCreated()) {
-            throw new RuntimeException("FHIR Organization creation failed");
+            throw new FHIROrganizationResourceException("FHIR Organization creation failed");
         }
         
         return resp.getId().getIdPart();

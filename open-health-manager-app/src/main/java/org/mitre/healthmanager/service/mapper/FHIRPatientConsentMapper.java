@@ -22,7 +22,6 @@ import org.mapstruct.MappingTarget;
 import org.mapstruct.Named;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 
-import org.mitre.healthmanager.domain.FHIRPatientConsent;
 import org.mitre.healthmanager.service.dto.FHIRPatientConsentDTO;
 
 import org.mitre.healthmanager.domain.User;
