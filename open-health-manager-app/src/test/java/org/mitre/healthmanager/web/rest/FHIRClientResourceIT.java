@@ -196,7 +196,7 @@ class FHIRClientResourceIT {
         
         restFHIRClientMockMvc
             .perform(post(ADMIN_ENTITY_API_URL).contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(fHIRClientDTO)))
-            .andExpect(status().is5xxServerError());
+            .andExpect(status().is4xxClientError());
 
         // Validate the FHIRClient was not added to the database
         List<FHIRClient> fHIRClientList = fHIRClientRepository.findAll();

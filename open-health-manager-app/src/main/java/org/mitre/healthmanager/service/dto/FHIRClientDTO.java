@@ -5,6 +5,7 @@ import java.util.Objects;
 
 import org.mitre.healthmanager.domain.FHIRClient;
 import org.mitre.healthmanager.domain.enumeration.ClientDirection;
+import javax.validation.constraints.NotNull;
 
 /**
  * A DTO for the {@link org.mitre.healthmanager.domain.FHIRClient} entity.
