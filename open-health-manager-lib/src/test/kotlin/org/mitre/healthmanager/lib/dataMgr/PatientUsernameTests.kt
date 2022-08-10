@@ -27,9 +27,11 @@ import org.hl7.fhir.r4.model.Bundle
 import org.hl7.fhir.r4.model.Patient
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.BeforeEach
 import org.mitre.healthmanager.searchForPatientByUsername
 import org.mitre.healthmanager.stringFromResource
 import org.mitre.healthmanager.getAdminAuthClient
+import org.mitre.healthmanager.TestUtils.mockAdminUser
 import org.slf4j.LoggerFactory
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.web.server.LocalServerPort
@@ -61,6 +63,11 @@ class PatientUsernameTests {
     @LocalServerPort
     private var port = 0
 
+    @BeforeEach
+    fun setAdminAuthContext() {
+        mockAdminUser()
+    }
+
     @Test
     fun testCreateWithoutUsername() {
         val methodName = "testCreateWithoutUsername"
@@ -68,7 +75,6 @@ class PatientUsernameTests {
         val testClient : IGenericClient = getAdminAuthClient(ourCtx, "http://localhost:$port/fhir/")
 
         val noUsernamePatient = Patient()
-        noUsernamePatient.addIdentifier().setSystem("urn:system").setValue("12345")
         noUsernamePatient.addName().setFamily("Smith").addGiven("John")
 
         val outcome: MethodOutcome? = try {
@@ -104,7 +110,7 @@ class PatientUsernameTests {
         val pdrBundle: Bundle = ourCtx.newJsonParser().parseResource<Bundle>(
             Bundle::class.java, stringFromResource("healthmanager/dataMgr/PatientUsernameTests/PatientRecordNoUsernamePDR.json")
         )
-        val response : Bundle = testClient
+        testClient
             .operation()
             .processMessage()
             .setMessageBundle<Bundle>(pdrBundle)

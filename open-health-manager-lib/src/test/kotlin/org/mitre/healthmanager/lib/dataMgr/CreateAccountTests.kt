@@ -27,6 +27,7 @@ import org.hl7.fhir.r4.model.StringType
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.api.BeforeEach
 import org.mitre.healthmanager.searchForPatientByUsername
 import org.mitre.healthmanager.getAdminAuthClient
 import org.mitre.healthmanager.TestUtils.mockAdminUser
@@ -65,12 +66,16 @@ class CreateAccountTests {
     @LocalServerPort
     private var port = 0
 
+    @BeforeEach
+    fun setAdminAuthContext() {
+        mockAdminUser()
+    }
+
     @Test
     fun testCreateSuccess() {
         val methodName = "testCreateSuccess"
         ourLog.info("Entering $methodName()...")
         val testClient : IGenericClient = getAdminAuthClient(ourCtx, "http://localhost:$port/fhir/")
-        mockAdminUser()
 
         // make sure patient doesn't exist
         val results = testClient

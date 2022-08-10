@@ -27,6 +27,7 @@ import org.mitre.healthmanager.lib.dataMgr.pdrAccountExtension
 import org.mitre.healthmanager.lib.dataMgr.pdrLinkListExtensionURL
 import org.mitre.healthmanager.stringFromResource
 import org.mitre.healthmanager.getAdminAuthClient
+import org.mitre.healthmanager.TestUtils.mockAdminUser
 import org.slf4j.LoggerFactory
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.web.server.LocalServerPort
@@ -60,6 +61,11 @@ class ProcessMessageTests {
 
     @LocalServerPort
     private var port = 0
+
+    @BeforeEach
+    fun setAdminAuthContext() {
+        mockAdminUser()
+    }
 
     @Test
     fun testSuccessfulBundleStorage() {

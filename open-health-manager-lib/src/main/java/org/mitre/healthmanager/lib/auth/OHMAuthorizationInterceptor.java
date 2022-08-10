@@ -8,6 +8,7 @@ import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.instance.model.api.IIdType;
 import org.hl7.fhir.r4.model.IdType;
 import org.hl7.fhir.r4.model.MessageHeader;
+import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,8 +31,6 @@ import ca.uhn.fhir.rest.server.interceptor.auth.AuthorizationInterceptor;
 import ca.uhn.fhir.rest.server.interceptor.auth.IAuthRule;
 import ca.uhn.fhir.rest.server.interceptor.auth.IAuthRuleBuilder;
 import ca.uhn.fhir.rest.server.interceptor.auth.RuleBuilder;
-
-
 
 public class OHMAuthorizationInterceptor extends AuthorizationInterceptor {
     
@@ -81,17 +80,16 @@ public class OHMAuthorizationInterceptor extends AuthorizationInterceptor {
         IdType userIdPatientId = new IdType("Patient", (String) patientId);
         
         IAuthRuleBuilder patientAccessRules = new RuleBuilder()
-        .allow("patient read").read().allResources().inCompartment("Patient", userIdPatientId).andThen()
-        .allow("patient write").write().allResources().inCompartment("Patient", userIdPatientId).andThen()
-        .allow("patient everything").operation().named("$everything").onInstance(userIdPatientId).andAllowAllResponses().andThen()
-        .allow("practitioner").read().resourcesOfType("Practitioner").withAnyId().andThen()
-        //.allow("organization").read().resourcesOfType("Organization").withAnyId().andThen()
-        .allow("location").read().resourcesOfType("Location").withAnyId().andThen()
-        .allow("practitioner role").read().resourcesOfType("PractitionerRole").withAnyId().andThen()
+        .allow("patient compartment read").read().allResources().inCompartment("Patient", userIdPatientId).andThen()
+        .allow("update patient record").write().instance(userIdPatientId).andThen()
+        .deny("no patient resource creation").write().resourcesOfType(Patient.class).withAnyId().andThen()
+        .allow("patient compartment write").write().allResources().inCompartment("Patient", userIdPatientId).andThen()
+        .allow("transactions").transaction().withAnyOperation().andApplyNormalRules().andThen()
+        .allow("process-message").operation().named("process-message").onServer().andAllowAllResponses().andThen()
         ;
 
         /// Get an explicit list of message headers and bundles representing PDRs
-        patientAccessRules = buildPDRRules(userIdPatientId, patientAccessRules);
+        // patientAccessRules = buildPDRRules(userIdPatientId, patientAccessRules);
         
         return patientAccessRules.denyAll("patient access restricted").andThen().build();
     }
@@ -157,7 +155,7 @@ public class OHMAuthorizationInterceptor extends AuthorizationInterceptor {
     }
 
     private String getAuthorization() {
-        /// Get from Spring auth context, but fall back to the request if needed
+        /// Get from Spring auth context
         String token;
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null) {
@@ -175,8 +173,8 @@ public class OHMAuthorizationInterceptor extends AuthorizationInterceptor {
     }
 
    private List<IAuthRule> metadataRule() {
-    // allow the metadata endpoint for everyone
     
+        // allow the metadata endpoint for everyone
         return new RuleBuilder()
             .allow("allow metadata")
             .metadata()

@@ -23,11 +23,13 @@ import ca.uhn.fhir.rest.client.api.ServerValidationModeEnum
 import org.hl7.fhir.r4.model.*
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.BeforeEach
 import org.mitre.healthmanager.lib.dataMgr.pdrLinkExtensionURL
 import org.mitre.healthmanager.lib.dataMgr.pdrLinkListExtensionURL
 import org.mitre.healthmanager.lib.dataMgr.usernameSystem
 import org.mitre.healthmanager.stringFromResource
 import org.mitre.healthmanager.getAdminAuthClient
+import org.mitre.healthmanager.TestUtils.mockAdminUser
 import org.slf4j.LoggerFactory
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.web.server.LocalServerPort
@@ -57,6 +59,11 @@ class PDRLinkTests {
 
     @LocalServerPort
     private var port = 0
+    
+    @BeforeEach
+    fun setAdminAuthContext() {
+        mockAdminUser()
+    }
 
     @Test
     fun testPDRLinksAddedToDirectWrite() {

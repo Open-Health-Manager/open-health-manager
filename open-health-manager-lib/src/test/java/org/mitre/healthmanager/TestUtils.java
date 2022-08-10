@@ -26,6 +26,9 @@ public class TestUtils {
         
         Authentication authentication = new UsernamePasswordAuthenticationToken("test", token); // mock(Authentication.class);
         //SecurityContext securityContext = mock(SecurityContext.class);
+        SecurityContextHolder.setStrategyName(SecurityContextHolder.MODE_GLOBAL);
+        SecurityContextHolder.clearContext();
+        SecurityContextHolder.createEmptyContext();
         SecurityContextHolder.getContext().setAuthentication(authentication); 
         //when(securityContext.getAuthentication()).thenReturn(authentication);
         //SecurityContextHolder.setContext(securityContext);

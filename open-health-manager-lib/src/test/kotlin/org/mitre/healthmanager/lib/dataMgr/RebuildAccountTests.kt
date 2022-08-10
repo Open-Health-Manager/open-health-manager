@@ -22,6 +22,8 @@ import ca.uhn.fhir.rest.client.api.ServerValidationModeEnum
 import org.hl7.fhir.r4.model.*
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.BeforeEach
+import org.mitre.healthmanager.TestUtils.mockAdminUser
 import org.mitre.healthmanager.searchForPatientByUsername
 import org.mitre.healthmanager.stringFromResource
 import org.mitre.healthmanager.getAdminAuthClient
@@ -54,6 +56,11 @@ class RebuildAccountTests {
 
     @LocalServerPort
     private var port = 0
+
+    @BeforeEach
+    fun setAdminAuthContext() {
+        mockAdminUser()
+    }
 
     @Test
     fun testPatientOnlyRebuild() {
