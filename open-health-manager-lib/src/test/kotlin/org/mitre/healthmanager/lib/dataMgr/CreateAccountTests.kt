@@ -39,9 +39,6 @@ import org.springframework.boot.web.server.LocalServerPort
 import org.springframework.security.test.context.support.WithMockUser
 import org.springframework.test.context.ContextConfiguration
 import org.springframework.test.context.junit.jupiter.SpringExtension
-import org.springframework.security.test.context.support.WithMockUser
-import org.springframework.test.context.ContextConfiguration
-import org.springframework.test.context.junit.jupiter.SpringExtension
 
 @SpringBootTest(
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
@@ -57,8 +54,6 @@ import org.springframework.test.context.junit.jupiter.SpringExtension
         "hapi.fhir.fhir_version=r4",
     ]
 )
-@ExtendWith(SpringExtension::class)
-@ContextConfiguration
 @ExtendWith(SpringExtension::class)
 @ContextConfiguration
 class CreateAccountTests {

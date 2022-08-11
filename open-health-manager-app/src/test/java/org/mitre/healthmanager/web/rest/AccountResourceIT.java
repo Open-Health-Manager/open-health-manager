@@ -21,6 +21,7 @@ import org.hl7.fhir.r4.model.Patient;
 import org.junit.jupiter.api.Test;
 import org.mitre.healthmanager.IntegrationTest;
 import org.mitre.healthmanager.config.Constants;
+import org.mitre.healthmanager.domain.Authority;
 import org.mitre.healthmanager.domain.FHIRPatient;
 import org.mitre.healthmanager.domain.User;
 import org.mitre.healthmanager.repository.AuthorityRepository;
@@ -209,7 +210,7 @@ class AccountResourceIT {
 
         restAccountMockMvc
             .perform(post("/api/register").contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(invalidUser)))
-            .andExpect(status().is5xxServerError());
+            .andExpect(status().is4xxClientError());
 
         Optional<User> findByLogin = userRepository.findOneByLogin("test-register-invalid");
         assertThat(findByLogin).isEmpty();
@@ -239,7 +240,7 @@ class AccountResourceIT {
 
         restAccountMockMvc
             .perform(post("/api/register").contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(invalidUser)))
-            .andExpect(status().is5xxServerError());
+            .andExpect(status().is4xxClientError());
 
         Optional<User> findByLogin = userRepository.findOneByLogin("test-register-invalid");
         assertThat(findByLogin).isEmpty();
@@ -701,7 +702,7 @@ class AccountResourceIT {
         firstUserDTO.setLastName("lastname");
         firstUserDTO.setImageUrl("http://placehold.it/50x50");
         firstUserDTO.setLangKey(Constants.DEFAULT_LANGUAGE);
-        firstUserDTO.setAuthorities(Collections.singleton(AuthoritiesConstants.ADMIN));
+        firstUserDTO.setAuthorities(Collections.singleton(AuthoritiesConstants.USER));
         firstUserDTO.setActivated(true);
         userService.createUser(firstUserDTO);
         
@@ -773,7 +774,10 @@ class AccountResourceIT {
         user.setPassword(RandomStringUtils.random(60));
         user.setActivated(false);
         user.setActivationKey(activationKey);
-
+        Set<Authority> authorities = new HashSet<>();
+        authorityRepository.findById(AuthoritiesConstants.USER).ifPresent(authorities::add);
+        user.setAuthorities(authorities);
+        
         userRepository.saveAndFlush(user);
 
         IFhirResourceDao<Patient> patientDAO = myDaoRegistry.getResourceDao(Patient.class);
