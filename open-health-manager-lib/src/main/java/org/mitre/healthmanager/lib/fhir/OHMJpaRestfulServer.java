@@ -13,7 +13,6 @@ import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.MessageHeader;
 import org.hl7.fhir.r4.model.Patient;
 import org.mitre.healthmanager.lib.auth.OHMAuthorizationInterceptor;
-import org.mitre.healthmanager.lib.auth.OHMConsentInterceptor;
 import org.mitre.healthmanager.lib.auth.OHMSearchNarrowingInterceptor;
 import org.mitre.healthmanager.lib.dataMgr.AccountInterceptor;
 import org.mitre.healthmanager.lib.dataMgr.AccountProvider;
@@ -51,7 +50,6 @@ public class OHMJpaRestfulServer extends BaseJpaRestfulServer {
 		registerInterceptor(new RequestInterceptor(myPatientDao, myBundleDao, myMessageHeaderDao, myTransactionProcessor, myDaoRegistry));
 		registerInterceptor(new OHMAuthorizationInterceptor(myDaoRegistry));
 		registerInterceptor(new OHMSearchNarrowingInterceptor());
-		registerInterceptor(new OHMConsentInterceptor());
   }
 
 }
