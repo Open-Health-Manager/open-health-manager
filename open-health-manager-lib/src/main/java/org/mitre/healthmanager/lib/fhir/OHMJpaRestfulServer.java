@@ -48,7 +48,7 @@ public class OHMJpaRestfulServer extends BaseJpaRestfulServer {
 		registerProvider(new AccountProvider(myPatientDao, myBundleDao, myMessageHeaderDao, myTransactionProcessor, myDaoRegistry));
 		registerInterceptor(new AccountInterceptor());
 		registerInterceptor(new RequestInterceptor(myPatientDao, myBundleDao, myMessageHeaderDao, myTransactionProcessor, myDaoRegistry));
-		registerInterceptor(new OHMAuthorizationInterceptor(myDaoRegistry));
+		registerInterceptor(new OHMAuthorizationInterceptor());
 		registerInterceptor(new OHMSearchNarrowingInterceptor());
   }
 

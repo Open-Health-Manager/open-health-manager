@@ -79,7 +79,7 @@ class RequestInterceptor(private val myPatientDaoR4: IFhirResourceDaoPatient<Pat
                 // Check here if allowed to create patient resource instances
                 // by calling auth interceptor, which isn't called since we
                 // don't continue normal processing
-                val authInterceptor = OHMAuthorizationInterceptor(myDaoRegistry)
+                val authInterceptor = OHMAuthorizationInterceptor()
                 authInterceptor.incomingRequestPreHandled(requestDetails, Pointcut.SERVER_INCOMING_REQUEST_POST_PROCESSED)
 
                 // 0. if id specified, check that it isn't already being used for another username
