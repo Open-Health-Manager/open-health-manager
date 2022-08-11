@@ -32,6 +32,9 @@ import ca.uhn.fhir.rest.server.interceptor.auth.IAuthRule;
 import ca.uhn.fhir.rest.server.interceptor.auth.IAuthRuleBuilder;
 import ca.uhn.fhir.rest.server.interceptor.auth.RuleBuilder;
 
+import static org.mitre.healthmanager.lib.auth.AuthFetcher.getAuthorization;
+import static org.mitre.healthmanager.lib.auth.AuthFetcher.parseAuthToken;
+
 public class OHMAuthorizationInterceptor extends AuthorizationInterceptor {
     
     private final Logger log = LoggerFactory.getLogger(OHMAuthorizationInterceptor.class);
@@ -94,6 +97,7 @@ public class OHMAuthorizationInterceptor extends AuthorizationInterceptor {
         return patientAccessRules.denyAll("patient access restricted").andThen().build();
     }
 
+    /* not currently used 
     private IAuthRuleBuilder buildPDRRules(IdType userIdPatientId, IAuthRuleBuilder patientAccessRules) {
         IFhirResourceDao<MessageHeader> messageHeaderDao = myDaoRegistry.getResourceDao(MessageHeader.class);
         SystemRequestDetails searchRequestDetails = SystemRequestDetails.forAllPartition();
@@ -128,48 +132,12 @@ public class OHMAuthorizationInterceptor extends AuthorizationInterceptor {
         }
         return patientAccessRules;
     }
+    */
 
     private List<IAuthRule> adminRule() {
         return new RuleBuilder()
             .allowAll("admin allow")
             .build();
-    }
-
-    private JSONObject parseAuthToken(String token) {
-        String body = token.split("\\.")[1];
-        String jsonBody = new String(Base64.getUrlDecoder().decode(body));
-        JSONObject claimsObject = null;
-        JSONParser parser = new JSONParser();
-        try {
-            Object parsedBody = parser.parse(jsonBody);
-            if (parsedBody instanceof JSONObject) {
-                claimsObject = (JSONObject) parsedBody;
-            }
-            else {
-                throw new AuthenticationException(Msg.code(644) + "jwt body not a json object");
-            }
-        } catch (ParseException e) {
-            throw new AuthenticationException(Msg.code(644) + "invalid jwt body");
-        }
-        return claimsObject;
-    }
-
-    private String getAuthorization() {
-        /// Get from Spring auth context
-        String token;
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null) {
-            throw new AuthenticationException(Msg.code(644) + "Missing Authorization");
-        }
-        else {
-            if (!(authentication.getCredentials() instanceof String)) {
-                throw new AuthenticationException(Msg.code(644) + "Invalid Authorization");
-            }
-            else {
-                token = (String) authentication.getCredentials();
-            }
-        }
-        return token;
     }
 
    private List<IAuthRule> metadataRule() {
