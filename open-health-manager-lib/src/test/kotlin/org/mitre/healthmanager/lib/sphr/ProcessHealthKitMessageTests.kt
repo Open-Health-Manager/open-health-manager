@@ -104,7 +104,7 @@ class ProcessHealthKitMessageTests {
         Assertions.assertEquals(1, patientEverythingResult.parameter.size)
         when (val everythingBundle = patientEverythingResult.parameter[0].resource) {
             is Bundle -> {
-                Assertions.assertEquals(15, everythingBundle.entry.size)
+                Assertions.assertEquals(15, everythingBundle.total)
             }
             else -> {
                 Assertions.fail("\$everything didn't return a bundle")
