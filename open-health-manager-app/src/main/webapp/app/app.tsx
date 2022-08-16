@@ -4,7 +4,7 @@ import 'app/config/dayjs.ts';
 
 import React, { useEffect } from 'react';
 import { Card } from 'reactstrap';
-import { BrowserRouter as Router } from 'react-router-dom';
+import { BrowserRouter as Router, useLocation } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
 
 import { useAppDispatch, useAppSelector } from 'app/config/store';
@@ -28,6 +28,13 @@ export const App = () => {
     dispatch(getProfile());
   }, []);
 
+  const location = useLocation();
+  useEffect(() => {
+    /* eslint-disable no-console */
+    console.log("Testing");
+    /* eslint-enable no-console */
+  }, [location]);
+
   const currentLocale = useAppSelector(state => state.locale.currentLocale);
   const isAuthenticated = useAppSelector(state => state.authentication.isAuthenticated);
   const isAdmin = useAppSelector(state => hasAnyAuthority(state.authentication.account.authorities, [AUTHORITIES.ADMIN]));
@@ -41,6 +48,8 @@ export const App = () => {
       <div className="app-container" style={{ paddingTop }}>
         <ToastContainer position={toast.POSITION.TOP_LEFT} className="toastify-container" toastClassName="toastify-toast" />
         <ErrorBoundary>
+          {
+          window.location.pathname!=='/public/account/activate' ?
           <Header
             isAuthenticated={isAuthenticated}
             isAdmin={isAdmin}
@@ -48,7 +57,8 @@ export const App = () => {
             ribbonEnv={ribbonEnv}
             isInProduction={isInProduction}
             isOpenAPIEnabled={isOpenAPIEnabled}
-          />
+          />:null
+          }
         </ErrorBoundary>
         <div className="container-fluid view-container" id="app-view-container">
           <Card className="jh-card">
