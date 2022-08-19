@@ -82,7 +82,7 @@ const LoginModal = (props: ILoginModalProps) => {
           </Row>
           <div className="mt-1">&nbsp;</div>
           <Alert color="warning">
-            <Link to="/account/reset/request" data-cy="forgetYourPasswordSelector">
+            <Link to="/public/account/reset/request" data-cy="forgetYourPasswordSelector">
               <Translate contentKey="login.password.forgot">Did you forget your password?</Translate>
             </Link>
           </Alert>
