@@ -115,12 +115,12 @@ public class UserResource {
         if (userDTO.getId() != null) {
             throw new BadRequestAlertException("A new user cannot already have an ID", "userManagement", "idexists");
             // Lowercase the user login before comparing with database
-        } else if (!userDTO.getEmail().toLowerCase().equals(userDTO.getLogin().toLowerCase())) {
-            throw new LoginMatchEmailException();
         } else if (userRepository.findOneByLogin(userDTO.getLogin().toLowerCase()).isPresent()) {
             throw new LoginAlreadyUsedException();
         } else if (userRepository.findOneByEmailIgnoreCase(userDTO.getEmail()).isPresent()) {
             throw new EmailAlreadyUsedException();
+        } else if (!userDTO.getEmail().toLowerCase().equals(userDTO.getLogin().toLowerCase())) {
+            throw new LoginMatchEmailException();
         } else {
             User newUser = userService.createUser(userDTO);
             mailService.sendCreationEmail(newUser);
@@ -144,9 +144,6 @@ public class UserResource {
     @PreAuthorize("hasAuthority(\"" + AuthoritiesConstants.ADMIN + "\")")
     public ResponseEntity<AdminUserDTO> updateUser(@Valid @RequestBody AdminUserDTO userDTO) {
         log.debug("REST request to update User : {}", userDTO);
-        if (!userDTO.getEmail().toLowerCase().equals(userDTO.getLogin().toLowerCase())) {
-            throw new LoginMatchEmailException();
-        }
         Optional<User> existingUser = userRepository.findOneByEmailIgnoreCase(userDTO.getEmail());
         if (existingUser.isPresent() && (!existingUser.get().getId().equals(userDTO.getId()))) {
             throw new EmailAlreadyUsedException();
@@ -154,6 +151,9 @@ public class UserResource {
         existingUser = userRepository.findOneByLogin(userDTO.getLogin().toLowerCase());
         if (existingUser.isPresent() && (!existingUser.get().getId().equals(userDTO.getId()))) {
             throw new LoginAlreadyUsedException();
+        }
+        if (!userDTO.getEmail().toLowerCase().equals(userDTO.getLogin().toLowerCase())) {
+            throw new LoginMatchEmailException();
         }
         Optional<AdminUserDTO> updatedUser = userService.updateUser(userDTO);
 

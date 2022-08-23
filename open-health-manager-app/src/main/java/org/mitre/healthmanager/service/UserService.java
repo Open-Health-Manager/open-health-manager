@@ -119,10 +119,6 @@ public class UserService {
 
     public User registerUser(AdminUserDTO userDTO, String password, UserDUADTO userDUADTO) {
         
-        if (!userDTO.getEmail().toLowerCase().equals(userDTO.getLogin().toLowerCase())) {
-            throw new LoginMatchEmailException();
-        }
-
         userRepository
             .findOneByLogin(userDTO.getLogin().toLowerCase())
             .ifPresent(existingUser -> {
@@ -139,6 +135,10 @@ public class UserService {
                     throw new EmailAlreadyUsedException();
                 }
             });
+        
+        if (!userDTO.getEmail().toLowerCase().equals(userDTO.getLogin().toLowerCase())) {
+            throw new LoginMatchEmailException();
+        }
 
         if (userDUADTO == null || !userDUADTO.getActive() || !userDUADTO.getAgeAttested()) {
             throw new InvalidDUAException();
