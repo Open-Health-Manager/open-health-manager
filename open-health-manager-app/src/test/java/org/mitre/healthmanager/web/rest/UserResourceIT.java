@@ -55,8 +55,8 @@ import ca.uhn.fhir.rest.param.TokenParam;
 @IntegrationTest
 class UserResourceIT {
 
-    private static final String DEFAULT_LOGIN = "johndoe";
-    private static final String UPDATED_LOGIN = "jhipster";
+    private static final String DEFAULT_LOGIN = "johndoe@localhost";
+    private static final String UPDATED_LOGIN = "jhipster@localhost";
 
     private static final Long DEFAULT_ID = 1L;
 
@@ -119,10 +119,11 @@ class UserResourceIT {
      */
     public static User createEntity(EntityManager em) {
         User user = new User();
-        user.setLogin(DEFAULT_LOGIN + RandomStringUtils.randomAlphabetic(5));
+        String randomAlphabetic = RandomStringUtils.randomAlphabetic(5);
+        user.setLogin(randomAlphabetic + DEFAULT_LOGIN);
         user.setPassword(RandomStringUtils.random(60));
         user.setActivated(true);
-        user.setEmail(RandomStringUtils.randomAlphabetic(5) + DEFAULT_EMAIL);
+        user.setEmail(randomAlphabetic + DEFAULT_EMAIL);
         user.setFirstName(DEFAULT_FIRSTNAME);
         user.setLastName(DEFAULT_LASTNAME);
         user.setImageUrl(DEFAULT_IMAGEURL);
@@ -150,7 +151,7 @@ class UserResourceIT {
     void createUser() throws Exception {
         String methodName = "createUser";
         log.info("**** " + methodName + " ****");
-        String testLogin = methodName.toLowerCase();
+        String testLogin = methodName.toLowerCase() + DEFAULT_EMAIL_SUFFIX;
         int databaseSizeBeforeCreate = userRepository.findAll().size();
 
         // Create the User
@@ -159,7 +160,7 @@ class UserResourceIT {
         managedUserVM.setPassword(DEFAULT_PASSWORD);
         managedUserVM.setFirstName(DEFAULT_FIRSTNAME);
         managedUserVM.setLastName(DEFAULT_LASTNAME);
-        managedUserVM.setEmail(testLogin + DEFAULT_EMAIL_SUFFIX);
+        managedUserVM.setEmail(testLogin);
         managedUserVM.setActivated(true);
         managedUserVM.setImageUrl(DEFAULT_IMAGEURL);
         managedUserVM.setLangKey(DEFAULT_LANGKEY);
@@ -178,7 +179,7 @@ class UserResourceIT {
             assertThat(testUser.getLogin()).isEqualTo(testLogin);
             assertThat(testUser.getFirstName()).isEqualTo(DEFAULT_FIRSTNAME);
             assertThat(testUser.getLastName()).isEqualTo(DEFAULT_LASTNAME);
-            assertThat(testUser.getEmail()).isEqualTo(testLogin + DEFAULT_EMAIL_SUFFIX);
+            assertThat(testUser.getEmail()).isEqualTo(testLogin);
             assertThat(testUser.getImageUrl()).isEqualTo(DEFAULT_IMAGEURL);
             assertThat(testUser.getLangKey()).isEqualTo(DEFAULT_LANGKEY);
         });
@@ -218,7 +219,7 @@ class UserResourceIT {
     void createUserWithExistingId() throws Exception {
         String methodName = "createUserWithExistingId";
         log.info("**** " + methodName + " ****");
-        String testLogin = methodName.toLowerCase();
+        String testLogin = methodName.toLowerCase() + DEFAULT_EMAIL_SUFFIX;
         int databaseSizeBeforeCreate = userRepository.findAll().size();
 
         ManagedUserVM managedUserVM = new ManagedUserVM();
@@ -227,7 +228,7 @@ class UserResourceIT {
         managedUserVM.setPassword(DEFAULT_PASSWORD);
         managedUserVM.setFirstName(DEFAULT_FIRSTNAME);
         managedUserVM.setLastName(DEFAULT_LASTNAME);
-        managedUserVM.setEmail(testLogin + DEFAULT_EMAIL_SUFFIX);
+        managedUserVM.setEmail(testLogin);
         managedUserVM.setActivated(true);
         managedUserVM.setImageUrl(DEFAULT_IMAGEURL);
         managedUserVM.setLangKey(DEFAULT_LANGKEY);
@@ -280,7 +281,7 @@ class UserResourceIT {
     void createUserWithExistingEmail() throws Exception {
         String methodName = "createUserWithExistingEmail";
         log.info("**** " + methodName + " ****");
-        String testLogin = methodName.toLowerCase();
+        String testLogin = methodName.toLowerCase() + DEFAULT_EMAIL_SUFFIX;
         // Initialize the database
         userRepository.saveAndFlush(user);
         int databaseSizeBeforeCreate = userRepository.findAll().size();
@@ -312,7 +313,7 @@ class UserResourceIT {
     void createUserWithFHIRPatientUsername() throws Exception {
         String methodName = "createUserWithFHIRPatientUsername";
         log.info("**** " + methodName + " ****");
-        String testLogin = methodName.toLowerCase();
+        String testLogin = methodName.toLowerCase() + DEFAULT_EMAIL_SUFFIX;
         // Initialize the database
         IFhirResourceDao<Patient> patientDAO = myDaoRegistry.getResourceDao(Patient.class);
         Patient patientFHIR = new Patient();
@@ -343,7 +344,7 @@ class UserResourceIT {
         managedUserVM.setPassword(DEFAULT_PASSWORD);
         managedUserVM.setFirstName(DEFAULT_FIRSTNAME);
         managedUserVM.setLastName(DEFAULT_LASTNAME);
-        managedUserVM.setEmail(testLogin + DEFAULT_EMAIL_SUFFIX);
+        managedUserVM.setEmail(testLogin);
         managedUserVM.setActivated(true);
         managedUserVM.setImageUrl(DEFAULT_IMAGEURL);
         managedUserVM.setLangKey(DEFAULT_LANGKEY);
@@ -441,7 +442,7 @@ class UserResourceIT {
         managedUserVM.setPassword(UPDATED_PASSWORD);
         managedUserVM.setFirstName(UPDATED_FIRSTNAME);
         managedUserVM.setLastName(UPDATED_LASTNAME);
-        managedUserVM.setEmail(UPDATED_EMAIL);
+        managedUserVM.setEmail(DEFAULT_EMAIL); // can't change email since email must equal login
         managedUserVM.setActivated(updatedUser.isActivated());
         managedUserVM.setImageUrl(UPDATED_IMAGEURL);
         managedUserVM.setLangKey(UPDATED_LANGKEY);
@@ -463,7 +464,7 @@ class UserResourceIT {
             User testUser = users.stream().filter(usr -> usr.getId().equals(updatedUser.getId())).findFirst().get();
             assertThat(testUser.getFirstName()).isEqualTo(UPDATED_FIRSTNAME);
             assertThat(testUser.getLastName()).isEqualTo(UPDATED_LASTNAME);
-            assertThat(testUser.getEmail()).isEqualTo(UPDATED_EMAIL);
+            assertThat(testUser.getEmail()).isEqualTo(DEFAULT_EMAIL);
             assertThat(testUser.getImageUrl()).isEqualTo(UPDATED_IMAGEURL);
             assertThat(testUser.getLangKey()).isEqualTo(UPDATED_LANGKEY);
         });
@@ -526,7 +527,7 @@ class UserResourceIT {
         userRepository.saveAndFlush(user);
 
         User anotherUser = new User();
-        anotherUser.setLogin("jhipster");
+        anotherUser.setLogin("jhipster@localhost");
         anotherUser.setPassword(RandomStringUtils.random(60));
         anotherUser.setActivated(true);
         anotherUser.setEmail("jhipster@localhost");
@@ -571,10 +572,10 @@ class UserResourceIT {
         userRepository.saveAndFlush(user);
 
         User anotherUser = new User();
-        anotherUser.setLogin("jhipster");
+        anotherUser.setLogin("jhipster123@localhost");
         anotherUser.setPassword(RandomStringUtils.random(60));
         anotherUser.setActivated(true);
-        anotherUser.setEmail("jhipster@localhost");
+        anotherUser.setEmail("jhipster123@localhost");
         anotherUser.setFirstName("java");
         anotherUser.setLastName("hipster");
         anotherUser.setImageUrl("");
@@ -586,7 +587,7 @@ class UserResourceIT {
 
         ManagedUserVM managedUserVM = new ManagedUserVM();
         managedUserVM.setId(updatedUser.getId());
-        managedUserVM.setLogin("jhipster"); // this login should already be used by anotherUser
+        managedUserVM.setLogin("jhipster123@localhost"); // this login should already be used by anotherUser
         managedUserVM.setPassword(updatedUser.getPassword());
         managedUserVM.setFirstName(updatedUser.getFirstName());
         managedUserVM.setLastName(updatedUser.getLastName());
@@ -639,7 +640,7 @@ class UserResourceIT {
     void createAdminUser() throws Exception {
         String methodName = "createUser";
         log.info("**** " + methodName + " ****");
-        String testLogin = methodName.toLowerCase();
+        String testLogin = methodName.toLowerCase() + DEFAULT_EMAIL_SUFFIX;
         int databaseSizeBeforeCreate = userRepository.findAll().size();
 
         // Create the User
@@ -648,7 +649,7 @@ class UserResourceIT {
         managedUserVM.setPassword(DEFAULT_PASSWORD);
         managedUserVM.setFirstName(DEFAULT_FIRSTNAME);
         managedUserVM.setLastName(DEFAULT_LASTNAME);
-        managedUserVM.setEmail(testLogin + DEFAULT_EMAIL_SUFFIX);
+        managedUserVM.setEmail(testLogin);
         managedUserVM.setActivated(true);
         managedUserVM.setImageUrl(DEFAULT_IMAGEURL);
         managedUserVM.setLangKey(DEFAULT_LANGKEY);
@@ -667,7 +668,7 @@ class UserResourceIT {
             assertThat(testUser.getLogin()).isEqualTo(testLogin);
             assertThat(testUser.getFirstName()).isEqualTo(DEFAULT_FIRSTNAME);
             assertThat(testUser.getLastName()).isEqualTo(DEFAULT_LASTNAME);
-            assertThat(testUser.getEmail()).isEqualTo(testLogin + DEFAULT_EMAIL_SUFFIX);
+            assertThat(testUser.getEmail()).isEqualTo(testLogin);
             assertThat(testUser.getImageUrl()).isEqualTo(DEFAULT_IMAGEURL);
             assertThat(testUser.getLangKey()).isEqualTo(DEFAULT_LANGKEY);
         });

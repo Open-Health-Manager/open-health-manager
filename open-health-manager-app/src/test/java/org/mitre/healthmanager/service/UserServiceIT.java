@@ -38,7 +38,7 @@ import org.mitre.healthmanager.service.mapper.UserMapper;
 @Transactional("jhipsterTransactionManager")
 class UserServiceIT {
 
-    private static final String DEFAULT_LOGIN = "johndoe";
+    private static final String DEFAULT_LOGIN = "johndoe@localhost";
 
     private static final String DEFAULT_EMAIL = "johndoe@localhost";
 
@@ -198,6 +198,18 @@ class UserServiceIT {
         userService.removeNotActivatedUsers();
         Optional<User> maybeDbUser = userRepository.findById(dbUser.getId());
         assertThat(maybeDbUser).contains(dbUser);
+    }
+
+    @Test
+    @Transactional("jhipsterTransactionManager")
+    void assertThatRegisteringWithMismatchedLoginAndEmailFails() {
+        user.setEmail("johndoe12@localhost");
+        AdminUserDTO userDTO = userMapper.userToAdminUserDTO(user);
+
+        LoginMatchEmailException thrown = assertThrows(LoginMatchEmailException.class, () -> userService.registerUser(userDTO, user.getPassword(), userDUADTO));
+        assertEquals("Login must be the same as email!", thrown.getMessage());
+
+        user.setEmail("johndoe@localhost");
     }
 
     @Test
