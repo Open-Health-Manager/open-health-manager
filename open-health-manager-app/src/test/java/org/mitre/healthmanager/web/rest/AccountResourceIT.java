@@ -457,6 +457,34 @@ class AccountResourceIT {
     }
 
     @Test
+    @Transactional("jhipsterTransactionManager")
+    void testRegisterMismatchLoginAndEmail() throws Exception {
+        DUAManagedUserVM invalidUser = new DUAManagedUserVM();
+        invalidUser.setLogin("bob");
+        invalidUser.setPassword("Password123*");
+        invalidUser.setFirstName("Bob");
+        invalidUser.setLastName("Green");
+        invalidUser.setEmail("bob@example.com");
+        invalidUser.setImageUrl("http://placehold.it/50x50");
+        invalidUser.setLangKey(Constants.DEFAULT_LANGUAGE);
+        invalidUser.setAuthorities(Collections.singleton(AuthoritiesConstants.USER));
+
+        UserDUADTO userDUADTO = new UserDUADTO();
+        userDUADTO.setActive(true);
+        userDUADTO.setVersion("v2020-03-21");
+        userDUADTO.setAgeAttested(true);
+
+        invalidUser.setUserDUADTO(userDUADTO);
+
+        restAccountMockMvc
+            .perform(post("/api/register").contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(invalidUser)))
+            .andExpect(status().isBadRequest());
+
+        Optional<User> user = userRepository.findOneByLogin("bob");
+        assertThat(user).isEmpty();
+    }
+
+    @Test
     @DirtiesContext(methodMode = MethodMode.AFTER_METHOD)
     void testRegisterDuplicateLogin() throws Exception {
         // First registration
@@ -486,10 +514,6 @@ class AccountResourceIT {
         secondUser.setEmail("alice2@example.com");
         secondUser.setImageUrl(firstUser.getImageUrl());
         secondUser.setLangKey(firstUser.getLangKey());
-        secondUser.setCreatedBy(firstUser.getCreatedBy());
-        secondUser.setCreatedDate(firstUser.getCreatedDate());
-        secondUser.setLastModifiedBy(firstUser.getLastModifiedBy());
-        secondUser.setLastModifiedDate(firstUser.getLastModifiedDate());
         secondUser.setAuthorities(new HashSet<>(firstUser.getAuthorities()));
 
         UserDUADTO secondUserDUADTO = new UserDUADTO();
@@ -507,7 +531,7 @@ class AccountResourceIT {
         // Second (non activated) user
         restAccountMockMvc
             .perform(post("/api/register").contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(secondUser)))
-            .andExpect(status().isBadRequest());
+            .andExpect(status().is5xxServerError());
 
         Optional<User> failedUser = userRepository.findOneByEmailIgnoreCase("alice2@example.com");
         assertThat(failedUser).isEmpty();
@@ -574,7 +598,7 @@ class AccountResourceIT {
         // Register second (non activated) user
         restAccountMockMvc
             .perform(post("/api/register").contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(secondUser)))
-            .andExpect(status().isBadRequest());
+            .andExpect(status().is5xxServerError());
 
         Optional<User> failedUser3 = userRepository.findOneByLogin("test-register-duplicate-email2@example.com");
         assertThat(failedUser3).isEmpty();
@@ -843,6 +867,36 @@ class AccountResourceIT {
         assertThat(updatedUser.getImageUrl()).isEqualTo(userDTO.getImageUrl());
         assertThat(updatedUser.isActivated()).isTrue();
         assertThat(updatedUser.getAuthorities()).isEmpty();
+    }
+
+
+    @Test
+    @Transactional("jhipsterTransactionManager")
+    @WithMockUser("save-mismatch-login-email@example.com")
+    void testSaveMismatchLoginAndEmail() throws Exception {
+        User user = new User();
+        user.setLogin("save-mismatch-login-email@example.com");
+        user.setEmail("save-mismatch-login-email@example.com");
+        user.setPassword(RandomStringUtils.random(60));
+        user.setActivated(true);
+
+        userRepository.saveAndFlush(user);
+
+        AdminUserDTO userDTO = new AdminUserDTO();
+        userDTO.setLogin("not-used");
+        userDTO.setFirstName("firstname");
+        userDTO.setLastName("lastname");
+        userDTO.setEmail("save-mismatch-login-email2@example.com");
+        userDTO.setActivated(false);
+        userDTO.setImageUrl("http://placehold.it/50x50");
+        userDTO.setLangKey(Constants.DEFAULT_LANGUAGE);
+        userDTO.setAuthorities(Collections.singleton(AuthoritiesConstants.ADMIN));
+
+        restAccountMockMvc
+            .perform(post("/api/account").contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(userDTO)))
+            .andExpect(status().isBadRequest());
+
+        assertThat(userRepository.findOneByEmailIgnoreCase("save-mismatch-login-email2@example.com")).isNotPresent();
     }
 
     @Test

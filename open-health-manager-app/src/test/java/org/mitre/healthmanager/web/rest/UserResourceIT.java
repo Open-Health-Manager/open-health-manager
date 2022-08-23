@@ -213,6 +213,37 @@ class UserResourceIT {
         assertEquals(fhirPatient.getFhirId(), searchResults.getAllResourceIds().get(0));
 
     } 
+
+    @Test
+    @Transactional("jhipsterTransactionManager")
+    void createUserMismatchLoginAndEmail() throws Exception {
+        String methodName = "createUserMismatchLoginAndEmail";
+        log.info("**** " + methodName + " ****");
+        // Initialize the database
+        userRepository.saveAndFlush(user);
+        int databaseSizeBeforeCreate = userRepository.findAll().size();
+
+        ManagedUserVM managedUserVM = new ManagedUserVM();
+        managedUserVM.setLogin(methodName.toLowerCase());
+        managedUserVM.setPassword(DEFAULT_PASSWORD);
+        managedUserVM.setFirstName(DEFAULT_FIRSTNAME);
+        managedUserVM.setLastName(DEFAULT_LASTNAME);
+        managedUserVM.setEmail(methodName.toLowerCase() + DEFAULT_EMAIL_SUFFIX);
+        managedUserVM.setActivated(true);
+        managedUserVM.setImageUrl(DEFAULT_IMAGEURL);
+        managedUserVM.setLangKey(DEFAULT_LANGKEY);
+        managedUserVM.setAuthorities(Collections.singleton(AuthoritiesConstants.USER));
+
+        // Create the User
+        restUserMockMvc
+            .perform(
+                post("/api/admin/users").contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(managedUserVM))
+            )
+            .andExpect(status().isBadRequest());
+
+        // Validate the User in the database
+        assertPersistedUsers(users -> assertThat(users).hasSize(databaseSizeBeforeCreate));
+    }
  
     @Test
     @Transactional("jhipsterTransactionManager")
@@ -516,6 +547,40 @@ class UserResourceIT {
             assertThat(testUser.getImageUrl()).isEqualTo(DEFAULT_IMAGEURL);
             assertThat(testUser.getLangKey()).isEqualTo(DEFAULT_LANGKEY);
         });
+    }
+
+    @Test
+    @Transactional("jhipsterTransactionManager")
+    void updateUserMismatchLoginAndEmail() throws Exception {
+        String methodName = "updateUserMismatchLoginAndEmail";
+        log.info("**** " + methodName + " ****");
+        // Initialize the database with user
+        userRepository.saveAndFlush(user);
+
+        // Update the user
+        User updatedUser = userRepository.findById(user.getId()).get();
+
+        ManagedUserVM managedUserVM = new ManagedUserVM();
+        managedUserVM.setId(updatedUser.getId());
+        managedUserVM.setLogin(updatedUser.getLogin());
+        managedUserVM.setPassword(updatedUser.getPassword());
+        managedUserVM.setFirstName(updatedUser.getFirstName());
+        managedUserVM.setLastName(updatedUser.getLastName());
+        managedUserVM.setEmail("1234" + updatedUser.getEmail());
+        managedUserVM.setActivated(updatedUser.isActivated());
+        managedUserVM.setImageUrl(updatedUser.getImageUrl());
+        managedUserVM.setLangKey(updatedUser.getLangKey());
+        managedUserVM.setCreatedBy(updatedUser.getCreatedBy());
+        managedUserVM.setCreatedDate(updatedUser.getCreatedDate());
+        managedUserVM.setLastModifiedBy(updatedUser.getLastModifiedBy());
+        managedUserVM.setLastModifiedDate(updatedUser.getLastModifiedDate());
+        managedUserVM.setAuthorities(Collections.singleton(AuthoritiesConstants.USER));
+
+        restUserMockMvc
+            .perform(
+                put("/api/admin/users").contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(managedUserVM))
+            )
+            .andExpect(status().isBadRequest());
     }
 
     @Test
