@@ -104,7 +104,7 @@ public class FHIRPatientConsentService {
     	if(consent.getProvision() != null &&
     			consent.getProvision().getTypeElement() != null){
         	Boolean consentApprove = consent.getProvision().getType().equals(Consent.ConsentProvisionType.PERMIT);	
-        	if(consentApprove != fHIRPatientConsentDTO.getApprove()) {
+        	if(!consentApprove.equals(fHIRPatientConsentDTO.getApprove())) {
         		//change in approve/deny, set new period start
         		consent.getProvision().setType(fhirPatientConsentMapper.approveToConsentProvisionType(fHIRPatientConsentDTO.getApprove()));
         		consent.getProvision().setPeriod(new Period().setStartElement(DateTimeType.now()));
@@ -131,7 +131,7 @@ public class FHIRPatientConsentService {
         
         List<FHIRPatientConsentDTO> list = results
         	.stream()
-            .skip(pageable.getPageSize() * pageable.getPageNumber())
+            .skip(pageable.getPageSize() * Long.valueOf(pageable.getPageNumber()))
        	    .limit(pageable.getPageSize())
        	    .map(fHIRPatientConsentDTO -> {
        	    	Consent consent = (Consent) FhirContext.forR4().newJsonParser().parseResource(fHIRPatientConsentDTO.getFhirResource());

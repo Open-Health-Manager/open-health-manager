@@ -38,6 +38,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import tech.jhipster.web.util.HeaderUtil;
 import tech.jhipster.web.util.PaginationUtil;
 import tech.jhipster.web.util.ResponseUtil;
+import java.util.Collections;
 
 /**
  * REST controller for managing {@link org.mitre.healthmanager.domain.FHIRPatientConsent}.
@@ -97,12 +98,17 @@ public class FHIRPatientConsentResource {
     @GetMapping("/fhir-patient-consents")
     public ResponseEntity<List<FHIRPatientConsentDTO>> getActiveUserFHIRPatientConsents() {
         log.debug("REST request to get user FHIRPatientConsents");
-        User user = userService.getUserWithAuthorities().get();
+        Optional <User> optionalUser = userService.getUserWithAuthorities();
         Optional<List<FHIRPatientConsentDTO>> list;
-        if(isAdmin(user)) {
-            list = Optional.ofNullable(fHIRPatientConsentService.findAll());
+        if (optionalUser.isPresent()) {
+            User user = optionalUser.get();
+            if(isAdmin(user)) {
+                list = Optional.ofNullable(fHIRPatientConsentService.findAll());
+            } else {
+                list = fHIRPatientConsentService.findActiveByUser(new UserDTO(user));
+            }
         } else {
-        	list = fHIRPatientConsentService.findActiveByUser(new UserDTO(user));
+            list = Optional.of(Collections.emptyList());
         }
         return ResponseUtil.wrapOrNotFound(list);
     }
@@ -202,10 +208,13 @@ public class FHIRPatientConsentResource {
     }
     
     private void checkUserAuthority(FHIRPatientConsentDTO fhirPatientConsentDTO) {
-    	User user = userService.getUserWithAuthorities().get();
-    	if (!isAdmin(user) && user.getId() != fhirPatientConsentDTO.getUser().getId()) {
-        	throw new BadRequestAlertException("Consent can only be updated for the current user", ENTITY_NAME, "wronguser");        	      
-    	}
+    	Optional <User> optionalUser = userService.getUserWithAuthorities();
+        if (optionalUser.isPresent()) {
+            User user = optionalUser.get();
+            if (!isAdmin(user) && !user.getId().equals(fhirPatientConsentDTO.getUser().getId())) {
+                throw new BadRequestAlertException("Consent can only be updated for the current user", ENTITY_NAME, "wronguser");        	      
+            }
+        }
     }
     
     private boolean isAdmin(User user) {
