@@ -147,7 +147,7 @@ public class AccountResource {
             throw new AccountResourceException("User could not be found");
         }
 
-        if (!userDTO.getEmail().toLowerCase().equals(userLogin.toLowerCase())) {
+        if (!userDTO.getLogin().equalsIgnoreCase("admin") && !userDTO.getEmail().equalsIgnoreCase(userLogin)) {
             throw new LoginMatchEmailException();
         }
 

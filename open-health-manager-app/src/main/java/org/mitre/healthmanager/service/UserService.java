@@ -136,7 +136,7 @@ public class UserService {
                 }
             });
         
-        if (!userDTO.getEmail().toLowerCase().equals(userDTO.getLogin().toLowerCase())) {
+        if (!userDTO.getLogin().equalsIgnoreCase("admin") && !userDTO.getEmail().equalsIgnoreCase(userDTO.getLogin())) {
             throw new LoginMatchEmailException();
         }
 

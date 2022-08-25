@@ -119,7 +119,7 @@ public class UserResource {
             throw new LoginAlreadyUsedException();
         } else if (userRepository.findOneByEmailIgnoreCase(userDTO.getEmail()).isPresent()) {
             throw new EmailAlreadyUsedException();
-        } else if (!userDTO.getEmail().toLowerCase().equals(userDTO.getLogin().toLowerCase())) {
+        } else if (!userDTO.getLogin().equalsIgnoreCase("admin") && !userDTO.getEmail().equalsIgnoreCase(userDTO.getLogin())) {
             throw new LoginMatchEmailException();
         } else {
             User newUser = userService.createUser(userDTO);
@@ -152,7 +152,7 @@ public class UserResource {
         if (existingUser.isPresent() && (!existingUser.get().getId().equals(userDTO.getId()))) {
             throw new LoginAlreadyUsedException();
         }
-        if (!userDTO.getEmail().toLowerCase().equals(userDTO.getLogin().toLowerCase())) {
+        if (!userDTO.getLogin().equalsIgnoreCase("admin") && !userDTO.getEmail().equalsIgnoreCase(userDTO.getLogin())) {
             throw new LoginMatchEmailException();
         }
         Optional<AdminUserDTO> updatedUser = userService.updateUser(userDTO);
