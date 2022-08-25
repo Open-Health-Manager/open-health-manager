@@ -271,7 +271,7 @@
 					}
 				],
 				"subject": {
-					"reference": "urn:uuid:71a8b156-760b-df6b-859e-eefc7932a526",
+					"reference": "Patient/71a8b156-760b-df6b-859e-eefc7932a526",
 					"display": "Mrs. Adriana394 Kutch271"
 				},
 				"period": {
@@ -306,7 +306,7 @@
 					"text": "Colonoscopy"
 				},
 				"subject": {
-					"reference": "urn:uuid:71a8b156-760b-df6b-859e-eefc7932a526",
+					"reference": "Patient/71a8b156-760b-df6b-859e-eefc7932a526",
 					"display": "Mrs. Adriana394 Kutch271"
 				},
 				"encounter": {

@@ -1,4 +1,4 @@
-package org.mitre.healthmanager.lib.pdr;
+	package org.mitre.healthmanager.lib.pdr;
 
 import java.util.Arrays;
 import java.util.List;
@@ -9,37 +9,22 @@ import org.hl7.fhir.instance.model.api.IBaseReference;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Bundle.BundleType;
-import org.hl7.fhir.r4.model.CompartmentDefinition;
 import org.hl7.fhir.r4.model.IdType;
 import org.hl7.fhir.r4.model.MessageHeader;
 import org.hl7.fhir.r4.model.Resource;
-import org.hl7.fhir.r4.model.Type;
-import org.hl7.fhir.r4.model.UriType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.RuntimeResourceDefinition;
 import ca.uhn.fhir.context.RuntimeSearchParam;
-import ca.uhn.fhir.jpa.api.dao.DaoRegistry;
-import ca.uhn.fhir.jpa.api.dao.IFhirResourceDao;
-import ca.uhn.fhir.jpa.api.dao.IFhirResourceDaoPatient;
-import ca.uhn.fhir.jpa.dao.TransactionProcessor;
 import ca.uhn.fhir.jpa.searchparam.extractor.BaseSearchParamExtractor;
 import ca.uhn.fhir.jpa.searchparam.extractor.ISearchParamExtractor;
-import ca.uhn.fhir.model.api.annotation.Compartment;
 import ca.uhn.fhir.rest.api.RestSearchParameterTypeEnum;
-import ca.uhn.fhir.rest.server.exceptions.MethodNotAllowedException;
 import ca.uhn.fhir.rest.server.exceptions.UnprocessableEntityException;
 
 @Service
 public class ProcessMessageService {
-
-	public static final String pdrEvent = "urn:mitre:healthmanager:pdr";
-	public static final String pdrAccountExtension = "https://github.com/Open-Health-Manager/patient-data-receipt-ig/StructureDefinition/AccountExtension";
-	public static final String pdrLinkExtensionURL = "https://github.com/Open-Health-Manager/patient-data-receipt-ig/StructureDefinition/PDRLinkExtension";
-	public static final String pdrLinkListExtensionURL = "https://github.com/Open-Health-Manager/patient-data-receipt-ig/StructureDefinition/PDRLinkListExtension";
-	
 	@Autowired
 	private FhirContext myFhirContext;
 
@@ -61,20 +46,6 @@ public class ProcessMessageService {
 			}
 		} else {
 			throw new UnprocessableEntityException("message Bundle must have at least a MessageHeader entry");
-		}
-	}
-
-	public static final boolean isPDRMessage(MessageHeader header) {
-		Type headerEvent = header.getEvent();
-		return headerEvent instanceof UriType
-				? ((UriType) headerEvent).getValueAsString().equalsIgnoreCase("urn:mitre:healthmanager:pdr")
-				: false;
-	}
-
-	public static final void validatePDR(Bundle theMessage) {
-		if (theMessage.getEntry().size() < 2) {
-			throw new UnprocessableEntityException(
-					"Patient Data Receipt must have at least one additional entry beside the MessageHeader");
 		}
 	}
 	
