@@ -164,7 +164,7 @@ public class UserResource {
         
         Optional<AdminUserDTO> updatedUser = userService.updateUser(userDTO);
 
-        if (userDTO.getEmail() != null && updatedUser.isPresent() && !userDTO.getEmail().equalsIgnoreCase(updatedUser.get().getEmail())) {
+        if (updatedUser.isPresent() && !updatedUser.get().isActivated()) {
             mailService.sendActivationEmail(userMapper.userDTOToUser(updatedUser.get()));
         }
 

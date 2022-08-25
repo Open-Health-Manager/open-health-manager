@@ -165,7 +165,7 @@ public class AccountResource {
             userDTO.getImageUrl()
         );
 
-        if (newUserDTO.isPresent() && !userDTO.getEmail().equalsIgnoreCase(newUserDTO.get().getEmail())) {
+        if (newUserDTO.isPresent() && !newUserDTO.get().isActivated()) {
             mailService.sendActivationEmail(userMapper.userDTOToUser(newUserDTO.get()));
         }
     }
