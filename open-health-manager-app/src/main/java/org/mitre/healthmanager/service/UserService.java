@@ -248,19 +248,20 @@ public class UserService {
             .map(Optional::get)
             .map(user -> {
                 this.clearUserCaches(user);
-                String newLogin = userDTO.getLogin().toLowerCase();
-                if (!newLogin.equals(user.getLogin())) {
-                    throw new UsernameChangeException();
-                }
                 
-                user.setLogin(userDTO.getLogin().toLowerCase());
                 user.setFirstName(userDTO.getFirstName());
                 user.setLastName(userDTO.getLastName());
                 if (userDTO.getEmail() != null) {
+                    if (!userDTO.getEmail().equalsIgnoreCase(user.getEmail())) {
+                        user.setActivated(false);
+                        user.setActivationKey(RandomUtil.generateActivationKey());
+                    } else {
+                        user.setActivated(userDTO.isActivated());
+                    }
                     user.setEmail(userDTO.getEmail().toLowerCase());
+                    user.setLogin(userDTO.getLogin().toLowerCase());
                 }
                 user.setImageUrl(userDTO.getImageUrl());
-                user.setActivated(userDTO.isActivated());
                 user.setLangKey(userDTO.getLangKey());
                 Set<Authority> managedAuthorities = user.getAuthorities();
                 managedAuthorities.clear();
@@ -294,29 +295,39 @@ public class UserService {
     }
 
     /**
-     * Update basic information (first name, last name, email, language) for the current user.
+     * Update basic information (first name, last name, email, login, language) for the current user.
      *
      * @param firstName first name of user.
      * @param lastName  last name of user.
      * @param email     email id of user.
+     * @param login     login of the user.
      * @param langKey   language key.
      * @param imageUrl  image URL of user.
      */
-    public void updateUser(String firstName, String lastName, String email, String langKey, String imageUrl) {
-        SecurityUtils
+    public Optional<AdminUserDTO> updateUser(String firstName, String lastName, String email, String login, String langKey, String imageUrl) {
+        return SecurityUtils
             .getCurrentUserLogin()
-            .flatMap(userRepository::findOneByLogin)
-            .ifPresent(user -> {
+            .map(userRepository::findOneByLogin)
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .map(user -> {
                 user.setFirstName(firstName);
                 user.setLastName(lastName);
                 if (email != null) {
+                    if (!user.getEmail().equalsIgnoreCase(email)) {
+                        user.setActivated(false);
+                        user.setActivationKey(RandomUtil.generateActivationKey());
+                    }
                     user.setEmail(email.toLowerCase());
+                    user.setLogin(login.toLowerCase());
                 }
                 user.setLangKey(langKey);
                 user.setImageUrl(imageUrl);
                 this.clearUserCaches(user);
                 log.debug("Changed Information for User: {}", user);
-            });
+                return user;
+            })
+            .map(AdminUserDTO::new);
     }
 
     @Transactional("jhipsterTransactionManager")

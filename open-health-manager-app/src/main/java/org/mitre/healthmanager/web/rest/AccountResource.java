@@ -12,7 +12,9 @@ import org.mitre.healthmanager.service.MailService;
 import org.mitre.healthmanager.service.UserService;
 import org.mitre.healthmanager.service.dto.AdminUserDTO;
 import org.mitre.healthmanager.service.dto.PasswordChangeDTO;
+import org.mitre.healthmanager.service.dto.UserDTO;
 import org.mitre.healthmanager.service.dto.UserDUADTO;
+import org.mitre.healthmanager.service.mapper.UserMapper;
 import org.mitre.healthmanager.web.rest.errors.BadRequestAlertException;
 import org.mitre.healthmanager.web.rest.errors.EmailAlreadyUsedException;
 import org.mitre.healthmanager.web.rest.errors.InvalidPasswordException;
@@ -54,10 +56,13 @@ public class AccountResource {
 
     private final MailService mailService;
 
-    public AccountResource(UserRepository userRepository, UserService userService, MailService mailService) {
+    private final UserMapper userMapper;
+
+    public AccountResource(UserRepository userRepository, UserService userService, MailService mailService, UserMapper userMapper) {
         this.userRepository = userRepository;
         this.userService = userService;
         this.mailService = mailService;
+        this.userMapper = userMapper;
     }
 
     /**
@@ -151,13 +156,18 @@ public class AccountResource {
             throw new LoginMatchEmailException();
         }
 
-        userService.updateUser(
+        Optional<AdminUserDTO> newUserDTO = userService.updateUser(
             userDTO.getFirstName(),
             userDTO.getLastName(),
             userDTO.getEmail(),
+            userDTO.getLogin(),
             userDTO.getLangKey(),
             userDTO.getImageUrl()
         );
+
+        if (newUserDTO.isPresent() && !userDTO.getEmail().equalsIgnoreCase(newUserDTO.get().getEmail())) {
+            mailService.sendActivationEmail(userMapper.userDTOToUser(newUserDTO.get()));
+        }
     }
 
     /**
