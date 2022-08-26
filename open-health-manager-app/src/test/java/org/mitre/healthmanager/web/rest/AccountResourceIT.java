@@ -845,7 +845,7 @@ class AccountResourceIT {
         userRepository.saveAndFlush(user);
 
         AdminUserDTO userDTO = new AdminUserDTO();
-        userDTO.setLogin("not-used");
+        userDTO.setLogin("save-account@example.com");
         userDTO.setFirstName("firstname");
         userDTO.setLastName("lastname");
         userDTO.setEmail("save-account@example.com");
@@ -869,6 +869,44 @@ class AccountResourceIT {
         assertThat(updatedUser.getAuthorities()).isEmpty();
     }
 
+    @Test
+    @Transactional("jhipsterTransactionManager")
+    @WithMockUser("save-account-change-email@example.com")
+    void testSaveAccountChangeEmail() throws Exception {
+        User user = new User();
+        user.setLogin("save-account-change-email@example.com");
+        user.setEmail("save-account-change-email@example.com");
+        user.setPassword(RandomStringUtils.random(60));
+        user.setActivated(true);
+        userRepository.saveAndFlush(user);
+
+        AdminUserDTO userDTO = new AdminUserDTO();
+        userDTO.setLogin("save-account-change-email_new@example.com");
+        userDTO.setFirstName("firstname");
+        userDTO.setLastName("lastname");
+        userDTO.setEmail("save-account-change-email_new@example.com");
+        userDTO.setActivated(true);
+        userDTO.setImageUrl("http://placehold.it/50x50");
+        userDTO.setLangKey(Constants.DEFAULT_LANGUAGE);
+        userDTO.setAuthorities(Collections.singleton(AuthoritiesConstants.ADMIN));
+
+        restAccountMockMvc
+            .perform(post("/api/account").contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(userDTO)))
+            .andExpect(status().isOk());
+
+        User updatedUser = userRepository.findOneWithAuthoritiesByLogin(user.getLogin()).orElse(null);
+        assertThat(updatedUser.getFirstName()).isEqualTo(userDTO.getFirstName());
+        assertThat(updatedUser.getLastName()).isEqualTo(userDTO.getLastName());
+        assertThat(updatedUser.getEmail()).isEqualTo(userDTO.getEmail());
+        assertThat(updatedUser.getLangKey()).isEqualTo(userDTO.getLangKey());
+        assertThat(updatedUser.getPassword()).isEqualTo(user.getPassword());
+        assertThat(updatedUser.getImageUrl()).isEqualTo(userDTO.getImageUrl());
+        assertThat(updatedUser.isActivated()).isFalse();
+        assertThat(updatedUser.getActivationKey()).isNotNull();
+        assertThat(updatedUser.getAuthorities()).isEmpty();
+    }
+
+
 
     @Test
     @Transactional("jhipsterTransactionManager")
@@ -883,7 +921,7 @@ class AccountResourceIT {
         userRepository.saveAndFlush(user);
 
         AdminUserDTO userDTO = new AdminUserDTO();
-        userDTO.setLogin("not-used");
+        userDTO.setLogin("save-mismatch-login-email@example.com");
         userDTO.setFirstName("firstname");
         userDTO.setLastName("lastname");
         userDTO.setEmail("save-mismatch-login-email2@example.com");
@@ -912,7 +950,7 @@ class AccountResourceIT {
         userRepository.saveAndFlush(user);
 
         AdminUserDTO userDTO = new AdminUserDTO();
-        userDTO.setLogin("not-used");
+        userDTO.setLogin("invalid email");
         userDTO.setFirstName("firstname");
         userDTO.setLastName("lastname");
         userDTO.setEmail("invalid email");
@@ -948,7 +986,7 @@ class AccountResourceIT {
         userRepository.saveAndFlush(anotherUser);
 
         AdminUserDTO userDTO = new AdminUserDTO();
-        userDTO.setLogin("not-used");
+        userDTO.setLogin("save-existing-email2@example.com");
         userDTO.setFirstName("firstname");
         userDTO.setLastName("lastname");
         userDTO.setEmail("save-existing-email2@example.com");
@@ -977,7 +1015,7 @@ class AccountResourceIT {
         userRepository.saveAndFlush(user);
 
         AdminUserDTO userDTO = new AdminUserDTO();
-        userDTO.setLogin("not-used");
+        userDTO.setLogin("save-existing-email-and-login@example.com");
         userDTO.setFirstName("firstname");
         userDTO.setLastName("lastname");
         userDTO.setEmail("save-existing-email-and-login@example.com");

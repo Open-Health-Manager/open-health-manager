@@ -254,9 +254,9 @@ public class UserService {
                 if (userDTO.getEmail() != null) {
                     if (!userDTO.getEmail().equalsIgnoreCase(user.getEmail())) {
                         user.setActivated(false);
+                        user.setActivationKey(RandomUtil.generateActivationKey());
                     } else {
                         user.setActivated(userDTO.isActivated());
-                        user.setActivationKey(RandomUtil.generateActivationKey());
                     }
                     user.setEmail(userDTO.getEmail().toLowerCase());
                     user.setLogin(userDTO.getLogin().toLowerCase());

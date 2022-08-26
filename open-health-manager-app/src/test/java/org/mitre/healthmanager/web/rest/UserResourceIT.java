@@ -534,18 +534,20 @@ class UserResourceIT {
             .perform(
                 put("/api/admin/users").contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(managedUserVM))
             )
-            .andExpect(status().isBadRequest());
+            .andExpect(status().isOk());
 
-        // Validate no changes to the user
+        // Validate the User in the database
         assertPersistedUsers(users -> {
             assertThat(users).hasSize(databaseSizeBeforeUpdate);
             User testUser = users.stream().filter(usr -> usr.getId().equals(updatedUser.getId())).findFirst().get();
-            assertThat(testUser.getLogin()).isEqualTo(DEFAULT_LOGIN);
-            assertThat(testUser.getFirstName()).isEqualTo(DEFAULT_FIRSTNAME);
-            assertThat(testUser.getLastName()).isEqualTo(DEFAULT_LASTNAME);
-            assertThat(testUser.getEmail()).isEqualTo(DEFAULT_EMAIL);
-            assertThat(testUser.getImageUrl()).isEqualTo(DEFAULT_IMAGEURL);
-            assertThat(testUser.getLangKey()).isEqualTo(DEFAULT_LANGKEY);
+            assertThat(testUser.getLogin()).isEqualTo(UPDATED_LOGIN);
+            assertThat(testUser.getEmail()).isEqualTo(UPDATED_EMAIL);
+            assertThat(testUser.getFirstName()).isEqualTo(UPDATED_FIRSTNAME);
+            assertThat(testUser.getLastName()).isEqualTo(UPDATED_LASTNAME);
+            assertThat(testUser.getImageUrl()).isEqualTo(UPDATED_IMAGEURL);
+            assertThat(testUser.getLangKey()).isEqualTo(UPDATED_LANGKEY);
+            assertThat(testUser.isActivated()).isFalse();
+            assertThat(testUser.getActivationKey()).isNotNull();
         });
     }
 

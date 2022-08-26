@@ -14,7 +14,6 @@ import org.mitre.healthmanager.service.dto.AdminUserDTO;
 import org.mitre.healthmanager.service.dto.PasswordChangeDTO;
 import org.mitre.healthmanager.service.dto.UserDTO;
 import org.mitre.healthmanager.service.dto.UserDUADTO;
-import org.mitre.healthmanager.service.mapper.UserMapper;
 import org.mitre.healthmanager.web.rest.errors.BadRequestAlertException;
 import org.mitre.healthmanager.web.rest.errors.EmailAlreadyUsedException;
 import org.mitre.healthmanager.web.rest.errors.InvalidPasswordException;
@@ -32,7 +31,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import tech.jhipster.security.RandomUtil;
 
 
 /**
@@ -57,13 +55,11 @@ public class AccountResource {
 
     private final MailService mailService;
 
-    private final UserMapper userMapper;
 
-    public AccountResource(UserRepository userRepository, UserService userService, MailService mailService, UserMapper userMapper) {
+    public AccountResource(UserRepository userRepository, UserService userService, MailService mailService) {
         this.userRepository = userRepository;
         this.userService = userService;
         this.mailService = mailService;
-        this.userMapper = userMapper;
     }
 
     /**
@@ -153,7 +149,7 @@ public class AccountResource {
             throw new AccountResourceException("User could not be found");
         }
 
-        if (!userDTO.getLogin().equalsIgnoreCase("admin") && !userDTO.getEmail().equalsIgnoreCase(userLogin)) {
+        if (!userDTO.getLogin().equalsIgnoreCase("admin") && !userDTO.getEmail().equalsIgnoreCase(userDTO.getLogin())) {
             throw new LoginMatchEmailException();
         }
 

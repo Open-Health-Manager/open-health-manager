@@ -33,7 +33,6 @@ import tech.jhipster.web.util.HeaderUtil;
 import tech.jhipster.web.util.PaginationUtil;
 import tech.jhipster.web.util.ResponseUtil;
 import org.mitre.healthmanager.service.mapper.UserMapper;
-import tech.jhipster.security.RandomUtil;
 
 /**
  * REST controller for managing users.
