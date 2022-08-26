@@ -3,11 +3,12 @@ package org.mitre.healthmanager.service.dto;
 /**
  * A DTO representing a password change required data - current and new password.
  */
+@ValidPasswordClass
 public class PasswordChangeDTO {
 
     private String currentPassword;
 
-    @ValidPassword
+
     private String newPassword;
 
     public PasswordChangeDTO() {

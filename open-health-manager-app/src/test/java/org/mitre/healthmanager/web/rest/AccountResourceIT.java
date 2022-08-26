@@ -31,7 +31,7 @@ import org.mitre.healthmanager.service.UserService;
 import org.mitre.healthmanager.service.dto.AdminUserDTO;
 import org.mitre.healthmanager.service.dto.UserDUADTO;
 import org.mitre.healthmanager.service.dto.PasswordChangeDTO;
-import org.mitre.healthmanager.service.dto.PasswordConstraintValidator;
+import org.mitre.healthmanager.service.dto.PasswordConstraintClassValidator;
 import org.mitre.healthmanager.web.rest.vm.KeyAndPasswordVM;
 import org.mitre.healthmanager.web.rest.vm.DUAManagedUserVM;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -330,6 +330,36 @@ class AccountResourceIT {
             .andExpect(jsonPath("$.fieldErrors[?(@.message=='TOO_SHORT')]").exists());
 
         Optional<User> user = userRepository.findOneByLogin("bob");
+        assertThat(user).isEmpty();
+    }
+
+    @Test
+    @Transactional("jhipsterTransactionManager")
+    void testRegisterInvalidPasswordIsUsername() throws Exception {
+        DUAManagedUserVM invalidUser = new DUAManagedUserVM();
+        invalidUser.setLogin("BOB23@example.com");
+        invalidUser.setPassword("BOB23@example.com"); // password with only 3 digits
+        invalidUser.setFirstName("Bob");
+        invalidUser.setLastName("Green");
+        invalidUser.setEmail("bob@example.com");
+        invalidUser.setActivated(true);
+        invalidUser.setImageUrl("http://placehold.it/50x50");
+        invalidUser.setLangKey(Constants.DEFAULT_LANGUAGE);
+        invalidUser.setAuthorities(Collections.singleton(AuthoritiesConstants.USER));
+
+        UserDUADTO userDUADTO = new UserDUADTO();
+        userDUADTO.setActive(true);
+        userDUADTO.setVersion("v2020-03-21");
+        userDUADTO.setAgeAttested(true);
+
+        invalidUser.setUserDUADTO(userDUADTO);
+
+        restAccountMockMvc
+            .perform(post("/api/register").contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(invalidUser)))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.fieldErrors[?(@.message=='ILLEGAL_USERNAME')]").exists());
+
+        Optional<User> user = userRepository.findOneByLogin("BOB23@example.com");
         assertThat(user).isEmpty();
     }
 
@@ -998,7 +1028,7 @@ class AccountResourceIT {
         user.setEmail("change-password-too-small@example.com");
         userRepository.saveAndFlush(user);
 
-        String newPassword = RandomStringUtils.random(PasswordConstraintValidator.PASSWORD_MIN_LENGTH - 1);
+        String newPassword = RandomStringUtils.random(PasswordConstraintClassValidator.PASSWORD_MIN_LENGTH - 1);
 
         restAccountMockMvc
             .perform(
@@ -1024,7 +1054,7 @@ class AccountResourceIT {
         user.setEmail("change-password-too-long@example.com");
         userRepository.saveAndFlush(user);
 
-        String newPassword = RandomStringUtils.random(PasswordConstraintValidator.PASSWORD_MAX_LENGTH + 1);
+        String newPassword = RandomStringUtils.random(PasswordConstraintClassValidator.PASSWORD_MAX_LENGTH + 1);
 
         restAccountMockMvc
             .perform(
