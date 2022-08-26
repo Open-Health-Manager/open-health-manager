@@ -241,7 +241,7 @@ public class UserService {
      * @param userDTO user to update.
      * @return updated user.
      */
-    public Optional<AdminUserDTO> updateUser(AdminUserDTO userDTO) {
+    public Optional<User> updateUser(AdminUserDTO userDTO) {
         return Optional
             .of(userRepository.findById(userDTO.getId()))
             .filter(Optional::isPresent)
@@ -254,9 +254,9 @@ public class UserService {
                 if (userDTO.getEmail() != null) {
                     if (!userDTO.getEmail().equalsIgnoreCase(user.getEmail())) {
                         user.setActivated(false);
-                        user.setActivationKey(RandomUtil.generateActivationKey());
                     } else {
                         user.setActivated(userDTO.isActivated());
+                        user.setActivationKey(RandomUtil.generateActivationKey());
                     }
                     user.setEmail(userDTO.getEmail().toLowerCase());
                     user.setLogin(userDTO.getLogin().toLowerCase());
@@ -279,8 +279,7 @@ public class UserService {
                 fhirPatientService.createFHIRPatientForUser(user);
 
                 return user;
-            })
-            .map(AdminUserDTO::new);
+            });
     }
 
     public void deleteUser(String login) {
@@ -304,7 +303,7 @@ public class UserService {
      * @param langKey   language key.
      * @param imageUrl  image URL of user.
      */
-    public Optional<AdminUserDTO> updateUser(String firstName, String lastName, String email, String login, String langKey, String imageUrl) {
+    public Optional<User> updateUser(String firstName, String lastName, String email, String login, String langKey, String imageUrl) {
         return SecurityUtils
             .getCurrentUserLogin()
             .map(userRepository::findOneByLogin)
@@ -326,8 +325,7 @@ public class UserService {
                 this.clearUserCaches(user);
                 log.debug("Changed Information for User: {}", user);
                 return user;
-            })
-            .map(AdminUserDTO::new);
+            });
     }
 
     @Transactional("jhipsterTransactionManager")

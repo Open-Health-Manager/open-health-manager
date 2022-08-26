@@ -32,6 +32,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import tech.jhipster.security.RandomUtil;
 
 
 /**
@@ -156,7 +157,7 @@ public class AccountResource {
             throw new LoginMatchEmailException();
         }
 
-        Optional<AdminUserDTO> newUserDTO = userService.updateUser(
+        Optional<User> newUser = userService.updateUser(
             userDTO.getFirstName(),
             userDTO.getLastName(),
             userDTO.getEmail(),
@@ -165,8 +166,8 @@ public class AccountResource {
             userDTO.getImageUrl()
         );
 
-        if (newUserDTO.isPresent() && !newUserDTO.get().isActivated()) {
-            mailService.sendActivationEmail(userMapper.userDTOToUser(newUserDTO.get()));
+        if (newUser.isPresent() && !newUser.get().isActivated()) {
+            mailService.sendActivationEmail(newUser.get());
         }
     }
 

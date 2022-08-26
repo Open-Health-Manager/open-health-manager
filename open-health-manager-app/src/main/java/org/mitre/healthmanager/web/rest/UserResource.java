@@ -33,6 +33,7 @@ import tech.jhipster.web.util.HeaderUtil;
 import tech.jhipster.web.util.PaginationUtil;
 import tech.jhipster.web.util.ResponseUtil;
 import org.mitre.healthmanager.service.mapper.UserMapper;
+import tech.jhipster.security.RandomUtil;
 
 /**
  * REST controller for managing users.
@@ -162,14 +163,21 @@ public class UserResource {
             }
         }
         
-        Optional<AdminUserDTO> updatedUser = userService.updateUser(userDTO);
+        Optional<User> updatedUser = userService.updateUser(userDTO);
 
-        if (updatedUser.isPresent() && !updatedUser.get().isActivated()) {
-            mailService.sendActivationEmail(userMapper.userDTOToUser(updatedUser.get()));
+        if (updatedUser.isPresent() && !updatedUser.get().isActivated()) {     
+            mailService.sendActivationEmail(updatedUser.get());
+        }
+        
+        Optional <AdminUserDTO> updatedUserDTO;
+        if (updatedUser.isPresent()) {
+            updatedUserDTO = Optional.of(userMapper.userToAdminUserDTO(updatedUser.get()));
+        } else {
+            updatedUserDTO = Optional.empty();
         }
 
         return ResponseUtil.wrapOrNotFound(
-            updatedUser,
+            updatedUserDTO,
             HeaderUtil.createAlert(applicationName, "userManagement.updated", userDTO.getLogin())
         );
     }
