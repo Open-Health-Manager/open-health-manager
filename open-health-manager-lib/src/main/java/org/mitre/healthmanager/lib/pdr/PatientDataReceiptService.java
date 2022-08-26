@@ -11,7 +11,6 @@ import org.hl7.fhir.instance.model.api.IBaseBundle;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.r4.model.Coding;
-import org.hl7.fhir.r4.model.DomainResource;
 import org.hl7.fhir.r4.model.IdType;
 import org.hl7.fhir.r4.model.Identifier;
 import org.hl7.fhir.r4.model.ListResource;
@@ -117,13 +116,13 @@ public class PatientDataReceiptService {
 			list.setMode(ListMode.SNAPSHOT);
 			list.getCode().getCoding()
 				.add(new Coding().setSystem(pdrCode.getSystem()).setCode(pdrCode.getCode()));
-			list.setSubject(new Reference().setReferenceElement(new IdType("Patient", patientInternalId)));
+			list.setSubject(new Reference(new IdType("Patient", patientInternalId)));
 			list.setDate(new Date());
 			
 			list.getIdentifier().add(getSourceMessageHeaderIdentifier(theHeader));
 			
 			list.getEntry().add(new ListEntryComponent()
-					.setItem(new Reference().setReferenceElement(new IdType("Bundle",rawBundleId))));
+					.setItem(new Reference(new IdType("Bundle",rawBundleId))));
 		}			
 		
 		// add new or update existing entries
@@ -134,6 +133,7 @@ public class PatientDataReceiptService {
 			IdType responseId = getTransactionResponseEntryResourceId(responseEntry);
 			if(responseId != null) {
 				for(ListEntryComponent existingEntry : list.getEntry()) {
+					// .equals(responseId) includes history version
 					if(existingEntry.getItem().getReferenceElement().equals(responseId)) {
 						entry = existingEntry;
 						break;
@@ -151,7 +151,8 @@ public class PatientDataReceiptService {
 			}
 			// add created fhir id as entry.item.reference
 			if(responseId != null) {
-				entry.setItem(new Reference().setReferenceElement(responseId));	
+				// configured to include history version in item.reference
+				entry.setItem(new Reference(responseId));	
 				createPDRProvenance(requestEntry, responseEntry, patientInternalId, theHeader, daoRegistry);
 			}							
 		}
@@ -208,13 +209,11 @@ public class PatientDataReceiptService {
 		
 		Provenance provenance = new Provenance();		
 		provenance.getTarget()
-			.add(new Reference().setReferenceElement(new IdType("Patient", patientInternalId)));
+			.add(new Reference(new IdType("Patient", patientInternalId)));
 		provenance.getTarget()
-			.add(new Reference().setReferenceElement(responseId));
+			.add(new Reference(responseId));
 		provenance.setRecorded(new Date());
 		
-		// add source fhir id as reference.reference
-		// ideally would be reference.identifier but this is not searchable due to HAPI FHIR not supporting reference:identifier search qualifier
 		IdType sourceId = getTransactionRequestEntryResourceId(requestEntry, theHeader);
 		Reference source = null;
 		if(sourceId == null) {
@@ -222,7 +221,11 @@ public class PatientDataReceiptService {
 			source = new Reference();
 			source.setResource(requestEntry.getResource());
 		} else {
-			source = new Reference().setReferenceElement(sourceId);
+			source = new Reference(sourceId);
+			// add source fhir id as meta.source
+			// entity.item.reference is not searchable with non-URLs
+			// entity.item.identifier is not searchable due to HAPI FHIR not supporting reference:identifier search qualifier
+			provenance.getMeta().setSourceElement(sourceId);
 		}		
 		provenance.getEntity().add(new Provenance.ProvenanceEntityComponent()
 				.setRole(Provenance.ProvenanceEntityRole.SOURCE)

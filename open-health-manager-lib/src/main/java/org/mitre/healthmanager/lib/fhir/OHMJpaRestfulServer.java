@@ -5,6 +5,7 @@ import javax.servlet.ServletException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 
+import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.jpa.model.config.PartitionSettings;
 import ca.uhn.fhir.jpa.partition.PartitionManagementProvider;
 import ca.uhn.fhir.jpa.starter.AppProperties;
@@ -15,6 +16,8 @@ import ca.uhn.fhir.rest.server.interceptor.partition.RequestTenantPartitionInter
 public class OHMJpaRestfulServer extends BaseJpaRestfulServer {
 	private static final long serialVersionUID = 1L;
 	
+	@Autowired
+	FhirContext theCtx;
 	@Autowired
 	private PartitionSettings myPartitionSettings;
 	@Autowired
@@ -31,6 +34,8 @@ public class OHMJpaRestfulServer extends BaseJpaRestfulServer {
 		//setTenantIdentificationStrategy(new OHMTenantIdentificationStrategy());
 		//registerInterceptor(new RequestTenantPartitionInterceptor());
 		//registerProviders(partitionManagementProvider);	
+				
+		theCtx.getParserOptions().getDontStripVersionsFromReferencesAtPaths().add("List.entry.item");
 		super.initialize();
 	}
 

@@ -16,10 +16,12 @@ import org.springframework.stereotype.Service;
 import ca.uhn.fhir.jpa.api.dao.DaoRegistry;
 import ca.uhn.fhir.jpa.api.dao.IFhirResourceDao;
 import ca.uhn.fhir.jpa.searchparam.SearchParameterMap;
+import ca.uhn.fhir.rest.api.Constants;
 import ca.uhn.fhir.rest.api.SortOrderEnum;
 import ca.uhn.fhir.rest.api.SortSpec;
 import ca.uhn.fhir.rest.api.server.IBundleProvider;
 import ca.uhn.fhir.rest.param.ReferenceParam;
+import ca.uhn.fhir.rest.param.StringParam;
 
 @Service
 public class RecordMatchService {
@@ -73,8 +75,8 @@ public class RecordMatchService {
 		}
 		
 		SearchParameterMap theParams = new SearchParameterMap();
-		theParams.add("patient", new ReferenceParam(new IdType("Patient", patientInternalId)));	
-		theParams.add("entity", new ReferenceParam(sourceId));	
+		theParams.add("patient", new ReferenceParam(new IdType("Patient", patientInternalId)));			
+		theParams.add(Constants.PARAM_SOURCE, new StringParam(sourceId.getValue()));	
 		theParams.setSort(new SortSpec().setOrder(SortOrderEnum.DESC).setParamName("recorded"));
 		
 		IFhirResourceDao<Provenance> dao = daoRegistry.getResourceDao(Provenance.class);
