@@ -1,13 +1,16 @@
 package org.mitre.healthmanager.service.dto;
 
 import java.util.Arrays;
+import java.util.Optional;
 
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 import org.passay.PasswordValidator;
 import org.passay.PasswordData;
-import org.mitre.healthmanager.web.rest.vm.KeyAndPasswordVM;
-import org.mitre.healthmanager.web.rest.vm.ManagedUserVM;
+import org.mitre.healthmanager.domain.User;
+import org.mitre.healthmanager.repository.UserRepository;
+
+import static org.mitre.healthmanager.security.SecurityUtils.getCurrentUserLogin;
 import org.passay.CharacterRule;
 import org.passay.EnglishCharacterData;
 import org.passay.EnglishSequenceData;
@@ -15,9 +18,7 @@ import org.passay.LengthRule;
 import org.passay.RuleResult;
 import org.passay.UsernameRule;
 import org.passay.WhitespaceRule;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.User;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.passay.IllegalSequenceRule;
 
 
@@ -26,6 +27,9 @@ public class PasswordConstraintClassValidator implements ConstraintValidator<Val
     public static final int PASSWORD_MIN_LENGTH = 6;
 
     public static final int PASSWORD_MAX_LENGTH = 50;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @Override
     public void initialize(ValidPasswordClass arg0) {
@@ -94,13 +98,17 @@ public class PasswordConstraintClassValidator implements ConstraintValidator<Val
         if (hasPassword instanceof PasswordChangeDTO) {
             PasswordChangeDTO passwordChange = (PasswordChangeDTO) hasPassword;
             String password = passwordChange.getNewPassword();
-            String username = getUsernameFromAuthorizationContext();
+            String username = getCurrentUserLogin().orElse(null);
             return new PasswordData(username, password);
         }
         else if (hasPassword instanceof KeyAndPasswordVM) {
             KeyAndPasswordVM passwordReset = (KeyAndPasswordVM) hasPassword;
             String password = passwordReset.getNewPassword();
             String username = null;
+            Optional<User> resetUserOption = userRepository.findOneByResetKey(passwordReset.getKey());
+            if (resetUserOption.isPresent()) {
+                username = resetUserOption.get().getLogin();
+            }
             return new PasswordData(username, password);
         }
         else if (hasPassword instanceof ManagedUserVM) {
@@ -125,16 +133,7 @@ public class PasswordConstraintClassValidator implements ConstraintValidator<Val
             return "password";
         }
         else {
-            return null;
+            return null; 
         }
-    }
-
-    public static String getUsernameFromAuthorizationContext() {
-        /// Get from Spring auth context
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null) {
-            return ((User) authentication.getPrincipal()).getUsername();
-        }
-        return null;
     }
 }

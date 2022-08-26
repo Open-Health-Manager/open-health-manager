@@ -1,7 +1,4 @@
-package org.mitre.healthmanager.web.rest.vm;
-
-import org.mitre.healthmanager.service.dto.AdminUserDTO;
-import org.mitre.healthmanager.service.dto.ValidPasswordClass;
+package org.mitre.healthmanager.service.dto;
 
 /**
  * View Model extending the AdminUserDTO, which is meant to be used in the user management UI.
