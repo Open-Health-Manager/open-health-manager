@@ -19,6 +19,8 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
+import org.springframework.web.util.UrlPathHelper;
+
 import tech.jhipster.config.JHipsterConstants;
 import tech.jhipster.config.JHipsterProperties;
 import tech.jhipster.config.h2.H2ConfigurationHelper;
@@ -97,7 +99,15 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
             source.registerCorsConfiguration("/management/**", config);
             source.registerCorsConfiguration("/v3/api-docs", config);
             source.registerCorsConfiguration("/swagger-ui/**", config);
+            source.registerCorsConfiguration("/fhir/**", config);
         }
+        
+        // force the identification logic to use the full path within the application
+        // (/fhir/...) rather than the path under the HAPI FHIR servlet (/...)
+        UrlPathHelper urlPathHelper = new UrlPathHelper();
+        urlPathHelper.setAlwaysUseFullPath(true);
+        source.setUrlPathHelper(urlPathHelper);
+        
         return new CorsFilter(source);
     }
 
