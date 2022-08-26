@@ -35,7 +35,7 @@ import ca.uhn.fhir.rest.client.api.IGenericClient;
 		// beans are ambiguous as they are constructed multiple places. This is evident
 		// when running in a spring boot environment
 		"spring.main.allow-bean-definition-overriding=true",
-		"hapi.fhir.allow_external_references= true"})
+		"hapi.fhir.allow_external_references=true"})
 @Transactional
 class PdrGatewayTest {
 	@Autowired
@@ -91,6 +91,7 @@ class PdrGatewayTest {
 	}
 	
 	private Bundle processMessage(Bundle testMessage) {		
+		ourCtx.getRestfulClientFactory().setSocketTimeout(200 * 1000);
 		IGenericClient testClient = ourCtx.newRestfulGenericClient("http://localhost:" + port + "/fhir/");
 		
 		return testClient

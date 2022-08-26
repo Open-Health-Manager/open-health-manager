@@ -11,6 +11,7 @@ import org.hl7.fhir.instance.model.api.IBaseBundle;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.r4.model.Coding;
+import org.hl7.fhir.r4.model.DomainResource;
 import org.hl7.fhir.r4.model.IdType;
 import org.hl7.fhir.r4.model.Identifier;
 import org.hl7.fhir.r4.model.ListResource;
@@ -87,16 +88,21 @@ public class PatientDataReceiptService {
 		Objects.requireNonNull(daoRegistry);
 		Objects.requireNonNull(theMessage.getEntry());	     	     
 
-		theMessage.setType(Bundle.BundleType.TRANSACTION);
-
+		// need to create a new bundle because transaction processor reorders, re-ids re-references the entries
+		Bundle transaction = new Bundle();
+		transaction.setType(Bundle.BundleType.TRANSACTION);
+		theMessage.setType(Bundle.BundleType.TRANSACTION);		
+		
+		// validate entries
 		for(BundleEntryComponent entry : theMessage.getEntry()) {	    	
 			Objects.requireNonNull(entry.getRequest());		    	
 			if (entry.getRequest().getMethod() == Bundle.HTTPVerb.DELETE) {
 				throw new UnprocessableEntityException("Cannot process DELETE as a part of a PDR");
-			}           
+			}     
+			transaction.addEntry(entry.copy());			
 		}
-
-		return (Bundle)myTransactionProcessor.transaction((RequestDetails)null, (IBaseBundle)theMessage, false);		
+		
+		return (Bundle)myTransactionProcessor.transaction((RequestDetails)null, (IBaseBundle)transaction, true);		
 	}
 	
 	public static final ListResource createPDRList(
@@ -210,11 +216,11 @@ public class PatientDataReceiptService {
 		// add source fhir id as reference.reference
 		// ideally would be reference.identifier but this is not searchable due to HAPI FHIR not supporting reference:identifier search qualifier
 		IdType sourceId = getTransactionRequestEntryResourceId(requestEntry, theHeader);
-		Reference source = new Reference().setReferenceElement(sourceId);
+		Reference source = null;
 		if(sourceId == null) {
-			// cannot correlate resources by source id, add contained resource
-			source = new Reference()
-				.setReferenceElement(provenance.addContained(requestEntry.getResource()).getIdElement());
+			// cannot correlate resources by source id, add contained resource			
+			source = new Reference();
+			source.setResource(requestEntry.getResource());
 		} else {
 			source = new Reference().setReferenceElement(sourceId);
 		}		
@@ -258,8 +264,10 @@ public class PatientDataReceiptService {
 		if (requestEntry.getResource() != null && requestEntry.getResource().getIdElement() != null
 				&& !StringUtils.isNullOrEmpty(requestEntry.getResource().getIdElement().getIdPart())
 				&& !StringUtils.isNullOrEmpty(theHeader.getSource().getEndpoint())) {
-			IdType requestId = new IdType(requestEntry.getResource().getIdElement());
-			requestId.setIdBase(theHeader.getSource().getEndpoint());
+			IdType requestId = new IdType(theHeader.getSource().getEndpoint(),
+					requestEntry.getResource().getIdElement().getResourceType(),
+					requestEntry.getResource().getIdElement().getIdPart(),
+					requestEntry.getResource().getIdElement().getVersionIdPart());
 			return requestId;
 		} else if(!StringUtils.isNullOrEmpty(requestEntry.getFullUrl())) {
 			return new IdType(requestEntry.getFullUrlElement());
