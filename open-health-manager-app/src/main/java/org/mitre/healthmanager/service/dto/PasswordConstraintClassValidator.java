@@ -67,7 +67,7 @@ public class PasswordConstraintClassValidator implements ConstraintValidator<Val
               .addPropertyNode(getPasswordField(hasPassword)).addConstraintViolation();
             return false;
         }
-        if (toValidate.getPassword() == null) {
+        if (toValidate.getPassword() == null  || toValidate.getPassword().isEmpty()) {
             context.disableDefaultConstraintViolation();
             context.buildConstraintViolationWithTemplate("Password must not be null.")
                 .addPropertyNode(getPasswordField(hasPassword)).addConstraintViolation();
