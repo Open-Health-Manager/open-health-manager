@@ -1099,6 +1099,33 @@ class AccountResourceIT {
 
     @Test
     @Transactional("jhipsterTransactionManager")
+    @WithMockUser("change2pw-BAD@ex.com")
+    void testChangePasswordInvalidPasswordIsUsername() throws Exception {
+        User user = new User();
+        String currentPassword = RandomStringUtils.random(60);
+        user.setPassword(passwordEncoder.encode(currentPassword));
+        user.setLogin("change2pw-BAD@ex.com");
+        user.setEmail("change2pw-BAD@ex.com");
+        userRepository.saveAndFlush(user);
+
+        String newPassword = "change2pw-BAD@ex.com";
+
+        restAccountMockMvc
+            .perform(
+                post("/api/account/change-password")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(TestUtil.convertObjectToJsonBytes(new PasswordChangeDTO(currentPassword, newPassword)))
+            )
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.fieldErrors[?(@.message=='ILLEGAL_USERNAME')]").exists());
+
+        // note: use lowercase of login for lookup
+        User updatedUser = userRepository.findOneByLogin("change2pw-bad@ex.com").orElse(null);
+        assertThat(updatedUser.getPassword()).isEqualTo(user.getPassword());
+    }
+
+    @Test
+    @Transactional("jhipsterTransactionManager")
     @WithMockUser("change-password-empty")
     void testChangePasswordEmpty() throws Exception {
         User user = new User();
@@ -1117,6 +1144,29 @@ class AccountResourceIT {
             .andExpect(status().isBadRequest());
 
         User updatedUser = userRepository.findOneByLogin("change-password-empty").orElse(null);
+        assertThat(updatedUser.getPassword()).isEqualTo(user.getPassword());
+    }
+
+    @Test
+    @Transactional("jhipsterTransactionManager")
+    @WithMockUser("change-password-null")
+    void testChangePasswordNull() throws Exception {
+        User user = new User();
+        String currentPassword = RandomStringUtils.random(60);
+        user.setPassword(passwordEncoder.encode(currentPassword));
+        user.setLogin("change-password-null");
+        user.setEmail("change-password-null@example.com");
+        userRepository.saveAndFlush(user);
+
+        restAccountMockMvc
+            .perform(
+                post("/api/account/change-password")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(TestUtil.convertObjectToJsonBytes(new PasswordChangeDTO(currentPassword, null)))
+            )
+            .andExpect(status().isBadRequest());
+
+        User updatedUser = userRepository.findOneByLogin("change-password-null").orElse(null);
         assertThat(updatedUser.getPassword()).isEqualTo(user.getPassword());
     }
 
@@ -1206,6 +1256,34 @@ class AccountResourceIT {
                     .content(TestUtil.convertObjectToJsonBytes(keyAndPassword))
             )
             .andExpect(status().isBadRequest());
+
+        User updatedUser = userRepository.findOneByLogin(user.getLogin()).orElse(null);
+        assertThat(passwordEncoder.matches(keyAndPassword.getNewPassword(), updatedUser.getPassword())).isFalse();
+    }
+
+    @Test
+    @Transactional("jhipsterTransactionManager")
+    void testFinishPasswordResetIsUsername() throws Exception {
+        User user = new User();
+        user.setPassword(RandomStringUtils.random(60));
+        user.setLogin("PWreset2un@ex.com");
+        user.setEmail("PWreset2un@ex.com");
+        user.setResetDate(Instant.now().plusSeconds(60));
+        user.setResetKey("reset key pw login");
+        userRepository.saveAndFlush(user);
+
+        KeyAndPasswordVM keyAndPassword = new KeyAndPasswordVM();
+        keyAndPassword.setKey(user.getResetKey());
+        keyAndPassword.setNewPassword("PWreset2un@ex.com");
+
+        restAccountMockMvc
+            .perform(
+                post("/api/account/reset-password/finish")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(TestUtil.convertObjectToJsonBytes(keyAndPassword))
+            )
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.fieldErrors[?(@.message=='ILLEGAL_USERNAME')]").exists());
 
         User updatedUser = userRepository.findOneByLogin(user.getLogin()).orElse(null);
         assertThat(passwordEncoder.matches(keyAndPassword.getNewPassword(), updatedUser.getPassword())).isFalse();

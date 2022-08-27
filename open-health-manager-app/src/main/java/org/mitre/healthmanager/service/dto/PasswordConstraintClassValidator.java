@@ -57,30 +57,26 @@ public class PasswordConstraintClassValidator implements ConstraintValidator<Val
             // rejects passwords that contain a sequence of >= 5 characters numerical   (e.g. 12345)
             new IllegalSequenceRule(EnglishSequenceData.Numerical, 5, false),
             // rejects passwords that are the same as the username / login
-            new UsernameRule()
+            new UsernameRule(false, true)
         ));
 
-        PasswordData toValidate = getUsernameAndPassword(hasPassword);
-        if (toValidate == null) {
-            context.disableDefaultConstraintViolation();
-            context.buildConstraintViolationWithTemplate("Password check failed.")
-              .addPropertyNode(getPasswordField(hasPassword)).addConstraintViolation();
-            return false;
-        }
-        if (toValidate.getPassword() == null  || toValidate.getPassword().isEmpty()) {
-            context.disableDefaultConstraintViolation();
-            context.buildConstraintViolationWithTemplate("Password must not be null.")
-                .addPropertyNode(getPasswordField(hasPassword)).addConstraintViolation();
-            return false;
-        }
-        if (toValidate.getUsername() == null) {
+        String username = getUsername(hasPassword);
+        if (username == null) {
             context.disableDefaultConstraintViolation();
             context.buildConstraintViolationWithTemplate("Username required for validation.")
                 .addPropertyNode("login").addConstraintViolation();
             return false;
         }
 
-        RuleResult result = validator.validate(toValidate);
+        String password = getPassword(hasPassword);
+        if (password == null  ) {
+            context.disableDefaultConstraintViolation();
+            context.buildConstraintViolationWithTemplate("Password must not be null.")
+                .addPropertyNode(getPasswordField(hasPassword)).addConstraintViolation();
+            return false;
+        }
+
+        RuleResult result = validator.validate(new PasswordData(username, password));
         if (result.isValid()) {
             return true;
         }
@@ -94,28 +90,40 @@ public class PasswordConstraintClassValidator implements ConstraintValidator<Val
         return false;
     }
 
-    private PasswordData getUsernameAndPassword(Object hasPassword) {
+    private String getUsername(Object hasPassword) {
         if (hasPassword instanceof PasswordChangeDTO) {
-            PasswordChangeDTO passwordChange = (PasswordChangeDTO) hasPassword;
-            String password = passwordChange.getNewPassword();
-            String username = getCurrentUserLogin().orElse(null);
-            return new PasswordData(username, password);
+            return getCurrentUserLogin().orElse(null);
         }
         else if (hasPassword instanceof KeyAndPasswordVM) {
             KeyAndPasswordVM passwordReset = (KeyAndPasswordVM) hasPassword;
-            String password = passwordReset.getNewPassword();
             String username = null;
             Optional<User> resetUserOption = userRepository.findOneByResetKey(passwordReset.getKey());
             if (resetUserOption.isPresent()) {
                 username = resetUserOption.get().getLogin();
             }
-            return new PasswordData(username, password);
+            return username;
         }
         else if (hasPassword instanceof ManagedUserVM) {
             ManagedUserVM userData = (ManagedUserVM) hasPassword;
-            String password = userData.getPassword();
-            String username = userData.getLogin();
-            return new PasswordData(username, password);
+            return userData.getLogin();
+        }
+        else {
+            return null;
+        }
+    }
+
+    private String getPassword(Object hasPassword) {
+        if (hasPassword instanceof PasswordChangeDTO) {
+            PasswordChangeDTO passwordChange = (PasswordChangeDTO) hasPassword;
+            return passwordChange.getNewPassword();
+        }
+        else if (hasPassword instanceof KeyAndPasswordVM) {
+            KeyAndPasswordVM passwordReset = (KeyAndPasswordVM) hasPassword;
+            return passwordReset.getNewPassword();
+        }
+        else if (hasPassword instanceof ManagedUserVM) {
+            ManagedUserVM userData = (ManagedUserVM) hasPassword;
+            return userData.getPassword();
         }
         else {
             return null;
