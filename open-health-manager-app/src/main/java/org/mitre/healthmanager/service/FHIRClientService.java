@@ -1,35 +1,26 @@
 package org.mitre.healthmanager.service;
 
 import java.util.Optional;
-import java.util.List;
-import java.util.stream.Collectors;
 
-
+import org.hl7.fhir.r4.model.IdType;
+import org.hl7.fhir.r4.model.Organization;
 import org.mitre.healthmanager.domain.FHIRClient;
 import org.mitre.healthmanager.repository.FHIRClientRepository;
 import org.mitre.healthmanager.service.dto.FHIRClientDTO;
 import org.mitre.healthmanager.service.mapper.FHIRClientMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import org.hl7.fhir.instance.model.api.IBaseResource;
-import org.hl7.fhir.r4.model.IdType;
-import org.hl7.fhir.r4.model.Organization;
 
 import ca.uhn.fhir.jpa.api.dao.DaoRegistry;
 import ca.uhn.fhir.jpa.api.dao.IFhirResourceDao;
 import ca.uhn.fhir.jpa.api.model.DaoMethodOutcome;
 import ca.uhn.fhir.jpa.partition.SystemRequestDetails;
-import ca.uhn.fhir.jpa.searchparam.SearchParameterMap;
-import ca.uhn.fhir.rest.api.server.IBundleProvider;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
-import ca.uhn.fhir.rest.param.StringParam;
-import ca.uhn.fhir.rest.param.TokenParam;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 
 
@@ -66,13 +57,12 @@ public class FHIRClientService {
         log.debug("Request to save FHIRClient : {}", fHIRClientDTO);
         FHIRClient fHIRClient = fHIRClientMapper.toEntity(fHIRClientDTO);
 
-        // create the organization resource
-        Organization organizationFHIR = new Organization();
-        organizationFHIR.setName(fHIRClient.getName());
-
         if (fHIRClient.getFhirOrganizationId() != null && fHIRClient.getFhirOrganizationId().length() > 0) {
             updateFHIROrganization(fHIRClient);
         } else {
+            // create the organization resource
+            Organization organizationFHIR = new Organization();
+            organizationFHIR.setName(fHIRClient.getName());
             fHIRClient.fhirOrganizationId(saveOrganizationResource(organizationFHIR, fHIRClient));
         }
         fHIRClient = fHIRClientRepository.save(fHIRClient);
@@ -165,7 +155,7 @@ public class FHIRClientService {
     private String updateFHIROrganization(FHIRClient fhirClient) {
     	if(fhirClient.getFhirOrganizationId() != null) { // existing record  	
         	// fail if fhirOrganizationID is linked to another client resource already  
-            if (fHIRClientRepository.findAllForFhirOrganizationID(fhirClient.getFhirOrganizationId()).stream()
+            if (fHIRClientRepository.findByFhirOrganizationId(fhirClient.getFhirOrganizationId()).stream()
             .filter(client -> !client.getId().equals(fhirClient.getId()))
     		.count() > 0) {
                 throw new FHIROrganizationResourceException("Existing link between organization resource and a different fhir client.");
@@ -202,8 +192,6 @@ public class FHIRClientService {
         }
         return resp.getId().getIdPart();
     }
-
-
 
     private String saveOrganizationResource(Organization organizationFHIR, FHIRClient fhirClient) {
         
