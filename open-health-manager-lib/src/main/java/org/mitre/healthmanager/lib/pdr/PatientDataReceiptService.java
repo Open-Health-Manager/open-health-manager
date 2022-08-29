@@ -62,10 +62,7 @@ public class PatientDataReceiptService {
 
 	public static final String storePDRAsRawBundle(@NotNull Bundle theMessage, @NotNull String internalPatientId, 
 			@NotNull IFhirResourceDao<Bundle> bundleDao) {
-		//int partitionId = Math.abs(internalPatientId.hashCode()) % 15000;
-		//RequestPartitionId requestPartitionId = RequestPartitionId.fromPartitionId(partitionId);
-		//SystemRequestDetails systemRequestDetails = new SystemRequestDetails().setRequestPartitionId(requestPartitionId);
-		DaoMethodOutcome outcome = bundleDao.create((Bundle)theMessage);
+			DaoMethodOutcome outcome = bundleDao.create((Bundle)theMessage);
 		Objects.requireNonNull(outcome);
 		Objects.requireNonNull(outcome.getResource()); 
 		Objects.requireNonNull(outcome.getResource().getIdElement());
@@ -153,7 +150,8 @@ public class PatientDataReceiptService {
 			if(responseId != null) {
 				// configured to include history version in item.reference
 				entry.setItem(new Reference(responseId));	
-				createPDRProvenance(requestEntry, responseEntry, patientInternalId, theHeader, daoRegistry);
+				Provenance provenance = createPDRProvenance(requestEntry, responseEntry, patientInternalId, theHeader, daoRegistry);
+				list.addEntry().setItem(new Reference(provenance.getIdElement()));
 			}							
 		}
 

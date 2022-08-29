@@ -76,7 +76,8 @@ public final class RequestInterceptor {
 		Objects.requireNonNull(theResponse, "theResponse");
 		
 		// PDR delete
-		if (requestDetails.getResourceName().equals("List") && requestDetails.getRequestType().equals(RequestTypeEnum.DELETE)) {
+		if (requestDetails.getResourceName() != null && requestDetails.getResourceName().equals("List") 
+				&& requestDetails.getRequestType() != null && requestDetails.getRequestType().equals(RequestTypeEnum.DELETE)) {
             // check that this is actually a PDR
             ListResource targetList = myListDaoR4.read(requestDetails.getId());
             if(targetList.getCode().getCodingFirstRep() != null &&
@@ -93,7 +94,7 @@ public final class RequestInterceptor {
                         .setUrl("List/" + targetList.getIdElement().getIdPart())));
                 
                 for(ListEntryComponent entry : targetList.getEntry()) {
-                	// disallow patient resource delete for now
+                	// disallow patient resource delete
                 	if(entry.getItem() != null && !entry.getDeleted() 
                 			&& entry.getItem().getReferenceElement() != null
                 			&& !entry.getItem().getReferenceElement().getResourceType().equals("Patient"))
