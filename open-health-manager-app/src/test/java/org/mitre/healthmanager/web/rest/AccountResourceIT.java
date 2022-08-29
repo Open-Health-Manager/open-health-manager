@@ -871,6 +871,35 @@ class AccountResourceIT {
 
     @Test
     @Transactional("jhipsterTransactionManager")
+    @WithMockUser("admin")
+    void testSaveAccountAdmin() throws Exception {
+        AdminUserDTO userDTO = new AdminUserDTO();
+        userDTO.setLogin("admin");
+        userDTO.setFirstName("firstname");
+        userDTO.setLastName("lastname");
+        userDTO.setEmail("adminnew@localhost");
+        userDTO.setActivated(true);
+        userDTO.setImageUrl("http://placehold.it/50x50");
+        userDTO.setLangKey(Constants.DEFAULT_LANGUAGE);
+        userDTO.setAuthorities(Collections.singleton(AuthoritiesConstants.ADMIN));
+
+        restAccountMockMvc
+            .perform(post("/api/account").contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(userDTO)))
+            .andExpect(status().isOk());
+
+        User updatedUser = userRepository.findOneWithAuthoritiesByLogin(userDTO.getLogin()).orElse(null);
+        assertThat(updatedUser.getFirstName()).isEqualTo(userDTO.getFirstName());
+        assertThat(updatedUser.getLastName()).isEqualTo(userDTO.getLastName());
+        assertThat(updatedUser.getEmail()).isEqualTo(userDTO.getEmail());
+        assertThat(updatedUser.getLogin()).isEqualTo(userDTO.getLogin());
+        assertThat(updatedUser.getLangKey()).isEqualTo(userDTO.getLangKey());
+        assertThat(updatedUser.getImageUrl()).isEqualTo(userDTO.getImageUrl());
+        assertThat(updatedUser.isActivated()).isFalse();
+        assertThat(updatedUser.getActivationKey()).isNotNull();
+    }
+
+    @Test
+    @Transactional("jhipsterTransactionManager")
     @WithMockUser("save-account-change-email@example.com")
     void testSaveAccountChangeEmail() throws Exception {
         User user = new User();

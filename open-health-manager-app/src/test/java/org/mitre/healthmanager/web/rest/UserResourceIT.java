@@ -503,6 +503,54 @@ class UserResourceIT {
 
     @Test
     @Transactional("jhipsterTransactionManager")
+    void updateUserAdmin() throws Exception {
+        String methodName = "updateUserAdmin";
+        log.info("**** " + methodName + " ****");
+        
+        int databaseSizeBeforeUpdate = userRepository.findAll().size();
+
+        // Update the user
+        User updatedUser = userRepository.findOneByLogin("admin").get();
+
+        ManagedUserVM managedUserVM = new ManagedUserVM();
+        managedUserVM.setId(updatedUser.getId());
+        managedUserVM.setLogin(updatedUser.getLogin());
+        managedUserVM.setPassword(UPDATED_PASSWORD);
+        managedUserVM.setFirstName(UPDATED_FIRSTNAME);
+        managedUserVM.setLastName(UPDATED_LASTNAME);
+        managedUserVM.setEmail("adminnew@localhost");
+        managedUserVM.setActivated(updatedUser.isActivated());
+        managedUserVM.setImageUrl(UPDATED_IMAGEURL);
+        managedUserVM.setLangKey(UPDATED_LANGKEY);
+        managedUserVM.setCreatedBy(updatedUser.getCreatedBy());
+        managedUserVM.setCreatedDate(updatedUser.getCreatedDate());
+        managedUserVM.setLastModifiedBy(updatedUser.getLastModifiedBy());
+        managedUserVM.setLastModifiedDate(updatedUser.getLastModifiedDate());
+        managedUserVM.setAuthorities(Collections.singleton(AuthoritiesConstants.USER));
+
+        restUserMockMvc
+            .perform(
+                put("/api/admin/users").contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(managedUserVM))
+            )
+            .andExpect(status().isOk());
+
+        // Validate the User in the database
+        assertPersistedUsers(users -> {
+            assertThat(users).hasSize(databaseSizeBeforeUpdate);
+            User testUser = users.stream().filter(usr -> usr.getId().equals(updatedUser.getId())).findFirst().get();
+            assertThat(testUser.getLogin()).isEqualTo("admin");
+            assertThat(testUser.getEmail()).isEqualTo("adminnew@localhost");
+            assertThat(testUser.getFirstName()).isEqualTo(UPDATED_FIRSTNAME);
+            assertThat(testUser.getLastName()).isEqualTo(UPDATED_LASTNAME);
+            assertThat(testUser.getImageUrl()).isEqualTo(UPDATED_IMAGEURL);
+            assertThat(testUser.getLangKey()).isEqualTo(UPDATED_LANGKEY);
+            assertThat(testUser.isActivated()).isFalse();
+            assertThat(testUser.getActivationKey()).isNotNull();
+        });
+    }
+
+    @Test
+    @Transactional("jhipsterTransactionManager")
     void updateUserLogin() throws Exception {
         String methodName = "updateUserLogin";
         log.info("**** " + methodName + " ****");
