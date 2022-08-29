@@ -12,6 +12,7 @@
     "validation": "Validation error on the server.",
     "patientconstraint": "<strong>Patient constraint violation!</strong> Please confirm patient id and check patient identifiers for existing matches.",
     "invaliddua": "Data use agreement must be active and include age attestation.",
-    "invalidconsent": "Invalid consent request."
+    "invalidconsent": "Invalid consent request.",
+    "organizationexception": "Problem saving fhir organization from client information."
   }
 }
