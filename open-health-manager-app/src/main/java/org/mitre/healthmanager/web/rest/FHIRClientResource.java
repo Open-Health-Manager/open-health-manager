@@ -121,6 +121,9 @@ public class FHIRClientResource {
         if (!Objects.equals(id, fHIRClientDTO.getId())) {
             throw new BadRequestAlertException("Invalid ID", ENTITY_NAME, "idinvalid");
         }
+        if (fHIRClientDTO.getFhirOrganizationId() == null) {
+            throw new BadRequestAlertException("Invalid FHIR Organization ID", ENTITY_NAME, "fhirorgidnull");
+        }
 
         if (!fHIRClientRepository.existsById(id)) {
             throw new BadRequestAlertException("Entity not found", ENTITY_NAME, "idnotfound");
