@@ -16,6 +16,7 @@ const initialState: EntityState<IFHIRClient> = {
 };
 
 const apiUrl = 'api/fhir-clients';
+const adminApiUrl = 'api/admin/fhir-clients';
 
 // Actions
 
@@ -36,7 +37,7 @@ export const getEntity = createAsyncThunk(
 export const createEntity = createAsyncThunk(
   'fHIRClient/create_entity',
   async (entity: IFHIRClient, thunkAPI) => {
-    const result = await axios.post<IFHIRClient>(apiUrl, cleanEntity(entity));
+    const result = await axios.post<IFHIRClient>(adminApiUrl, cleanEntity(entity));
     thunkAPI.dispatch(getEntities({}));
     return result;
   },
@@ -46,7 +47,7 @@ export const createEntity = createAsyncThunk(
 export const updateEntity = createAsyncThunk(
   'fHIRClient/update_entity',
   async (entity: IFHIRClient, thunkAPI) => {
-    const result = await axios.put<IFHIRClient>(`${apiUrl}/${entity.id}`, cleanEntity(entity));
+    const result = await axios.put<IFHIRClient>(`${adminApiUrl}/${entity.id}`, cleanEntity(entity));
     thunkAPI.dispatch(getEntities({}));
     return result;
   },
@@ -56,7 +57,7 @@ export const updateEntity = createAsyncThunk(
 export const partialUpdateEntity = createAsyncThunk(
   'fHIRClient/partial_update_entity',
   async (entity: IFHIRClient, thunkAPI) => {
-    const result = await axios.patch<IFHIRClient>(`${apiUrl}/${entity.id}`, cleanEntity(entity));
+    const result = await axios.patch<IFHIRClient>(`${adminApiUrl}/${entity.id}`, cleanEntity(entity));
     thunkAPI.dispatch(getEntities({}));
     return result;
   },
@@ -66,7 +67,7 @@ export const partialUpdateEntity = createAsyncThunk(
 export const deleteEntity = createAsyncThunk(
   'fHIRClient/delete_entity',
   async (id: string | number, thunkAPI) => {
-    const requestUrl = `${apiUrl}/${id}`;
+    const requestUrl = `${adminApiUrl}/${id}`;
     const result = await axios.delete<IFHIRClient>(requestUrl);
     thunkAPI.dispatch(getEntities({}));
     return result;

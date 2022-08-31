@@ -194,19 +194,22 @@ public class FHIRPatientService {
     // need to manually unlink patient resource identifiers for now in case of failures
     private void saveFHIRPatient(FHIRPatient fHIRPatient) {
     	if(fHIRPatient.getId() != null) { // existing record
-        	FHIRPatient existingFHIRPatient = fHIRPatientRepository
-        			.findById(fHIRPatient.getId()).get();
-        	User existingUser = existingFHIRPatient.getUser();
-        	
-        	if(existingFHIRPatient.getFhirId().equals(fHIRPatient.getFhirId()) 
-        			&& existingUser.getId().equals(fHIRPatient.getUser().getId())) {
-        		// no changes
-        		return;
-        	}
-        	
-        	// fail if existing record has a patient resource link already    		
-            if (getExistingFhirPatientResources(existingFHIRPatient, existingUser).size() > 0) {
-                throw new FHIRPatientResourceException("Existing link between patient resource and user account.");
+        	Optional<FHIRPatient> optionalExistingFHIRPatient = fHIRPatientRepository
+        			.findById(fHIRPatient.getId());
+            if (optionalExistingFHIRPatient.isPresent()) {
+                FHIRPatient existingFHIRPatient = optionalExistingFHIRPatient.get();
+                User existingUser = existingFHIRPatient.getUser();
+                
+                if(existingFHIRPatient.getFhirId().equals(fHIRPatient.getFhirId()) 
+                        && existingUser.getId().equals(fHIRPatient.getUser().getId())) {
+                    // no changes
+                    return;
+                }
+                
+                // fail if existing record has a patient resource link already    		
+                if (getExistingFhirPatientResources(existingFHIRPatient, existingUser).size() > 0) {
+                    throw new FHIRPatientResourceException("Existing link between patient resource and user account.");
+                }
             }
     	}
     	
@@ -225,6 +228,10 @@ public class FHIRPatientService {
     	} catch(ResourceNotFoundException rnfe) {    		
 			throw new FHIRPatientResourceException("Patient resource does not exist.");
 		}
+
+        if (patientFHIR == null) {
+            throw new FHIRPatientResourceException("Patient resource does not exist.");
+        }
 		
 		// fail if patient resource linked to another user account
 		if(hasExistingAccountIdentifier(patientFHIR, fHIRPatient.getUser())) {
@@ -286,8 +293,7 @@ public class FHIRPatientService {
     
     // check if Patient resource has an account identifier for another user
     private boolean hasExistingAccountIdentifier(Patient patientFHIR, User user) {
-    	return patientFHIR != null && 
-    		patientFHIR.getIdentifier().stream()
+    	return patientFHIR.getIdentifier().stream()
 				.filter(identifier -> identifier.getSystem().equals(FHIR_LOGIN_SYSTEM) 
 						&& !identifier.getValue().equals(user.getLogin()))
 				.count() > 0;

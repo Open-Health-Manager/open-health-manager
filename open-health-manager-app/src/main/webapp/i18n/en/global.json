@@ -139,6 +139,7 @@
     "idnull": "Invalid ID",
     "idinvalid": "Invalid ID",
     "idnotfound": "ID cannot be found",
+    "fhirorgidnull": "Invalid FHIR Organization ID",
     "file": {
       "could.not.extract": "Could not extract file",
       "not.image": "File was expected to be an image but was found to be \"{{ fileType }}\""
