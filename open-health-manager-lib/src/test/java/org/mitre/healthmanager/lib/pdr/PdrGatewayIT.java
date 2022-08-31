@@ -53,7 +53,7 @@ class PdrGatewayIT {
 	@BeforeEach
 	private void addPatient() {
 		if(testClient == null) {
-			ourCtx.getRestfulClientFactory().setSocketTimeout(200 * 1000);			
+			// ourCtx.getRestfulClientFactory().setSocketTimeout(200 * 1000);			
 			testClient = ourCtx.newRestfulGenericClient("http://localhost:" + port + "/fhir/");
 		}
 		
