@@ -97,13 +97,17 @@ public class FHIRPatientConsentResource {
     @GetMapping("/fhir-patient-consents")
     public ResponseEntity<List<FHIRPatientConsentDTO>> getActiveUserFHIRPatientConsents() {
         log.debug("REST request to get user FHIRPatientConsents");
-        User user = userService.getUserWithAuthorities().get();
-        Optional<List<FHIRPatientConsentDTO>> list;
-        if(isAdmin(user)) {
-            list = Optional.ofNullable(fHIRPatientConsentService.findAll());
-        } else {
-        	list = fHIRPatientConsentService.findActiveByUser(new UserDTO(user));
+        Optional <User> optionalUser = userService.getUserWithAuthorities();
+        Optional<List<FHIRPatientConsentDTO>> list = Optional.empty();
+        if (optionalUser.isPresent()) {
+            User user = optionalUser.get();
+            if(isAdmin(user)) {
+                list = Optional.ofNullable(fHIRPatientConsentService.findAll());
+            } else {
+                list = fHIRPatientConsentService.findActiveByUser(new UserDTO(user));
+            }
         }
+        
         return ResponseUtil.wrapOrNotFound(list);
     }
 
@@ -202,10 +206,15 @@ public class FHIRPatientConsentResource {
     }
     
     private void checkUserAuthority(FHIRPatientConsentDTO fhirPatientConsentDTO) {
-    	User user = userService.getUserWithAuthorities().get();
-    	if (!isAdmin(user) && user.getId() != fhirPatientConsentDTO.getUser().getId()) {
-        	throw new BadRequestAlertException("Consent can only be updated for the current user", ENTITY_NAME, "wronguser");        	      
-    	}
+    	Optional <User> optionalUser = userService.getUserWithAuthorities();
+        if (optionalUser.isPresent()) {
+            User user = optionalUser.get();
+            if (!isAdmin(user) && !user.getId().equals(fhirPatientConsentDTO.getUser().getId())) {
+                throw new BadRequestAlertException("Consent can only be updated for the current user", ENTITY_NAME, "wronguser");        	      
+            }
+        } else {
+        	throw new BadRequestAlertException("Consent can only be updated for the current user", ENTITY_NAME, "wronguser");
+        }
     }
     
     private boolean isAdmin(User user) {
