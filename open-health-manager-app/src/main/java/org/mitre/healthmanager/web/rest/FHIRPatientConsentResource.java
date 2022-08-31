@@ -38,7 +38,6 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import tech.jhipster.web.util.HeaderUtil;
 import tech.jhipster.web.util.PaginationUtil;
 import tech.jhipster.web.util.ResponseUtil;
-import java.util.Collections;
 
 /**
  * REST controller for managing {@link org.mitre.healthmanager.domain.FHIRPatientConsent}.
@@ -99,7 +98,7 @@ public class FHIRPatientConsentResource {
     public ResponseEntity<List<FHIRPatientConsentDTO>> getActiveUserFHIRPatientConsents() {
         log.debug("REST request to get user FHIRPatientConsents");
         Optional <User> optionalUser = userService.getUserWithAuthorities();
-        Optional<List<FHIRPatientConsentDTO>> list;
+        Optional<List<FHIRPatientConsentDTO>> list = Optional.empty();
         if (optionalUser.isPresent()) {
             User user = optionalUser.get();
             if(isAdmin(user)) {
@@ -107,9 +106,8 @@ public class FHIRPatientConsentResource {
             } else {
                 list = fHIRPatientConsentService.findActiveByUser(new UserDTO(user));
             }
-        } else {
-            list = Optional.of(Collections.emptyList());
         }
+        
         return ResponseUtil.wrapOrNotFound(list);
     }
 
@@ -214,6 +212,8 @@ public class FHIRPatientConsentResource {
             if (!isAdmin(user) && !user.getId().equals(fhirPatientConsentDTO.getUser().getId())) {
                 throw new BadRequestAlertException("Consent can only be updated for the current user", ENTITY_NAME, "wronguser");        	      
             }
+        } else {
+        	throw new BadRequestAlertException("Consent can only be updated for the current user", ENTITY_NAME, "wronguser");
         }
     }
     

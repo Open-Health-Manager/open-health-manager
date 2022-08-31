@@ -157,7 +157,7 @@ public class FHIRPatientConsentService {
         
         List<FHIRPatientConsentDTO> list = results
         	.stream()
-            .skip(pageable.getPageSize() * pageable.getPageNumber())
+            .skip(pageable.getPageSize() * Long.valueOf(pageable.getPageNumber()))
        	    .limit(pageable.getPageSize())
        	    .collect(Collectors.toList());
 
