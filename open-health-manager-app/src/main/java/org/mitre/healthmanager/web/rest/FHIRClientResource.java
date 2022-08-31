@@ -22,6 +22,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
+import com.mysql.cj.util.StringUtils;
+
 import tech.jhipster.web.util.HeaderUtil;
 import tech.jhipster.web.util.PaginationUtil;
 import tech.jhipster.web.util.ResponseUtil;
@@ -121,7 +124,7 @@ public class FHIRClientResource {
         if (!Objects.equals(id, fHIRClientDTO.getId())) {
             throw new BadRequestAlertException("Invalid ID", ENTITY_NAME, "idinvalid");
         }
-        if (fHIRClientDTO.getFhirOrganizationId() == null) {
+        if (StringUtils.isNullOrEmpty(fHIRClientDTO.getFhirOrganizationId())) {
             throw new BadRequestAlertException("Invalid FHIR Organization ID", ENTITY_NAME, "fhirorgidnull");
         }
 
