@@ -125,16 +125,12 @@ class FHIRPatientResourceIT {
         return fHIRPatient;
     }
 
-    public void createFHIRPatientResource() {
+    public void createFHIRPatientResource(FHIRPatient fhirPatient) {
 		Patient patientFHIR = new Patient();
-		patientFHIR.setId(fHIRPatient.getFhirId()); // id must include alpha chars to allow put
+		patientFHIR.setId(fhirPatient.getFhirId()); // id must include alpha chars to allow put
         patientFHIR.addName()
-            .setFamily(fHIRPatient.getUser().getLastName())
-            .addGiven(fHIRPatient.getUser().getFirstName());
-
-        patientFHIR.addIdentifier()
-            .setSystem(FHIR_LOGIN_SYSTEM)
-            .setValue(fHIRPatient.getUser().getLogin());
+            .setFamily(fhirPatient.getUser().getLastName())
+            .addGiven(fhirPatient.getUser().getFirstName());
 
 		RequestDetails requestDetails = SystemRequestDetails.forAllPartition();
 		IFhirResourceDao<Patient> patientDAO = myDaoRegistry.getResourceDao(Patient.class);
@@ -403,7 +399,7 @@ class FHIRPatientResourceIT {
                 // Disconnect from session so that the updates on updatedFHIRPatient are not directly saved in db
                 em.detach(updatedFHIRPatient);
                 updatedFHIRPatient.fhirId(UPDATED_FHIR_ID);
-                createFHIRPatientResource();
+                createFHIRPatientResource(updatedFHIRPatient);
 
                 try {
                     restFHIRPatientMockMvc
