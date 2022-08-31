@@ -12,7 +12,6 @@ import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.r4.model.MessageHeader;
 import org.hl7.fhir.r4.model.Patient;
-import org.mitre.healthmanager.lib.pdr.data.RecordMatchService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,7 +52,7 @@ public class PdrIntegrationConfig {
 	AppProperties appProperties;
 	
 	@Autowired
-	DaoRegistry doaRegistry;
+	DaoRegistry daoRegistry;
 	
 	@Autowired
 	TransactionProcessor myTransactionProcessor;
@@ -150,8 +149,8 @@ public class PdrIntegrationConfig {
 	public Bundle writeData(@Payload Bundle theMessage, @Header("messageHeader") MessageHeader messageHeader,
 			@Header("internalPatientId") @NotNull String internalPatientId,
 			@Header("rawBundleId") @NotNull String rawBundleId) {	    	    	   
-	    Bundle transactionResponse = PatientDataReceiptService.storeIndividualPDREntries(theMessage, internalPatientId, myTransactionProcessor, messageHeader, doaRegistry);
-	    PatientDataReceiptService.createPDRList(theMessage, transactionResponse, internalPatientId, rawBundleId, messageHeader, doaRegistry);
+	    Bundle transactionResponse = PatientDataReceiptService.storeIndividualPDREntries(theMessage, internalPatientId, myTransactionProcessor, messageHeader, daoRegistry);
+	    PatientDataReceiptService.createPDRList(theMessage, transactionResponse, internalPatientId, rawBundleId, messageHeader, daoRegistry);
 		return theMessage;		
 	}
 	
@@ -167,7 +166,7 @@ public class PdrIntegrationConfig {
 	@ServiceActivator
 	public BundleEntryComponent recordMatch(@Payload BundleEntryComponent entry, @Header("messageHeader") MessageHeader messageHeader,
 			@Header("internalPatientId") @NotNull String internalPatientId) {
-		return recordMatchService.recordMatch(entry, internalPatientId, messageHeader, doaRegistry);		
+		return recordMatchService.recordMatch(entry, internalPatientId, messageHeader, daoRegistry);		
 	}
 		
 	@ServiceActivator
@@ -188,7 +187,7 @@ public class PdrIntegrationConfig {
 	@ServiceActivator
 	public Bundle patientMatch(@Payload Bundle theMessage, @Header("messageHeader") MessageHeader messageHeader, @Header("internalPatientId") String internalPatientId) {
 		try {
-			PatientDataReceiptService.getPatient(internalPatientId, doaRegistry.getDaoOrThrowException(Patient.class));
+			PatientDataReceiptService.getPatient(internalPatientId, daoRegistry.getDaoOrThrowException(Patient.class));
 			return theMessage;
 		} catch (ResourceNotFoundException e) {
 			throw new UnprocessableEntityException("patient " + internalPatientId + " does not exist");
@@ -199,7 +198,7 @@ public class PdrIntegrationConfig {
 	public Message<Bundle> processRawBundle(Message<Bundle> message, @Headers Map<String,Object> headers) {
 		PatientDataReceiptService.validatePDR(message.getPayload());
 		@SuppressWarnings("unchecked")
-		IFhirResourceDao<Bundle> bundleDao = doaRegistry.getDaoOrThrowException(Bundle.class);
+		IFhirResourceDao<Bundle> bundleDao = daoRegistry.getDaoOrThrowException(Bundle.class);
 		String rawBundleId = PatientDataReceiptService.storePDRAsRawBundle(message.getPayload(), 
 				(@NotNull String) headers.get("internalPatientId"), 
 				bundleDao);

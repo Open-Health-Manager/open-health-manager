@@ -43,13 +43,13 @@ import ca.uhn.fhir.rest.server.exceptions.UnprocessableEntityException;
 
 @Service
 public class PatientDataReceiptService {
-	public static final String pdrEvent = "urn:mitre:healthmanager:pdr";
-	public static final Coding pdrCode = new Coding().setSystem("urn:mitre:healthmanager").setCode("pdr");
+	public static final String PDR_EVENT = "urn:mitre:healthmanager:pdr";
+	public static final Coding PDR_CODE = new Coding().setSystem("urn:mitre:healthmanager").setCode("pdr");
 
 	public static final boolean isPDRMessage(MessageHeader header) {
 		Type headerEvent = header.getEvent();
 		return headerEvent instanceof UriType
-				? ((UriType) headerEvent).getValueAsString().equalsIgnoreCase(pdrEvent)
+				? ((UriType) headerEvent).getValueAsString().equalsIgnoreCase(PDR_EVENT)
 						: false;
 	}
 
@@ -112,7 +112,7 @@ public class PatientDataReceiptService {
 			list.setStatus(ListStatus.CURRENT);
 			list.setMode(ListMode.SNAPSHOT);
 			list.getCode().getCoding()
-				.add(new Coding().setSystem(pdrCode.getSystem()).setCode(pdrCode.getCode()));
+				.add(new Coding().setSystem(PDR_CODE.getSystem()).setCode(PDR_CODE.getCode()));
 			list.setSubject(new Reference(new IdType("Patient", patientInternalId)));
 			list.setDate(new Date());
 			
@@ -176,7 +176,7 @@ public class PatientDataReceiptService {
 			@NotNull MessageHeader theHeader, @NotNull DaoRegistry daoRegistry) {
 		SearchParameterMap theParams = new SearchParameterMap();
 		theParams.add("patient", new ReferenceParam(new IdType("Patient", patientInternalId)));				
-		theParams.add("code", new TokenParam(pdrCode));
+		theParams.add("code", new TokenParam(PDR_CODE));
 		if(theHeader.getSource() != null && theHeader.getSource().getEndpoint() != null
 				&& theHeader.getIdElement() != null && theHeader.getIdElement().getIdPart() != null) 
 		{
@@ -221,8 +221,8 @@ public class PatientDataReceiptService {
 		} else {
 			source = new Reference(sourceId);
 			// add source fhir id as meta.source
-			// entity.item.reference is not searchable with non-URLs
-			// entity.item.identifier is not searchable due to HAPI FHIR not supporting reference:identifier search qualifier
+			// entity.what.reference is not searchable with non-URLs, ie urns
+			// entity.what.identifier is not searchable due to HAPI FHIR not supporting reference:identifier search qualifier
 			provenance.getMeta().setSourceElement(sourceId);
 		}		
 		provenance.getEntity().add(new Provenance.ProvenanceEntityComponent()
