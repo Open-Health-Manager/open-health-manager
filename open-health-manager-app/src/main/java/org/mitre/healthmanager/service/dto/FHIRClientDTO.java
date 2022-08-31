@@ -24,7 +24,6 @@ public class FHIRClientDTO implements Serializable {
 
     private String uri;
 
-    @NotNull
     private String fhirOrganizationId;
 
     private ClientDirection clientDirection;
