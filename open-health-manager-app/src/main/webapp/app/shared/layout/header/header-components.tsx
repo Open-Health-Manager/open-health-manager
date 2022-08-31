@@ -21,6 +21,16 @@ export const Brand = () => (
   </NavbarBrand>
 );
 
+export const BrandNoLink = () => (
+  <NavbarBrand className="brand-logo">
+    <BrandIcon />
+    <span className="brand-title">
+      <Translate contentKey="global.title">OpenHealthManagerApp</Translate>
+    </span>
+    <span className="navbar-version">{VERSION}</span>
+  </NavbarBrand>
+);
+
 export const Home = () => (
   <NavItem>
     <NavLink tag={Link} to="/" className="d-flex align-items-center">

@@ -6,7 +6,7 @@ import { Navbar, Nav, NavbarToggler, Collapse } from 'reactstrap';
 import LoadingBar from 'react-redux-loading-bar';
 
 import { useLocation } from 'react-router-dom';
-import { Home, Brand } from './header-components';
+import { Home, Brand, BrandNoLink } from './header-components';
 import { AdminMenu, EntitiesMenu, AccountMenu, LocaleMenu } from '../menus';
 import { useAppDispatch } from 'app/config/store';
 import { setLocale } from 'app/shared/reducers/locale';
@@ -65,7 +65,15 @@ const Header = (props: IHeaderProps) => {
             </Nav>
           </Collapse>
         </Navbar>
-      </div> : null
+      </div> 
+      : 
+      <div id="app-header">
+        {renderDevRibbon()}
+        <LoadingBar className="loading-bar" />
+        <Navbar data-cy="navbar" dark expand="md" fixed="top" className="jh-navbar">
+          <BrandNoLink />
+        </Navbar>
+      </div>
   );
 };
 
