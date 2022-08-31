@@ -21,13 +21,15 @@ import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.Named;
 import org.mapstruct.NullValuePropertyMappingStrategy;
-import org.mitre.healthmanager.domain.FHIRClient;
+
+import org.mitre.healthmanager.service.dto.FHIRPatientConsentDTO;
+
 import org.mitre.healthmanager.domain.User;
+import org.mitre.healthmanager.service.dto.UserDTO;
+import org.mitre.healthmanager.domain.FHIRClient;
 import org.mitre.healthmanager.repository.FHIRClientRepository;
 import org.mitre.healthmanager.repository.FHIRPatientRepository;
 import org.mitre.healthmanager.service.dto.FHIRClientDTO;
-import org.mitre.healthmanager.service.dto.FHIRPatientConsentDTO;
-import org.mitre.healthmanager.service.dto.UserDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import ca.uhn.fhir.context.FhirContext;
