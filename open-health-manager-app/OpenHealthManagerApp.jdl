@@ -37,13 +37,45 @@ application {
     withAdminUi true
   }
 
-  entities FHIRPatient
+  entities FHIRClient, FHIRPatient, FHIRPatientConsent, UserDUA
 }
 
-entity FHIRPatient {
-  fhirId String
+entity FHIRClient {
+  name String required
+  displayName String required
+  uri String
+  fhirOrganizationId String required
+  clientDirection ClientDirection
 }
+entity FHIRPatient {
+  fhirId String required
+}
+entity FHIRPatientConsent {
+  approve Boolean
+  fhirResource TextBlob
+}
+entity UserDUA {
+  active Boolean required
+  version String required
+  ageAttested Boolean required
+  activeDate Instant required
+  revocationDate Instant
+}
+enum ClientDirection {
+  OUTBOUND (Outbound),
+  INBOUND (Inbound),
+  BIDIRECTIONAL (Bidirectional)
+}
+
 relationship OneToOne {
   FHIRPatient{user(login) required} to User
 }
+relationship ManyToOne {
+  FHIRPatientConsent{user(login) required} to User
+  FHIRPatientConsent{client(name)} to FHIRClient
+  UserDUA{user(login) required} to User
+}
 
+dto FHIRClient, UserDUA with mapstruct
+paginate FHIRClient, FHIRPatient, FHIRPatientConsent, UserDUA with pagination
+service FHIRClient, FHIRPatient, FHIRPatientConsent, UserDUA with serviceClass
