@@ -17,6 +17,7 @@ public final class ErrorConstants {
     public static final URI LOGIN_CHANGED_TYPE = URI.create(PROBLEM_BASE_URL + "/login-changed");
     public static final URI INVALID_DUA = URI.create(PROBLEM_BASE_URL + "/invalid-dua");
     public static final URI INVALID_CONSENT = URI.create(PROBLEM_BASE_URL + "/invalid-consent");
+    public static final URI ORGANIZATION_EXCEPTION = URI.create(PROBLEM_BASE_URL + "/organization-exception");
 
     private ErrorConstants() {}
 }

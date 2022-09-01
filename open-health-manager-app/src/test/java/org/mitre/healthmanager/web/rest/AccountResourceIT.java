@@ -21,6 +21,7 @@ import org.hl7.fhir.r4.model.Patient;
 import org.junit.jupiter.api.Test;
 import org.mitre.healthmanager.IntegrationTest;
 import org.mitre.healthmanager.config.Constants;
+import org.mitre.healthmanager.domain.Authority;
 import org.mitre.healthmanager.domain.FHIRPatient;
 import org.mitre.healthmanager.domain.User;
 import org.mitre.healthmanager.repository.AuthorityRepository;
@@ -50,6 +51,12 @@ import ca.uhn.fhir.jpa.partition.SystemRequestDetails;
 import ca.uhn.fhir.jpa.searchparam.SearchParameterMap;
 import ca.uhn.fhir.rest.api.server.IBundleProvider;
 import ca.uhn.fhir.rest.param.TokenParam;
+
+import org.springframework.transaction.support.TransactionCallbackWithoutResult;
+import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionStatus;
+import org.junit.jupiter.api.BeforeEach;
 
 /**
  * Integration tests for the {@link AccountResource} REST controller.
@@ -81,6 +88,16 @@ class AccountResourceIT {
 
     @Autowired
 	private DaoRegistry myDaoRegistry;
+
+    @Autowired //this is the HAPI FHIR tx manager
+    private PlatformTransactionManager transactionManager;
+
+    private TransactionTemplate transactionTemplate;
+
+    @BeforeEach
+    public void initTest() {
+    	transactionTemplate = new TransactionTemplate(transactionManager);
+    }
 
     @Test
     @WithUnauthenticatedMockUser
@@ -716,115 +733,147 @@ class AccountResourceIT {
     @Test
     @Transactional("jhipsterTransactionManager")
     void testReRegisterPreviouslyActivatedAccount() throws Exception {
-        
-        // create activated via service
-        AdminUserDTO firstUserDTO = new AdminUserDTO();
-        firstUserDTO.setLogin("to-re-register@example.com");
-        firstUserDTO.setEmail("to-re-register@example.com");
-        firstUserDTO.setFirstName("firstname");
-        firstUserDTO.setLastName("lastname");
-        firstUserDTO.setImageUrl("http://placehold.it/50x50");
-        firstUserDTO.setLangKey(Constants.DEFAULT_LANGUAGE);
-        firstUserDTO.setAuthorities(Collections.singleton(AuthoritiesConstants.ADMIN));
-        firstUserDTO.setActivated(true);
-        userService.createUser(firstUserDTO);
-        
-        // confirm a linked FHIR patient exists
-        Optional<User> storedUser = userRepository.findOneByLogin("to-re-register@example.com");
-        assertThat(storedUser).isPresent();
-        FHIRPatient fhirPatient = fhirPatientService.findOneForUser(storedUser.get().getId()).orElse(null);
-        assertNotNull(fhirPatient);
-        IFhirResourceDao<Patient> patientDAO = myDaoRegistry.getResourceDao(Patient.class);
-        SystemRequestDetails searchRequestDetails = SystemRequestDetails.forAllPartition();
-        searchRequestDetails.addHeader("Cache-Control", "no-cache");
-        IBundleProvider searchResultsPre = patientDAO.search(
-            new SearchParameterMap(
-                "identifier", 
-                new TokenParam(FHIRPatientService.FHIR_LOGIN_SYSTEM, "to-re-register@example.com")
-            ),
-            searchRequestDetails
-        );
-        assertEquals(1, searchResultsPre.getAllResourceIds().size());
+        transactionTemplate.execute(new TransactionCallbackWithoutResult() {
+			@Override
+			protected void doInTransactionWithoutResult(TransactionStatus status) {    
+            
+                // create activated via service
+                AdminUserDTO firstUserDTO = new AdminUserDTO();
+                firstUserDTO.setLogin("to-re-register@example.com");
+                firstUserDTO.setEmail("to-re-register@example.com");
+                firstUserDTO.setFirstName("firstname");
+                firstUserDTO.setLastName("lastname");
+                firstUserDTO.setImageUrl("http://placehold.it/50x50");
+                firstUserDTO.setLangKey(Constants.DEFAULT_LANGUAGE);
+                firstUserDTO.setAuthorities(Collections.singleton(AuthoritiesConstants.USER));
+                firstUserDTO.setActivated(true);
+                userService.createUser(firstUserDTO);
 
-        // deactivate via service
-        firstUserDTO.setActivated(false);
-        firstUserDTO.setId(storedUser.get().getId());
-        userService.updateUser(firstUserDTO);
+                // confirm a linked FHIR patient exists
+                Optional<User> storedUser = userRepository.findOneByLogin("to-re-register");
+                assertThat(storedUser).isPresent();
+                FHIRPatient fhirPatient = fhirPatientService.findOneForUser(storedUser.get().getId()).orElse(null);
+                assertNotNull(fhirPatient);
+                IFhirResourceDao<Patient> patientDAO = myDaoRegistry.getResourceDao(Patient.class);
+                SystemRequestDetails searchRequestDetails = SystemRequestDetails.forAllPartition();
+                searchRequestDetails.addHeader("Cache-Control", "no-cache");
+                IBundleProvider searchResultsPre = patientDAO.search(
+                    new SearchParameterMap(
+                        "identifier", 
+                        new TokenParam(FHIRPatientService.FHIR_LOGIN_SYSTEM, "to-re-register")
+                    ),
+                    searchRequestDetails
+                );
+                assertEquals(1, searchResultsPre.getAllResourceIds().size());
 
-        // attempt to re-register email with a different login
-        DUAManagedUserVM secondUser = new DUAManagedUserVM();
-        secondUser.setLogin("to-re-register-2@example.com");
-        secondUser.setPassword("Password135*");
-        secondUser.setEmail("to-re-register@example.com");
+                // deactivate via service
+                firstUserDTO.setActivated(false);
+                firstUserDTO.setId(storedUser.get().getId());
+                userService.updateUser(firstUserDTO);
 
-        UserDUADTO secondUserDUADTO = new UserDUADTO();
-        secondUserDUADTO.setActive(true);
-        secondUserDUADTO.setVersion("v2020-03-21");
-        secondUserDUADTO.setAgeAttested(true);
+                // attempt to re-register email with a different login
+                DUAManagedUserVM secondUser = new DUAManagedUserVM();
+                secondUser.setLogin("to-re-register-2@example.com");
+                secondUser.setPassword("Password135*");
+                secondUser.setEmail("to-re-register@example.com");
 
-        secondUser.setUserDUADTO(secondUserDUADTO);
+                UserDUADTO secondUserDUADTO = new UserDUADTO();
+                secondUserDUADTO.setActive(true);
+                secondUserDUADTO.setVersion("v2020-03-21");
+                secondUserDUADTO.setAgeAttested(true);
 
-        restAccountMockMvc
-            .perform(post("/api/register").contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(secondUser)))
-            .andExpect(status().is4xxClientError());
+                secondUser.setUserDUADTO(secondUserDUADTO);
 
-        // attempt to re-register login with a different email
-        DUAManagedUserVM thirdUser = new DUAManagedUserVM();
-        thirdUser.setLogin("to-re-register@example.com");
-        thirdUser.setPassword("Password135*");
-        thirdUser.setEmail("to-re-register-2@example.com");
+                try {
+                    restAccountMockMvc
+                        .perform(post("/api/register").contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(secondUser)))
+                        .andExpect(status().is4xxClientError());
+                } catch (Exception e) {
+					throw new RuntimeException(e);
+				}
 
-        UserDUADTO thirdUserDUADTO = new UserDUADTO();
-        thirdUserDUADTO.setActive(true);
-        thirdUserDUADTO.setVersion("v2020-03-21");
-        thirdUserDUADTO.setAgeAttested(true);
+                // attempt to re-register login with a different email
+                DUAManagedUserVM thirdUser = new DUAManagedUserVM();
+                thirdUser.setLogin("to-re-register@example.com");
+                thirdUser.setPassword("Password135*");
+                thirdUser.setEmail("to-re-register-2@example.com");
 
-        thirdUser.setUserDUADTO(thirdUserDUADTO);
+                UserDUADTO thirdUserDUADTO = new UserDUADTO();
+                thirdUserDUADTO.setActive(true);
+                thirdUserDUADTO.setVersion("v2020-03-21");
+                thirdUserDUADTO.setAgeAttested(true);
 
-        restAccountMockMvc
-            .perform(post("/api/register").contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(thirdUser)))
-            .andExpect(status().is4xxClientError());
+                thirdUser.setUserDUADTO(thirdUserDUADTO);
 
+                try {
+                    restAccountMockMvc
+                        .perform(post("/api/register").contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(thirdUser)))
+                        .andExpect(status().is4xxClientError());
+                } catch (Exception e) {
+					throw new RuntimeException(e);
+				}
+				
+                status.setRollbackOnly();
+			}
+		});
     }
 
     @Test
     @Transactional("jhipsterTransactionManager")
     void testActivateAccount() throws Exception {
-        final String activationKey = "some activation key";
-        User user = new User();
-        user.setLogin("activate-account@example.com");
-        user.setEmail("activate-account@example.com");
-        user.setPassword(RandomStringUtils.random(60));
-        user.setActivated(false);
-        user.setActivationKey(activationKey);
+        transactionTemplate.execute(new TransactionCallbackWithoutResult() {
+            @Override
+            protected void doInTransactionWithoutResult(TransactionStatus status) {
+                // Initialize the database
+                final String activationKey = "some activation key";
+                User user = new User();
+                user.setLogin("activate-account@example.com");
+                user.setEmail("activate-account@example.com");
+                user.setPassword(RandomStringUtils.random(60));
+                user.setActivated(false);
+                user.setActivationKey(activationKey);
+                
+                Set<Authority> authorities = new HashSet<>();
+                authorityRepository.findById(AuthoritiesConstants.USER).ifPresent(authorities::add);
+                user.setAuthorities(authorities);
+        
+                userRepository.saveAndFlush(user);
 
-        userRepository.saveAndFlush(user);
-
-        IFhirResourceDao<Patient> patientDAO = myDaoRegistry.getResourceDao(Patient.class);
-        SystemRequestDetails searchRequestDetails = SystemRequestDetails.forAllPartition();
-        searchRequestDetails.addHeader("Cache-Control", "no-cache");
-        IBundleProvider searchResultsPre = patientDAO.search(
-            new SearchParameterMap(
-                "identifier", 
-                new TokenParam(FHIRPatientService.FHIR_LOGIN_SYSTEM, "activate-account@example.com")
-            ),
-            searchRequestDetails
-        );
-        assertEquals(0, searchResultsPre.getAllResourceIds().size());
-
-        restAccountMockMvc.perform(get("/api/activate?key={activationKey}", activationKey)).andExpect(status().isOk());
-
-        user = userRepository.findOneByLogin(user.getLogin()).orElse(null);
-        assertThat(user.isActivated()).isTrue();
-        assertThat(fhirPatientService.findOneForUser(user.getId())).isPresent();
-        IBundleProvider searchResultsPost = patientDAO.search(
-            new SearchParameterMap(
-                "identifier", 
-                new TokenParam(FHIRPatientService.FHIR_LOGIN_SYSTEM, "activate-account@example.com")
-            ),
-            searchRequestDetails
-        );
-        assertEquals(1, searchResultsPost.getAllResourceIds().size());
+                // Get the fHIRPatientConsentDTO
+                
+                    IFhirResourceDao<Patient> patientDAO = myDaoRegistry.getResourceDao(Patient.class);
+                    SystemRequestDetails searchRequestDetails = SystemRequestDetails.forAllPartition();
+                    searchRequestDetails.addHeader("Cache-Control", "no-cache");
+                    IBundleProvider searchResultsPre = patientDAO.search(
+                        new SearchParameterMap(
+                            "identifier", 
+                            new TokenParam(FHIRPatientService.FHIR_LOGIN_SYSTEM, "activate-account")
+                        ),
+                        searchRequestDetails
+                    );
+                    assertEquals(0, searchResultsPre.getAllResourceIds().size());
+            
+                    try {
+						restAccountMockMvc.perform(get("/api/activate?key={activationKey}", activationKey)).andExpect(status().isOk());
+					} catch (Exception e) {
+						throw new RuntimeException(e);
+					}
+            
+                    user = userRepository.findOneByLogin(user.getLogin()).orElse(null);
+                    assertThat(user.isActivated()).isTrue();
+                    assertThat(fhirPatientService.findOneForUser(user.getId())).isPresent();
+                    IBundleProvider searchResultsPost = patientDAO.search(
+                        new SearchParameterMap(
+                            "identifier", 
+                            new TokenParam(FHIRPatientService.FHIR_LOGIN_SYSTEM, "activate-account")
+                        ),
+                        searchRequestDetails
+                    );
+                    assertEquals(1, searchResultsPost.getAllResourceIds().size());
+				
+                status.setRollbackOnly();
+            }
+        });
     }
 
     @Test

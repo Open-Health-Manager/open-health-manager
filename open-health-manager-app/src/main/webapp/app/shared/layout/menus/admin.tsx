@@ -15,7 +15,13 @@ const adminMenuItems = () => (
     </MenuItem>
     <MenuItem icon="asterisk" to="/user-dua">
         <Translate contentKey="global.menu.entities.userDua" />
-    </MenuItem>     
+    </MenuItem>  
+    <MenuItem icon="asterisk" to="/fhir-client">
+        <Translate contentKey="global.menu.entities.fhirClient" />
+    </MenuItem>
+    <MenuItem icon="asterisk" to="/fhir-patient-consent">
+      <Translate contentKey="global.menu.entities.fhirPatientConsent" />
+    </MenuItem>
     <MenuItem icon="tachometer-alt" to="/admin/metrics">
       <Translate contentKey="global.menu.admin.metrics">Metrics</Translate>
     </MenuItem>

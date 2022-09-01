@@ -193,6 +193,19 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
             HeaderUtil.createFailureAlert(applicationName, true, problem.getEntityName(), problem.getErrorKey(), problem.getMessage())
         );
     }
+
+    @ExceptionHandler
+    public ResponseEntity<Problem> handleFHIROrganizationResourceException(
+        org.mitre.healthmanager.service.FHIROrganizationResourceException ex,
+        NativeWebRequest request
+    ) {
+    	FHIROrganizationResourceException problem = new FHIROrganizationResourceException();
+        return create(
+            problem,
+            request,
+            HeaderUtil.createFailureAlert(applicationName, true, problem.getEntityName(), problem.getErrorKey(), problem.getMessage())
+        );
+    }
     
     @ExceptionHandler
     public ResponseEntity<Problem> handleInvalidDuaException(

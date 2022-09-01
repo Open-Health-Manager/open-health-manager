@@ -18,6 +18,7 @@
       "messages": {
         "info": "Choose a new password",
         "success": "<strong>Your password has been reset.</strong> Please ",
+        "publicsuccess": "<strong>Your password has been reset.</strong> Please sign in to Rosie.",
         "keymissing": "The reset key is missing.",
         "error": "Your password couldn't be reset. Remember a password request is only valid for 24 hours."
       }
