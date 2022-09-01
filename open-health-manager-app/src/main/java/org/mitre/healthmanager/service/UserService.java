@@ -11,7 +11,6 @@ import java.util.stream.Collectors;
 
 import org.mitre.healthmanager.config.Constants;
 import org.mitre.healthmanager.domain.Authority;
-import org.mitre.healthmanager.domain.FHIRPatient;
 import org.mitre.healthmanager.domain.User;
 import org.mitre.healthmanager.service.dto.UserDUADTO;
 import org.mitre.healthmanager.service.mapper.UserMapper;
@@ -20,6 +19,7 @@ import org.mitre.healthmanager.repository.UserRepository;
 import org.mitre.healthmanager.security.AuthoritiesConstants;
 import org.mitre.healthmanager.security.SecurityUtils;
 import org.mitre.healthmanager.service.dto.AdminUserDTO;
+import org.mitre.healthmanager.service.dto.FHIRPatientDTO;
 import org.mitre.healthmanager.service.dto.UserDTO;
 
 
@@ -225,7 +225,7 @@ public class UserService {
     }
 
     private void deleteFHIRPatient(User user) {
-        Optional<FHIRPatient> linkedFHIRPatient = fhirPatientService.findOneForUser(user.getId());
+        Optional<FHIRPatientDTO> linkedFHIRPatient = fhirPatientService.findOneForUser(user.getId());
         if (linkedFHIRPatient.isPresent()) {
         	fhirPatientService.delete(linkedFHIRPatient.get().getId());
         }
