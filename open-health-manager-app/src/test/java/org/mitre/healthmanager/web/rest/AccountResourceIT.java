@@ -522,13 +522,13 @@ class AccountResourceIT {
 
         firstUser.setUserDUADTO(firstUserDUADTO);
 
-        // Duplicate login, different email
+        // Duplicate login, same email
         DUAManagedUserVM secondUser = new DUAManagedUserVM();
         secondUser.setLogin(firstUser.getLogin());
         secondUser.setPassword(firstUser.getPassword());
         secondUser.setFirstName(firstUser.getFirstName());
         secondUser.setLastName(firstUser.getLastName());
-        secondUser.setEmail("alice2@example.com");
+        secondUser.setEmail(firstUser.getLogin());
         secondUser.setImageUrl(firstUser.getImageUrl());
         secondUser.setLangKey(firstUser.getLangKey());
         secondUser.setAuthorities(new HashSet<>(firstUser.getAuthorities()));
@@ -594,9 +594,10 @@ class AccountResourceIT {
         Optional<User> testUser1 = userRepository.findOneByLogin("test-register-duplicate-email@example.com");
         assertThat(testUser1).isPresent();
 
-        // Duplicate email, different login
+        // Duplicate email, same login
         DUAManagedUserVM secondUser = new DUAManagedUserVM();
-        secondUser.setLogin("test-register-duplicate-email2@example.com");
+        secondUser.setLogin("test-register-duplicate-email@example.com");
+        secondUser.setEmail("test-register-duplicate-email@example.com");
         secondUser.setPassword(firstUser.getPassword());
         secondUser.setFirstName(firstUser.getFirstName());
         secondUser.setLastName(firstUser.getLastName());
@@ -664,7 +665,7 @@ class AccountResourceIT {
         // Duplicate email - with uppercase email address
         DUAManagedUserVM userWithUpperCaseEmail = new DUAManagedUserVM();
         userWithUpperCaseEmail.setId(firstUser.getId());
-        userWithUpperCaseEmail.setLogin("test-register-duplicate-email-upper2@example.com");
+        userWithUpperCaseEmail.setLogin("TEST-register-duplicate-email-upper@example.com");
         userWithUpperCaseEmail.setPassword(firstUser.getPassword());
         userWithUpperCaseEmail.setFirstName(firstUser.getFirstName());
         userWithUpperCaseEmail.setLastName(firstUser.getLastName());
@@ -750,7 +751,7 @@ class AccountResourceIT {
                 userService.createUser(firstUserDTO);
 
                 // confirm a linked FHIR patient exists
-                Optional<User> storedUser = userRepository.findOneByLogin("to-re-register");
+                Optional<User> storedUser = userRepository.findOneByLogin("to-re-register@example.com");
                 assertThat(storedUser).isPresent();
                 FHIRPatient fhirPatient = fhirPatientService.findOneForUser(storedUser.get().getId()).orElse(null);
                 assertNotNull(fhirPatient);
@@ -760,7 +761,7 @@ class AccountResourceIT {
                 IBundleProvider searchResultsPre = patientDAO.search(
                     new SearchParameterMap(
                         "identifier", 
-                        new TokenParam(FHIRPatientService.FHIR_LOGIN_SYSTEM, "to-re-register")
+                        new TokenParam(FHIRPatientService.FHIR_LOGIN_SYSTEM, "to-re-register@example.com")
                     ),
                     searchRequestDetails
                 );
@@ -847,7 +848,7 @@ class AccountResourceIT {
                     IBundleProvider searchResultsPre = patientDAO.search(
                         new SearchParameterMap(
                             "identifier", 
-                            new TokenParam(FHIRPatientService.FHIR_LOGIN_SYSTEM, "activate-account")
+                            new TokenParam(FHIRPatientService.FHIR_LOGIN_SYSTEM, "activate-account@example.com")
                         ),
                         searchRequestDetails
                     );
@@ -865,7 +866,7 @@ class AccountResourceIT {
                     IBundleProvider searchResultsPost = patientDAO.search(
                         new SearchParameterMap(
                             "identifier", 
-                            new TokenParam(FHIRPatientService.FHIR_LOGIN_SYSTEM, "activate-account")
+                            new TokenParam(FHIRPatientService.FHIR_LOGIN_SYSTEM, "activate-account@example.com")
                         ),
                         searchRequestDetails
                     );
