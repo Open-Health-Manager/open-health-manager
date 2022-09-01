@@ -9,6 +9,8 @@ import org.passay.PasswordValidator;
 import org.passay.PasswordData;
 import org.mitre.healthmanager.domain.User;
 import org.mitre.healthmanager.repository.UserRepository;
+import org.mitre.healthmanager.web.rest.vm.KeyAndPasswordVM;
+import org.mitre.healthmanager.web.rest.vm.ManagedUserVM;
 
 import static org.mitre.healthmanager.security.SecurityUtils.getCurrentUserLogin;
 import org.passay.CharacterRule;

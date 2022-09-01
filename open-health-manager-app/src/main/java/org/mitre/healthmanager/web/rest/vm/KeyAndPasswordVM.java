@@ -1,4 +1,6 @@
-package org.mitre.healthmanager.service.dto;
+package org.mitre.healthmanager.web.rest.vm;
+
+import org.mitre.healthmanager.service.dto.ValidPasswordClass;
 
 /**
  * View Model object for storing the user's key and password.

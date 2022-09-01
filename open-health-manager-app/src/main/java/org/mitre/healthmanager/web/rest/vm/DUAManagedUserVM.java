@@ -1,4 +1,6 @@
-package org.mitre.healthmanager.service.dto;
+package org.mitre.healthmanager.web.rest.vm;
+
+import org.mitre.healthmanager.service.dto.UserDUADTO;
 
 /**
  * View Model extending the ManagedUserVM class with a UserDUADTO object included
