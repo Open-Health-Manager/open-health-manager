@@ -734,77 +734,6 @@ class AccountResourceIT {
     @Test
     @Transactional("jhipsterTransactionManager")
     void testReRegisterPreviouslyActivatedAccount() throws Exception {
-<<<<<<< HEAD
-        
-        // create activated via service
-        AdminUserDTO firstUserDTO = new AdminUserDTO();
-        firstUserDTO.setLogin("to-re-register");
-        firstUserDTO.setEmail("to-re-register@example.com");
-        firstUserDTO.setFirstName("firstname");
-        firstUserDTO.setLastName("lastname");
-        firstUserDTO.setImageUrl("http://placehold.it/50x50");
-        firstUserDTO.setLangKey(Constants.DEFAULT_LANGUAGE);
-        firstUserDTO.setAuthorities(Collections.singleton(AuthoritiesConstants.USER));
-        firstUserDTO.setActivated(true);
-        userService.createUser(firstUserDTO);
-        
-        // confirm a linked FHIR patient exists
-        Optional<User> storedUser = userRepository.findOneByLogin("to-re-register");
-        assertThat(storedUser).isPresent();
-        FHIRPatient fhirPatient = fhirPatientService.findOneForUser(storedUser.get().getId()).orElse(null);
-        assertNotNull(fhirPatient);
-        IFhirResourceDao<Patient> patientDAO = myDaoRegistry.getResourceDao(Patient.class);
-        SystemRequestDetails searchRequestDetails = SystemRequestDetails.forAllPartition();
-        searchRequestDetails.addHeader("Cache-Control", "no-cache");
-        IBundleProvider searchResultsPre = patientDAO.search(
-            new SearchParameterMap(
-                "identifier", 
-                new TokenParam(FHIRPatientService.FHIR_LOGIN_SYSTEM, "to-re-register")
-            ),
-            searchRequestDetails
-        );
-        assertEquals(1, searchResultsPre.getAllResourceIds().size());
-
-        // deactivate via service
-        firstUserDTO.setActivated(false);
-        firstUserDTO.setId(storedUser.get().getId());
-        userService.updateUser(firstUserDTO);
-
-        // attempt to re-register email with a different login
-        DUAManagedUserVM secondUser = new DUAManagedUserVM();
-        secondUser.setLogin("to-re-register-2");
-        secondUser.setPassword("Password135*");
-        secondUser.setEmail("to-re-register@example.com");
-
-        UserDUADTO secondUserDUADTO = new UserDUADTO();
-        secondUserDUADTO.setActive(true);
-        secondUserDUADTO.setVersion("v2020-03-21");
-        secondUserDUADTO.setAgeAttested(true);
-
-        secondUser.setUserDUADTO(secondUserDUADTO);
-
-        restAccountMockMvc
-            .perform(post("/api/register").contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(secondUser)))
-            .andExpect(status().is4xxClientError());
-
-        // attempt to re-register login with a different email
-        DUAManagedUserVM thirdUser = new DUAManagedUserVM();
-        thirdUser.setLogin("to-re-register");
-        thirdUser.setPassword("Password135*");
-        thirdUser.setEmail("to-re-register-2@example.com");
-
-        UserDUADTO thirdUserDUADTO = new UserDUADTO();
-        thirdUserDUADTO.setActive(true);
-        thirdUserDUADTO.setVersion("v2020-03-21");
-        thirdUserDUADTO.setAgeAttested(true);
-
-        thirdUser.setUserDUADTO(thirdUserDUADTO);
-
-        restAccountMockMvc
-            .perform(post("/api/register").contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(thirdUser)))
-            .andExpect(status().is4xxClientError());
-
-=======
         transactionTemplate.execute(new TransactionCallbackWithoutResult() {
 			@Override
 			protected void doInTransactionWithoutResult(TransactionStatus status) {    
@@ -888,52 +817,11 @@ class AccountResourceIT {
                 status.setRollbackOnly();
 			}
 		});
->>>>>>> main
     }
 
     @Test
     @Transactional("jhipsterTransactionManager")
     void testActivateAccount() throws Exception {
-<<<<<<< HEAD
-        final String activationKey = "some activation key";
-        User user = new User();
-        user.setLogin("activate-account");
-        user.setEmail("activate-account@example.com");
-        user.setPassword(RandomStringUtils.random(60));
-        user.setActivated(false);
-        user.setActivationKey(activationKey);
-        Set<Authority> authorities = new HashSet<>();
-        authorityRepository.findById(AuthoritiesConstants.USER).ifPresent(authorities::add);
-        user.setAuthorities(authorities);
-        
-        userRepository.saveAndFlush(user);
-
-        IFhirResourceDao<Patient> patientDAO = myDaoRegistry.getResourceDao(Patient.class);
-        SystemRequestDetails searchRequestDetails = SystemRequestDetails.forAllPartition();
-        searchRequestDetails.addHeader("Cache-Control", "no-cache");
-        IBundleProvider searchResultsPre = patientDAO.search(
-            new SearchParameterMap(
-                "identifier", 
-                new TokenParam(FHIRPatientService.FHIR_LOGIN_SYSTEM, "activate-account")
-            ),
-            searchRequestDetails
-        );
-        assertEquals(0, searchResultsPre.getAllResourceIds().size());
-
-        restAccountMockMvc.perform(get("/api/activate?key={activationKey}", activationKey)).andExpect(status().isOk());
-
-        user = userRepository.findOneByLogin(user.getLogin()).orElse(null);
-        assertThat(user.isActivated()).isTrue();
-        assertThat(fhirPatientService.findOneForUser(user.getId())).isPresent();
-        IBundleProvider searchResultsPost = patientDAO.search(
-            new SearchParameterMap(
-                "identifier", 
-                new TokenParam(FHIRPatientService.FHIR_LOGIN_SYSTEM, "activate-account")
-            ),
-            searchRequestDetails
-        );
-        assertEquals(1, searchResultsPost.getAllResourceIds().size());
-=======
         transactionTemplate.execute(new TransactionCallbackWithoutResult() {
             @Override
             protected void doInTransactionWithoutResult(TransactionStatus status) {
@@ -987,7 +875,6 @@ class AccountResourceIT {
                 status.setRollbackOnly();
             }
         });
->>>>>>> main
     }
 
     @Test
