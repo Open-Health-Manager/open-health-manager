@@ -76,6 +76,6 @@ relationship ManyToOne {
   UserDUA{user(login) required} to User
 }
 
-dto FHIRClient, UserDUA with mapstruct
+dto FHIRClient, FHIRPatient, UserDUA with mapstruct
 paginate FHIRClient, FHIRPatient, FHIRPatientConsent, UserDUA with pagination
 service FHIRClient, FHIRPatient, FHIRPatientConsent, UserDUA with serviceClass
