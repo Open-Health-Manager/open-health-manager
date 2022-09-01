@@ -8,7 +8,6 @@ import Activate from 'app/modules/account/activate/activate';
 import PublicActivate from 'app/modules/public/account/activate/activate';
 import PasswordResetInit from 'app/modules/account/password-reset/init/password-reset-init';
 import PasswordResetFinish from 'app/modules/account/password-reset/finish/password-reset-finish';
-import PublicPasswordResetInit from 'app/modules/public/account/password-reset/init/password-reset-init';
 import PublicPasswordResetFinish from 'app/modules/public/account/password-reset/finish/password-reset-finish';
 import Logout from 'app/modules/login/logout';
 import Home from 'app/modules/home/home';
@@ -41,7 +40,6 @@ const Routes = () => {
         <ErrorBoundaryRoute path="/public/account/activate/:key?" component={PublicActivate} />
         <ErrorBoundaryRoute path="/account/reset/request" component={PasswordResetInit} />
         <ErrorBoundaryRoute path="/account/reset/finish/:key?" component={PasswordResetFinish} />
-        <ErrorBoundaryRoute path="/public/account/reset/request" component={PublicPasswordResetInit} />
         <ErrorBoundaryRoute path="/public/account/reset/finish/:key?" component={PublicPasswordResetFinish} />
         <PrivateRoute path="/admin" component={Admin} hasAnyAuthorities={[AUTHORITIES.ADMIN]} />
         <PrivateRoute path="/account" component={Account} hasAnyAuthorities={[AUTHORITIES.ADMIN, AUTHORITIES.USER]} />

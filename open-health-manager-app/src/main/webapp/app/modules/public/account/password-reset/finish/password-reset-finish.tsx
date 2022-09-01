@@ -4,7 +4,7 @@ import { Translate, translate, getUrlParameter, ValidatedField, ValidatedForm } 
 import { RouteComponentProps } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
-import { handlePasswordResetFinish, reset } from '../password-reset.reducer';
+import { handlePasswordResetFinish, reset } from '../../../../account/password-reset/password-reset.reducer';
 import PasswordStrengthBar from 'app/shared/layout/password/password-strength-bar';
 import { useAppDispatch, useAppSelector } from 'app/config/store';
 
@@ -67,7 +67,11 @@ export const PasswordResetFinishPage = (props: RouteComponentProps<{ key: string
 
   useEffect(() => {
     if (successMessage) {
-      toast.success(translate(successMessage));
+		if(successMessage === 'reset.finish.messages.success'){
+			toast.success(translate('reset.finish.messages.publicsuccess'));
+		} else {
+			toast.success(translate(successMessage));	
+		}      
     }
   }, [successMessage]);
 
