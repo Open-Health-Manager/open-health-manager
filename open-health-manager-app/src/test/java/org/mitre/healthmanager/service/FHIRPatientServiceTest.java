@@ -14,6 +14,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mitre.healthmanager.domain.FHIRPatient;
 import org.mitre.healthmanager.domain.User;
 import org.mitre.healthmanager.repository.FHIRPatientRepository;
+import org.mitre.healthmanager.service.dto.FHIRPatientDTO;
+import org.mitre.healthmanager.service.mapper.FHIRPatientMapper;
+import org.mitre.healthmanager.service.mapper.FHIRPatientMapperImpl;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -34,6 +37,8 @@ class FHIRPatientServiceTest {
 	@Mock
 	private FHIRPatientRepository fHIRPatientRepository;
 	
+    private FHIRPatientMapper fHIRPatientMapper = new FHIRPatientMapperImpl();
+	
 	@Mock
 	private DaoRegistry myDaoRegistry;
 	
@@ -42,7 +47,7 @@ class FHIRPatientServiceTest {
 	
 	@BeforeEach
     public void setup() {
-		fhirPatientService = new FHIRPatientService(fHIRPatientRepository);
+		fhirPatientService = new FHIRPatientService(fHIRPatientRepository, fHIRPatientMapper);
 		ReflectionTestUtils.setField(fhirPatientService, "myDaoRegistry", myDaoRegistry);
 	}
 
@@ -58,7 +63,8 @@ class FHIRPatientServiceTest {
 		when(fHIRPatientRepository.findById(Long.valueOf(12345))).thenReturn(Optional.of(fhirPatient));
 		when(fHIRPatientRepository.save(any(FHIRPatient.class))).thenReturn(fhirPatient);
 				
-		FHIRPatient result = fhirPatientService.save(fhirPatient);
+		FHIRPatientDTO fHIRPatientDTO = fHIRPatientMapper.toDto(fhirPatient);
+		FHIRPatientDTO result = fhirPatientService.save(fHIRPatientDTO);
 		assertNotNull(result);
 	}
 	
@@ -87,7 +93,8 @@ class FHIRPatientServiceTest {
 		IBundleProvider  bundleProvider = new SimpleBundleProvider(patient);
 		when(patientDAO.search(any(SearchParameterMap.class), any())).thenReturn(bundleProvider);
 				
-		Exception exception = assertThrows(FHIRPatientResourceException.class, () -> fhirPatientService.save(fhirPatient));
+		FHIRPatientDTO fHIRPatientDTO = fHIRPatientMapper.toDto(fhirPatient);
+		Exception exception = assertThrows(FHIRPatientResourceException.class, () -> fhirPatientService.save(fHIRPatientDTO));
 		assertEquals("Existing link between patient resource and user account.", exception.getMessage());		
 	}
 	
@@ -125,7 +132,8 @@ class FHIRPatientServiceTest {
 			.thenReturn(dmo);				
 		when(fHIRPatientRepository.save(any(FHIRPatient.class))).thenReturn(fhirPatient);
 		
-		FHIRPatient result = fhirPatientService.save(fhirPatient);
+		FHIRPatientDTO fhirPatientDTO = fHIRPatientMapper.toDto(fhirPatient);
+		FHIRPatientDTO result = fhirPatientService.save(fhirPatientDTO);
 		assertNotNull(result);
 	}
 	
@@ -155,7 +163,8 @@ class FHIRPatientServiceTest {
 			.thenReturn(new SimpleBundleProvider())
 			.thenReturn(new SimpleBundleProvider(patient));
 				
-		Exception exception =  assertThrows(FHIRPatientResourceException.class, () -> fhirPatientService.save(fhirPatient));
+		FHIRPatientDTO fhirPatientDTO = fHIRPatientMapper.toDto(fhirPatient);
+		Exception exception =  assertThrows(FHIRPatientResourceException.class, () -> fhirPatientService.save(fhirPatientDTO));
 		assertEquals("User account already linked to another patient resource.", exception.getMessage());
 	}
 	
@@ -180,7 +189,8 @@ class FHIRPatientServiceTest {
 			.thenReturn(new SimpleBundleProvider());
 		when(patientDAO.read(any(IdType.class))).thenThrow(new ResourceNotFoundException(""));
 
-		Exception exception = assertThrows(FHIRPatientResourceException.class, () -> fhirPatientService.save(fhirPatient));
+		FHIRPatientDTO fhirPatientDTO = fHIRPatientMapper.toDto(fhirPatient);
+		Exception exception = assertThrows(FHIRPatientResourceException.class, () -> fhirPatientService.save(fhirPatientDTO));
 		assertEquals("Patient resource does not exist.", exception.getMessage());
 	}
 	
@@ -217,7 +227,8 @@ class FHIRPatientServiceTest {
 			.thenReturn(dmo);				
 		when(fHIRPatientRepository.save(any(FHIRPatient.class))).thenReturn(fhirPatient);
 		
-		FHIRPatient result = fhirPatientService.save(fhirPatient);
+		FHIRPatientDTO fhirPatientDTO = fHIRPatientMapper.toDto(fhirPatient);
+		FHIRPatientDTO result = fhirPatientService.save(fhirPatientDTO);
 		assertNotNull(result);
 	}
 	
@@ -248,7 +259,8 @@ class FHIRPatientServiceTest {
 		when(patientDAO.read(any(IdType.class)))
 			.thenReturn(patient);
 				
-		Exception exception = assertThrows(FHIRPatientResourceException.class, () -> fhirPatientService.save(fhirPatient));
+		FHIRPatientDTO fhirPatientDTO = fHIRPatientMapper.toDto(fhirPatient);
+		Exception exception = assertThrows(FHIRPatientResourceException.class, () -> fhirPatientService.save(fhirPatientDTO));
 		assertEquals("Patient resource already linked to another user account.", exception.getMessage());
 	}
 

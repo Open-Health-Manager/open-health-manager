@@ -3,8 +3,11 @@ package org.mitre.healthmanager.service.dto;
 import java.io.Serializable;
 import java.util.Objects;
 
+import javax.validation.constraints.NotNull;
+
 import org.mitre.healthmanager.domain.FHIRClient;
 import org.mitre.healthmanager.domain.enumeration.ClientDirection;
+import javax.validation.constraints.NotNull;
 
 /**
  * A DTO for the {@link org.mitre.healthmanager.domain.FHIRClient} entity.
@@ -13,8 +16,10 @@ public class FHIRClientDTO implements Serializable {
 
     private Long id;
 
+    @NotNull
     private String name;
 
+    @NotNull
     private String displayName;
 
     private String uri;

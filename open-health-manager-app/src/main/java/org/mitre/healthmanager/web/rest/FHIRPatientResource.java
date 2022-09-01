@@ -9,11 +9,11 @@ import java.util.Optional;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
-import org.mitre.healthmanager.domain.FHIRPatient;
 import org.mitre.healthmanager.repository.FHIRPatientRepository;
 import org.mitre.healthmanager.security.AuthoritiesConstants;
 import org.mitre.healthmanager.service.FHIRPatientResourceException;
 import org.mitre.healthmanager.service.FHIRPatientService;
+import org.mitre.healthmanager.service.dto.FHIRPatientDTO;
 import org.mitre.healthmanager.web.rest.errors.BadRequestAlertException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,23 +65,23 @@ public class FHIRPatientResource {
     /**
      * {@code POST  /admin/fhir-patients} : Create a new fHIRPatient.
      *
-     * @param fHIRPatient the fHIRPatient to create.
-     * @return the {@link ResponseEntity} with status {@code 201 (Created)} and with body the new fHIRPatient, or with status {@code 400 (Bad Request)} if the fHIRPatient has already an ID.
+     * @param fHIRPatientDTO the fHIRPatientDTO to create.
+     * @return the {@link ResponseEntity} with status {@code 201 (Created)} and with body the new fHIRPatientDTO, or with status {@code 400 (Bad Request)} if the fHIRPatient has already an ID.
      * @throws URISyntaxException if the Location URI syntax is incorrect.
      */
     @PostMapping("/fhir-patients")
     @PreAuthorize("hasAuthority(\"" + AuthoritiesConstants.ADMIN + "\")")
-    public ResponseEntity<FHIRPatient> createFHIRPatient(@Valid @RequestBody FHIRPatient fHIRPatient) throws URISyntaxException {
-        log.debug("REST request to save FHIRPatient : {}", fHIRPatient);
-        if (fHIRPatient.getId() != null) {
+    public ResponseEntity<FHIRPatientDTO> createFHIRPatient(@Valid @RequestBody FHIRPatientDTO fHIRPatientDTO) throws URISyntaxException {
+        log.debug("REST request to save FHIRPatient : {}", fHIRPatientDTO);
+        if (fHIRPatientDTO.getId() != null) {
             throw new BadRequestAlertException("A new fHIRPatient cannot already have an ID", ENTITY_NAME, "idexists");
         }
         try {
-	        FHIRPatient result = fHIRPatientService.save(fHIRPatient);
-	        return ResponseEntity
-	            .created(new URI("/api/fhir-patients/" + result.getId()))
-	            .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString()))
-	            .body(result);
+        	FHIRPatientDTO result = fHIRPatientService.save(fHIRPatientDTO);
+            return ResponseEntity
+                .created(new URI("/api/fhir-patients/" + result.getId()))
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString()))
+                .body(result);
         } catch(FHIRPatientResourceException ex) {
         	throw new BadRequestAlertException(ex.getMessage(), ENTITY_NAME, "patientconstraint");
         }
@@ -90,24 +90,24 @@ public class FHIRPatientResource {
     /**
      * {@code PUT  /admin/fhir-patients/:id} : Updates an existing fHIRPatient.
      *
-     * @param id the id of the fHIRPatient to save.
-     * @param fHIRPatient the fHIRPatient to update.
-     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the updated fHIRPatient,
-     * or with status {@code 400 (Bad Request)} if the fHIRPatient is not valid,
-     * or with status {@code 500 (Internal Server Error)} if the fHIRPatient couldn't be updated.
+     * @param id the id of the fHIRPatientDTO to save.
+     * @param fHIRPatientDTO the fHIRPatientDTO to update.
+     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the updated fHIRPatientDTO,
+     * or with status {@code 400 (Bad Request)} if the fHIRPatientDTO is not valid,
+     * or with status {@code 500 (Internal Server Error)} if the fHIRPatientDTO couldn't be updated.
      * @throws URISyntaxException if the Location URI syntax is incorrect.
      */
     @PutMapping("/fhir-patients/{id}")
     @PreAuthorize("hasAuthority(\"" + AuthoritiesConstants.ADMIN + "\")")
-    public ResponseEntity<FHIRPatient> updateFHIRPatient(
+    public ResponseEntity<FHIRPatientDTO> updateFHIRPatient(
         @PathVariable(value = "id", required = false) final Long id,
-        @Valid @RequestBody FHIRPatient fHIRPatient
+        @Valid @RequestBody FHIRPatientDTO fHIRPatientDTO
     ) throws URISyntaxException {
-        log.debug("REST request to update FHIRPatient : {}, {}", id, fHIRPatient);
-        if (fHIRPatient.getId() == null) {
+        log.debug("REST request to update FHIRPatient : {}, {}", id, fHIRPatientDTO);
+        if (fHIRPatientDTO.getId() == null) {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
-        if (!Objects.equals(id, fHIRPatient.getId())) {
+        if (!Objects.equals(id, fHIRPatientDTO.getId())) {
             throw new BadRequestAlertException("Invalid ID", ENTITY_NAME, "idinvalid");
         }
 
@@ -116,10 +116,10 @@ public class FHIRPatientResource {
         }
 
         try {
-        FHIRPatient result = fHIRPatientService.update(fHIRPatient);
+        FHIRPatientDTO result = fHIRPatientService.update(fHIRPatientDTO);
         return ResponseEntity
             .ok()
-            .headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, fHIRPatient.getId().toString()))
+            .headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, fHIRPatientDTO.getId().toString()))
             .body(result);
         } catch(FHIRPatientResourceException ex) {
         	throw new BadRequestAlertException(ex.getMessage(), ENTITY_NAME, "patientconstraint");
@@ -129,25 +129,25 @@ public class FHIRPatientResource {
     /**
      * {@code PATCH  /admin/fhir-patients/:id} : Partial updates given fields of an existing fHIRPatient, field will ignore if it is null
      *
-     * @param id the id of the fHIRPatient to save.
-     * @param fHIRPatient the fHIRPatient to update.
-     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the updated fHIRPatient,
-     * or with status {@code 400 (Bad Request)} if the fHIRPatient is not valid,
-     * or with status {@code 404 (Not Found)} if the fHIRPatient is not found,
-     * or with status {@code 500 (Internal Server Error)} if the fHIRPatient couldn't be updated.
+     * @param id the id of the fHIRPatientDTO to save.
+     * @param fHIRPatientDTO the fHIRPatientDTO to update.
+     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the updated fHIRPatientDTO,
+     * or with status {@code 400 (Bad Request)} if the fHIRPatientDTO is not valid,
+     * or with status {@code 404 (Not Found)} if the fHIRPatientDTO is not found,
+     * or with status {@code 500 (Internal Server Error)} if the fHIRPatientDTO couldn't be updated.
      * @throws URISyntaxException if the Location URI syntax is incorrect.
      */
     @PatchMapping(value = "/fhir-patients/{id}", consumes = { "application/json", "application/merge-patch+json" })
     @PreAuthorize("hasAuthority(\"" + AuthoritiesConstants.ADMIN + "\")")
-    public ResponseEntity<FHIRPatient> partialUpdateFHIRPatient(
+    public ResponseEntity<FHIRPatientDTO> partialUpdateFHIRPatient(
         @PathVariable(value = "id", required = false) final Long id,
-        @NotNull @RequestBody FHIRPatient fHIRPatient
+        @NotNull @RequestBody FHIRPatientDTO fHIRPatientDTO
     ) throws URISyntaxException {
-        log.debug("REST request to partial update FHIRPatient partially : {}, {}", id, fHIRPatient);
-        if (fHIRPatient.getId() == null) {
+        log.debug("REST request to partial update FHIRPatient partially : {}, {}", id, fHIRPatientDTO);
+        if (fHIRPatientDTO.getId() == null) {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
-        if (!Objects.equals(id, fHIRPatient.getId())) {
+        if (!Objects.equals(id, fHIRPatientDTO.getId())) {
             throw new BadRequestAlertException("Invalid ID", ENTITY_NAME, "idinvalid");
         }
 
@@ -156,12 +156,12 @@ public class FHIRPatientResource {
         }
 
         try {
-	        Optional<FHIRPatient> result = fHIRPatientService.partialUpdate(fHIRPatient);
-	
-	        return ResponseUtil.wrapOrNotFound(
-	            result,
-	            HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, fHIRPatient.getId().toString())
-	        );
+            Optional<FHIRPatientDTO> result = fHIRPatientService.partialUpdate(fHIRPatientDTO);
+
+            return ResponseUtil.wrapOrNotFound(
+                result,
+                HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, fHIRPatientDTO.getId().toString())
+            );
         } catch(FHIRPatientResourceException ex) {
         	throw new BadRequestAlertException(ex.getMessage(), ENTITY_NAME, "patientconstraint");
         }
@@ -176,12 +176,12 @@ public class FHIRPatientResource {
      */
     @GetMapping("/fhir-patients")
     @PreAuthorize("hasAuthority(\"" + AuthoritiesConstants.ADMIN + "\")")
-    public ResponseEntity<List<FHIRPatient>> getAllFHIRPatients(
+    public ResponseEntity<List<FHIRPatientDTO>> getAllFHIRPatients(
         @org.springdoc.api.annotations.ParameterObject Pageable pageable,
         @RequestParam(required = false, defaultValue = "true") boolean eagerload
     ) {
         log.debug("REST request to get a page of FHIRPatients");
-        Page<FHIRPatient> page;
+        Page<FHIRPatientDTO> page;
         if (eagerload) {
             page = fHIRPatientService.findAllWithEagerRelationships(pageable);
         } else {
@@ -194,21 +194,21 @@ public class FHIRPatientResource {
     /**
      * {@code GET  /admin/fhir-patients/:id} : get the "id" fHIRPatient.
      *
-     * @param id the id of the fHIRPatient to retrieve.
-     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the fHIRPatient, or with status {@code 404 (Not Found)}.
+     * @param id the id of the fHIRPatientDTO to retrieve.
+     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the fHIRPatientDTO, or with status {@code 404 (Not Found)}.
      */
     @GetMapping("/fhir-patients/{id}")
     @PreAuthorize("hasAuthority(\"" + AuthoritiesConstants.ADMIN + "\")")
-    public ResponseEntity<FHIRPatient> getFHIRPatient(@PathVariable Long id) {
+    public ResponseEntity<FHIRPatientDTO> getFHIRPatient(@PathVariable Long id) {
         log.debug("REST request to get FHIRPatient : {}", id);
-        Optional<FHIRPatient> fHIRPatient = fHIRPatientService.findOne(id);
-        return ResponseUtil.wrapOrNotFound(fHIRPatient);
+        Optional<FHIRPatientDTO> fHIRPatientDTO = fHIRPatientService.findOne(id);
+        return ResponseUtil.wrapOrNotFound(fHIRPatientDTO);
     }
 
     /**
      * {@code DELETE  /admin/fhir-patients/:id} : delete the "id" fHIRPatient.
      *
-     * @param id the id of the fHIRPatient to delete.
+     * @param id the id of the fHIRPatientDTO to delete.
      * @return the {@link ResponseEntity} with status {@code 204 (NO_CONTENT)}.
      */
     @DeleteMapping("/fhir-patients/{id}")

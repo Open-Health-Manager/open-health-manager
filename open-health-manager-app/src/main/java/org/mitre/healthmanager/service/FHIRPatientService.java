@@ -12,6 +12,8 @@ import org.mitre.healthmanager.domain.FHIRPatient;
 import org.mitre.healthmanager.domain.User;
 import org.mitre.healthmanager.repository.FHIRPatientRepository;
 import org.mitre.healthmanager.security.AuthoritiesConstants;
+import org.mitre.healthmanager.service.dto.FHIRPatientDTO;
+import org.mitre.healthmanager.service.mapper.FHIRPatientMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,54 +47,63 @@ public class FHIRPatientService {
     @Autowired
 	private DaoRegistry myDaoRegistry;
 
-    public FHIRPatientService(FHIRPatientRepository fHIRPatientRepository) {
+    private final FHIRPatientMapper fHIRPatientMapper;
+
+    public FHIRPatientService(FHIRPatientRepository fHIRPatientRepository, FHIRPatientMapper fHIRPatientMapper) {
         this.fHIRPatientRepository = fHIRPatientRepository;
+        this.fHIRPatientMapper = fHIRPatientMapper;
     }
 
     /**
      * Save a fHIRPatient.
      *
-     * @param fHIRPatient the entity to save.
+     * @param fHIRPatientDTO the entity to save.
      * @return the persisted entity.
      */
-    public FHIRPatient save(FHIRPatient fHIRPatient) {
-        log.debug("Request to save FHIRPatient : {}", fHIRPatient);
+    public FHIRPatientDTO save(FHIRPatientDTO fHIRPatientDTO) {
+        log.debug("Request to save FHIRPatient : {}", fHIRPatientDTO);
+        FHIRPatient fHIRPatient = fHIRPatientMapper.toEntity(fHIRPatientDTO);
         saveFHIRPatient(fHIRPatient);
-        return fHIRPatientRepository.save(fHIRPatient);
+        fHIRPatient = fHIRPatientRepository.save(fHIRPatient);
+        return fHIRPatientMapper.toDto(fHIRPatient);
     }
 
     /**
      * Update a fHIRPatient.
      *
-     * @param fHIRPatient the entity to save.
+     * @param fHIRPatientDTO the entity to save.
      * @return the persisted entity.
-     */
-    public FHIRPatient update(FHIRPatient fHIRPatient) {
-        log.debug("Request to save FHIRPatient : {}", fHIRPatient);
+     */        
+    public FHIRPatientDTO update(FHIRPatientDTO fHIRPatientDTO) {
+        log.debug("Request to save FHIRPatient : {}", fHIRPatientDTO);
+        FHIRPatient fHIRPatient = fHIRPatientMapper.toEntity(fHIRPatientDTO);
         saveFHIRPatient(fHIRPatient);
-        return fHIRPatientRepository.save(fHIRPatient);
+        fHIRPatient = fHIRPatientRepository.save(fHIRPatient);
+        return fHIRPatientMapper.toDto(fHIRPatient);
     }
 
     /**
      * Partially update a fHIRPatient.
      *
-     * @param fHIRPatient the entity to update partially.
+     * @param fHIRPatientDTO the entity to update partially.
      * @return the persisted entity.
      */
-    public Optional<FHIRPatient> partialUpdate(FHIRPatient fHIRPatient) {
-        log.debug("Request to partially update FHIRPatient : {}", fHIRPatient);
+    public Optional<FHIRPatientDTO> partialUpdate(FHIRPatientDTO fHIRPatientDTO) {
+        log.debug("Request to partially update FHIRPatient : {}", fHIRPatientDTO);
 
         return fHIRPatientRepository
-            .findById(fHIRPatient.getId())
+            .findById(fHIRPatientDTO.getId())
             .map(existingFHIRPatient -> {
-                if (fHIRPatient.getFhirId() != null) {
-                    existingFHIRPatient.setFhirId(fHIRPatient.getFhirId());
+                if (fHIRPatientDTO.getFhirId() != null) {
+                    existingFHIRPatient.setFhirId(fHIRPatientDTO.getFhirId());
                 }
+                fHIRPatientMapper.partialUpdate(existingFHIRPatient, fHIRPatientDTO);
 
                 saveFHIRPatient(existingFHIRPatient);
                 return existingFHIRPatient;
             })
-            .map(fHIRPatientRepository::save);
+            .map(fHIRPatientRepository::save)
+            .map(fHIRPatientMapper::toDto);
     }
 
     /**
@@ -102,9 +113,9 @@ public class FHIRPatientService {
      * @return the list of entities.
      */
     @Transactional(transactionManager = "jhipsterTransactionManager", readOnly = true)
-    public Page<FHIRPatient> findAll(Pageable pageable) {
+    public Page<FHIRPatientDTO> findAll(Pageable pageable) {
         log.debug("Request to get all FHIRPatients");
-        return fHIRPatientRepository.findAll(pageable);
+        return fHIRPatientRepository.findAll(pageable).map(fHIRPatientMapper::toDto);
     }
 
     /**
@@ -112,8 +123,8 @@ public class FHIRPatientService {
      *
      * @return the list of entities.
      */
-    public Page<FHIRPatient> findAllWithEagerRelationships(Pageable pageable) {
-        return fHIRPatientRepository.findAllWithEagerRelationships(pageable);
+    public Page<FHIRPatientDTO> findAllWithEagerRelationships(Pageable pageable) {
+        return fHIRPatientRepository.findAllWithEagerRelationships(pageable).map(fHIRPatientMapper::toDto);
     }
 
     /**
@@ -123,9 +134,9 @@ public class FHIRPatientService {
      * @return the entity.
      */
     @Transactional(transactionManager = "jhipsterTransactionManager", readOnly = true)
-    public Optional<FHIRPatient> findOne(Long id) {
+    public Optional<FHIRPatientDTO> findOne(Long id) {
         log.debug("Request to get FHIRPatient : {}", id);
-        return fHIRPatientRepository.findOneWithEagerRelationships(id);
+        return fHIRPatientRepository.findOneWithEagerRelationships(id).map(fHIRPatientMapper::toDto);
     }
     
     /**
@@ -135,9 +146,9 @@ public class FHIRPatientService {
      * @return the entity.
      */
     @Transactional(transactionManager = "jhipsterTransactionManager", readOnly = true)
-    public Optional<FHIRPatient> findOneForUser(Long id) {
+    public Optional<FHIRPatientDTO> findOneForUser(Long id) {
         log.debug("Request to get FHIRPatient by User : {}", id);
-        return fHIRPatientRepository.findOneForUser(id);
+        return fHIRPatientRepository.findOneForUser(id).map(fHIRPatientMapper::toDto);
     }
 
     /**
@@ -161,10 +172,11 @@ public class FHIRPatientService {
      */
     public FHIRPatient createFHIRPatientForUser(User user) {
     	// check if FHIRPatient record already exists for user
-    	FHIRPatient fhirPatient = findOneForUser(user.getId()).orElse(null);
-    	if(fhirPatient != null) {
-    		return fhirPatient;
+    	FHIRPatientDTO fHIRPatientDTO = findOneForUser(user.getId()).orElse(null);    	
+    	if(fHIRPatientDTO != null) {
+    		return fHIRPatientMapper.toEntity(fHIRPatientDTO);
     	}
+
     	// do not create FHIR Patient if user not activated or not ROLE_USER
     	if(!user.isActivated() || 
     			user.getAuthorities().stream().map(Authority::getName)
@@ -179,7 +191,7 @@ public class FHIRPatientService {
         patientFHIR.addName()
         	.setFamily(user.getLastName())
         	.addGiven(user.getFirstName());
-        fhirPatient = new FHIRPatient();
+        FHIRPatient fhirPatient = new FHIRPatient();
         fhirPatient.fhirId(savePatientResource(patientFHIR, user));
         fhirPatient.user(user);
         fHIRPatientRepository.save(fhirPatient);
@@ -194,19 +206,22 @@ public class FHIRPatientService {
     // need to manually unlink patient resource identifiers for now in case of failures
     private void saveFHIRPatient(FHIRPatient fHIRPatient) {
     	if(fHIRPatient.getId() != null) { // existing record
-        	FHIRPatient existingFHIRPatient = fHIRPatientRepository
-        			.findById(fHIRPatient.getId()).get();
-        	User existingUser = existingFHIRPatient.getUser();
-        	
-        	if(existingFHIRPatient.getFhirId().equals(fHIRPatient.getFhirId()) 
-        			&& existingUser.getId().equals(fHIRPatient.getUser().getId())) {
-        		// no changes
-        		return;
-        	}
-        	
-        	// fail if existing record has a patient resource link already    		
-            if (getExistingFhirPatientResources(existingFHIRPatient, existingUser).size() > 0) {
-                throw new FHIRPatientResourceException("Existing link between patient resource and user account.");
+        	Optional<FHIRPatient> optionalExistingFHIRPatient = fHIRPatientRepository
+        			.findById(fHIRPatient.getId());
+            if (optionalExistingFHIRPatient.isPresent()) {
+                FHIRPatient existingFHIRPatient = optionalExistingFHIRPatient.get();
+                User existingUser = existingFHIRPatient.getUser();
+                
+                if(existingFHIRPatient.getFhirId().equals(fHIRPatient.getFhirId()) 
+                        && existingUser.getId().equals(fHIRPatient.getUser().getId())) {
+                    // no changes
+                    return;
+                }
+                
+                // fail if existing record has a patient resource link already    		
+                if (getExistingFhirPatientResources(existingFHIRPatient, existingUser).size() > 0) {
+                    throw new FHIRPatientResourceException("Existing link between patient resource and user account.");
+                }
             }
     	}
     	
@@ -225,6 +240,10 @@ public class FHIRPatientService {
     	} catch(ResourceNotFoundException rnfe) {    		
 			throw new FHIRPatientResourceException("Patient resource does not exist.");
 		}
+
+        if (patientFHIR == null) {
+            throw new FHIRPatientResourceException("Patient resource does not exist.");
+        }
 		
 		// fail if patient resource linked to another user account
 		if(hasExistingAccountIdentifier(patientFHIR, fHIRPatient.getUser())) {
@@ -286,8 +305,7 @@ public class FHIRPatientService {
     
     // check if Patient resource has an account identifier for another user
     private boolean hasExistingAccountIdentifier(Patient patientFHIR, User user) {
-    	return patientFHIR != null && 
-    		patientFHIR.getIdentifier().stream()
+    	return patientFHIR.getIdentifier().stream()
 				.filter(identifier -> identifier.getSystem().equals(FHIR_LOGIN_SYSTEM) 
 						&& !identifier.getValue().equals(user.getLogin()))
 				.count() > 0;

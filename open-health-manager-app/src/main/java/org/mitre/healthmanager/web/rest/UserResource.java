@@ -31,6 +31,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import tech.jhipster.web.util.HeaderUtil;
 import tech.jhipster.web.util.PaginationUtil;
 import tech.jhipster.web.util.ResponseUtil;
+import org.mitre.healthmanager.service.mapper.UserMapper;
 
 /**
  * REST controller for managing users.
@@ -87,10 +88,13 @@ public class UserResource {
 
     private final MailService mailService;
 
-    public UserResource(UserService userService, UserRepository userRepository, MailService mailService) {
+    private final UserMapper userMapper;
+
+    public UserResource(UserService userService, UserRepository userRepository, MailService mailService, UserMapper userMapper) {
         this.userService = userService;
         this.userRepository = userRepository;
         this.mailService = mailService;
+        this.userMapper = userMapper;
     }
 
     /**
@@ -147,10 +151,22 @@ public class UserResource {
         if (existingUser.isPresent() && (!existingUser.get().getId().equals(userDTO.getId()))) {
             throw new LoginAlreadyUsedException();
         }
-        Optional<AdminUserDTO> updatedUser = userService.updateUser(userDTO);
+        
+        Optional<User> updatedUser = userService.updateUser(userDTO);
+
+        if (updatedUser.isPresent() && !updatedUser.get().isActivated()) {     
+            mailService.sendActivationEmail(updatedUser.get());
+        }
+        
+        Optional <AdminUserDTO> updatedUserDTO;
+        if (updatedUser.isPresent()) {
+            updatedUserDTO = Optional.of(userMapper.userToAdminUserDTO(updatedUser.get()));
+        } else {
+            updatedUserDTO = Optional.empty();
+        }
 
         return ResponseUtil.wrapOrNotFound(
-            updatedUser,
+            updatedUserDTO,
             HeaderUtil.createAlert(applicationName, "userManagement.updated", userDTO.getLogin())
         );
     }
