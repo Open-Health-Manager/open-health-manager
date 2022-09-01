@@ -358,7 +358,7 @@ class AccountResourceIT {
         invalidUser.setPassword("BOB23@example.com"); // password with only 3 digits
         invalidUser.setFirstName("Bob");
         invalidUser.setLastName("Green");
-        invalidUser.setEmail("bob@example.com");
+        invalidUser.setEmail("BOB23@example.com");
         invalidUser.setActivated(true);
         invalidUser.setImageUrl("http://placehold.it/50x50");
         invalidUser.setLangKey(Constants.DEFAULT_LANGUAGE);
