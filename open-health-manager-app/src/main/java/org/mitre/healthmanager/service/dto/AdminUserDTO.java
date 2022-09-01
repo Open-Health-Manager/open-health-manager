@@ -11,6 +11,7 @@ import org.mitre.healthmanager.domain.User;
 /**
  * A DTO representing a user, with his authorities.
  */
+@ValidEmailLogin
 public class AdminUserDTO {
 
     private Long id;

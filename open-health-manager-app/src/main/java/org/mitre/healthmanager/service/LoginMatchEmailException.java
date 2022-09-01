@@ -1,6 +1,8 @@
 package org.mitre.healthmanager.service;
 
-public class LoginMatchEmailException extends RuntimeException {
+import javax.validation.ConstraintDeclarationException;
+
+public class LoginMatchEmailException extends ConstraintDeclarationException {
     private static final long serialVersionUID = 1L;
 
     public LoginMatchEmailException() {

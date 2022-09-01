@@ -202,18 +202,6 @@ class UserServiceIT {
 
     @Test
     @Transactional("jhipsterTransactionManager")
-    void assertThatRegisteringWithMismatchedLoginAndEmailFails() {
-        user.setEmail("johndoe12@localhost");
-        AdminUserDTO userDTO = userMapper.userToAdminUserDTO(user);
-
-        LoginMatchEmailException thrown = assertThrows(LoginMatchEmailException.class, () -> userService.registerUser(userDTO, user.getPassword(), userDUADTO));
-        assertEquals("Login must be the same as email!", thrown.getMessage());
-
-        user.setEmail("johndoe@localhost");
-    }
-
-    @Test
-    @Transactional("jhipsterTransactionManager")
     void assertThatRegisteringUsersWithUnActivatedDUAFails() {
         userDUADTO.setActive(false);
         AdminUserDTO userDTO = userMapper.userToAdminUserDTO(user);

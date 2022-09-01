@@ -16,7 +16,6 @@ import org.mitre.healthmanager.service.dto.AdminUserDTO;
 import org.mitre.healthmanager.web.rest.errors.BadRequestAlertException;
 import org.mitre.healthmanager.web.rest.errors.EmailAlreadyUsedException;
 import org.mitre.healthmanager.web.rest.errors.LoginAlreadyUsedException;
-import org.mitre.healthmanager.web.rest.errors.LoginMatchEmailException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -109,7 +108,6 @@ public class UserResource {
      * @return the {@link ResponseEntity} with status {@code 201 (Created)} and with body the new user, or with status {@code 400 (Bad Request)} if the login or email is already in use.
      * @throws URISyntaxException if the Location URI syntax is incorrect.
      * @throws BadRequestAlertException {@code 400 (Bad Request)} if the login or email is already in use.
-     * @throws LoginMatchEmailException {@code 400 (Bad Request)} if the email and login do not match.
      */
     @PostMapping("/users")
     @PreAuthorize("hasAuthority(\"" + AuthoritiesConstants.ADMIN + "\")")
@@ -123,8 +121,6 @@ public class UserResource {
             throw new LoginAlreadyUsedException();
         } else if (userRepository.findOneByEmailIgnoreCase(userDTO.getEmail()).isPresent()) {
             throw new EmailAlreadyUsedException();
-        } else if (!userDTO.getLogin().equalsIgnoreCase("admin") && !userDTO.getEmail().equalsIgnoreCase(userDTO.getLogin())) {
-            throw new LoginMatchEmailException();
         } else {
             User newUser = userService.createUser(userDTO);
             mailService.sendCreationEmail(newUser);
@@ -140,7 +136,6 @@ public class UserResource {
      *
      * @param userDTO the user to update.
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the updated user.
-     * @throws LoginMatchEmailException {@code 400 (Bad Request)} if the email and login do not match.
      * @throws EmailAlreadyUsedException {@code 400 (Bad Request)} if the email is already in use.
      * @throws LoginAlreadyUsedException {@code 400 (Bad Request)} if the login is already in use.
      */
@@ -155,11 +150,6 @@ public class UserResource {
         existingUser = userRepository.findOneByLogin(userDTO.getLogin().toLowerCase());
         if (existingUser.isPresent() && (!existingUser.get().getId().equals(userDTO.getId()))) {
             throw new LoginAlreadyUsedException();
-        }
-        if (userDTO.getEmail() != null) {
-            if (!userDTO.getLogin().equalsIgnoreCase("admin") && !userDTO.getEmail().equalsIgnoreCase(userDTO.getLogin())) {
-                throw new LoginMatchEmailException();
-            }
         }
         
         Optional<User> updatedUser = userService.updateUser(userDTO);

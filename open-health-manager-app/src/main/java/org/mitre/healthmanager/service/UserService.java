@@ -135,10 +135,6 @@ public class UserService {
                     throw new EmailAlreadyUsedException();
                 }
             });
-        
-        if (!userDTO.getLogin().equalsIgnoreCase("admin") && !userDTO.getEmail().equalsIgnoreCase(userDTO.getLogin())) {
-            throw new LoginMatchEmailException();
-        }
 
         if (userDUADTO == null || !userDUADTO.getActive() || !userDUADTO.getAgeAttested()) {
             throw new InvalidDUAException();

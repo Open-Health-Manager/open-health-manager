@@ -12,13 +12,11 @@ import org.mitre.healthmanager.service.MailService;
 import org.mitre.healthmanager.service.UserService;
 import org.mitre.healthmanager.service.dto.AdminUserDTO;
 import org.mitre.healthmanager.service.dto.PasswordChangeDTO;
-import org.mitre.healthmanager.service.dto.UserDTO;
 import org.mitre.healthmanager.service.dto.UserDUADTO;
 import org.mitre.healthmanager.web.rest.errors.BadRequestAlertException;
 import org.mitre.healthmanager.web.rest.errors.EmailAlreadyUsedException;
 import org.mitre.healthmanager.web.rest.errors.InvalidPasswordException;
 import org.mitre.healthmanager.web.rest.errors.LoginAlreadyUsedException;
-import org.mitre.healthmanager.web.rest.errors.LoginMatchEmailException;
 import org.mitre.healthmanager.web.rest.vm.DUAManagedUserVM;
 import org.mitre.healthmanager.web.rest.vm.KeyAndPasswordVM;
 import org.slf4j.Logger;
@@ -66,7 +64,6 @@ public class AccountResource {
      * {@code POST  /register} : register the user.
      *
      * @param DUAmanagedUserVM the managed user View Model.
-     * @throws LoginMatchEmailException {@code 400 (Bad Request)} if the email and login do not match.
      * @throws InvalidPasswordException {@code 400 (Bad Request)} if the password is incorrect.
      * @throws EmailAlreadyUsedException {@code 400 (Bad Request)} if the email is already used.
      * @throws LoginAlreadyUsedException {@code 400 (Bad Request)} if the login is already used.
@@ -130,7 +127,6 @@ public class AccountResource {
      * {@code POST  /account} : update the current user information.
      *
      * @param userDTO the current user information.
-     * @throws LoginMatchEmailException {@code 400 (Bad Request)} if the email and login do not match.
      * @throws EmailAlreadyUsedException {@code 400 (Bad Request)} if the email is already used.
      * @throws RuntimeException {@code 500 (Internal Server Error)} if the user login wasn't found.
      */
@@ -147,10 +143,6 @@ public class AccountResource {
         Optional<User> user = userRepository.findOneByLogin(userLogin);
         if (!user.isPresent()) {
             throw new AccountResourceException("User could not be found");
-        }
-
-        if (!userDTO.getLogin().equalsIgnoreCase("admin") && !userDTO.getEmail().equalsIgnoreCase(userDTO.getLogin())) {
-            throw new LoginMatchEmailException();
         }
 
         Optional<User> newUser = userService.updateUser(
