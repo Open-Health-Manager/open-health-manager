@@ -5,6 +5,7 @@ import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 
+import org.apache.commons.text.StringEscapeUtils;
 import org.mitre.healthmanager.domain.User;
 import org.mitre.healthmanager.repository.UserRepository;
 import org.mitre.healthmanager.security.SecurityUtils;
@@ -106,7 +107,7 @@ public class AccountResource {
     @GetMapping("/authenticate")
     public String isAuthenticated(HttpServletRequest request) {
         log.debug("REST request to check if the current user is authenticated");
-        return request.getRemoteUser();
+        return StringEscapeUtils.escapeHtml4(request.getRemoteUser());
     }
 
     /**
