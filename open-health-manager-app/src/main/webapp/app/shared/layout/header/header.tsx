@@ -5,7 +5,8 @@ import { Translate, Storage } from 'react-jhipster';
 import { Navbar, Nav, NavbarToggler, Collapse } from 'reactstrap';
 import LoadingBar from 'react-redux-loading-bar';
 
-import { Home, Brand } from './header-components';
+import { useLocation } from 'react-router-dom';
+import { Home, Brand, BrandNoLink } from './header-components';
 import { AdminMenu, EntitiesMenu, AccountMenu, LocaleMenu } from '../menus';
 import { useAppDispatch } from 'app/config/store';
 import { setLocale } from 'app/shared/reducers/locale';
@@ -22,6 +23,7 @@ export interface IHeaderProps {
 const Header = (props: IHeaderProps) => {
   const [menuOpen, setMenuOpen] = useState(false);
 
+  const location = useLocation();
   const dispatch = useAppDispatch();
 
   const handleLocaleChange = event => {
@@ -41,28 +43,39 @@ const Header = (props: IHeaderProps) => {
 
   const toggleMenu = () => setMenuOpen(!menuOpen);
 
+  const noHeaderPaths = ["/public/account/activate", "/public/account/reset/request", "/public/account/reset/finish"]
+
   /* jhipster-needle-add-element-to-menu - JHipster will add new menu items here */
 
   return (
-    <div id="app-header">
-      {renderDevRibbon()}
-      <LoadingBar className="loading-bar" />
-      <Navbar data-cy="navbar" dark expand="md" fixed="top" className="jh-navbar">
-        <NavbarToggler aria-label="Menu" onClick={toggleMenu} />
-        <Brand />
-        <Collapse isOpen={menuOpen} navbar>
-          <Nav id="header-tabs" className="ms-auto" navbar>
-            <Home />
-            {props.isAuthenticated && <EntitiesMenu />}
-            {props.isAuthenticated && props.isAdmin && (
-              <AdminMenu showOpenAPI={props.isOpenAPIEnabled} showDatabase={!props.isInProduction} />
-            )}
-            <LocaleMenu currentLocale={props.currentLocale} onClick={handleLocaleChange} />
-            <AccountMenu isAuthenticated={props.isAuthenticated} />
-          </Nav>
-        </Collapse>
-      </Navbar>
-    </div>
+      !noHeaderPaths.includes(location.pathname)?
+      <div id="app-header">
+        {renderDevRibbon()}
+        <LoadingBar className="loading-bar" />
+        <Navbar data-cy="navbar" dark expand="md" fixed="top" className="jh-navbar">
+          <NavbarToggler aria-label="Menu" onClick={toggleMenu} />
+          <Brand />
+          <Collapse isOpen={menuOpen} navbar>
+            <Nav id="header-tabs" className="ms-auto" navbar>
+              <Home />
+              {props.isAuthenticated && <EntitiesMenu />}
+              {props.isAuthenticated && props.isAdmin && (
+                <AdminMenu showOpenAPI={props.isOpenAPIEnabled} showDatabase={!props.isInProduction} />
+              )}
+              <LocaleMenu currentLocale={props.currentLocale} onClick={handleLocaleChange} />
+              <AccountMenu isAuthenticated={props.isAuthenticated} />
+            </Nav>
+          </Collapse>
+        </Navbar>
+      </div> 
+      : 
+      <div id="app-header">
+        {renderDevRibbon()}
+        <LoadingBar className="loading-bar" />
+        <Navbar data-cy="navbar" dark expand="md" fixed="top" className="jh-navbar">
+          <BrandNoLink />
+        </Navbar>
+      </div>
   );
 };
 

@@ -53,6 +53,7 @@ public class AccountResource {
 
     private final MailService mailService;
 
+
     public AccountResource(UserRepository userRepository, UserService userService, MailService mailService) {
         this.userRepository = userRepository;
         this.userService = userService;
@@ -134,6 +135,7 @@ public class AccountResource {
         String userLogin = SecurityUtils
             .getCurrentUserLogin()
             .orElseThrow(() -> new AccountResourceException("Current user login not found"));
+
         Optional<User> existingUser = userRepository.findOneByEmailIgnoreCase(userDTO.getEmail());
         if (existingUser.isPresent() && (!existingUser.get().getLogin().equalsIgnoreCase(userLogin))) {
             throw new EmailAlreadyUsedException();
@@ -142,13 +144,19 @@ public class AccountResource {
         if (!user.isPresent()) {
             throw new AccountResourceException("User could not be found");
         }
-        userService.updateUser(
+
+        Optional<User> newUser = userService.updateUser(
             userDTO.getFirstName(),
             userDTO.getLastName(),
             userDTO.getEmail(),
+            userDTO.getLogin(),
             userDTO.getLangKey(),
             userDTO.getImageUrl()
         );
+
+        if (newUser.isPresent() && !newUser.get().isActivated()) {
+            mailService.sendActivationEmail(newUser.get());
+        }
     }
 
     /**

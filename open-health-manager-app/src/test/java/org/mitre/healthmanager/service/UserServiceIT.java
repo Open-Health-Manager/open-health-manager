@@ -38,7 +38,7 @@ import org.mitre.healthmanager.service.mapper.UserMapper;
 @Transactional("jhipsterTransactionManager")
 class UserServiceIT {
 
-    private static final String DEFAULT_LOGIN = "johndoe";
+    private static final String DEFAULT_LOGIN = "johndoe@localhost";
 
     private static final String DEFAULT_EMAIL = "johndoe@localhost";
 

@@ -116,6 +116,20 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
     }
 
     @ExceptionHandler
+    public ResponseEntity<Problem> handleLoginMatchEmailException(
+        org.mitre.healthmanager.service.LoginMatchEmailException ex,
+        NativeWebRequest request
+    ) {
+        LoginMatchEmailException problem = new LoginMatchEmailException();
+        return create(
+            problem,
+            request,
+            HeaderUtil.createFailureAlert(applicationName, true, problem.getEntityName(), problem.getErrorKey(), problem.getMessage())
+        );
+    }
+
+
+    @ExceptionHandler
     public ResponseEntity<Problem> handleEmailAlreadyUsedException(
         org.mitre.healthmanager.service.EmailAlreadyUsedException ex,
         NativeWebRequest request
@@ -173,6 +187,19 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
         NativeWebRequest request
     ) {
     	InvalidConsentException problem = new InvalidConsentException();
+        return create(
+            problem,
+            request,
+            HeaderUtil.createFailureAlert(applicationName, true, problem.getEntityName(), problem.getErrorKey(), problem.getMessage())
+        );
+    }
+
+    @ExceptionHandler
+    public ResponseEntity<Problem> handleFHIROrganizationResourceException(
+        org.mitre.healthmanager.service.FHIROrganizationResourceException ex,
+        NativeWebRequest request
+    ) {
+    	FHIROrganizationResourceException problem = new FHIROrganizationResourceException();
         return create(
             problem,
             request,

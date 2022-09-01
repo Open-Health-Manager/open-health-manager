@@ -55,8 +55,8 @@ import ca.uhn.fhir.rest.param.TokenParam;
 @IntegrationTest
 class UserResourceIT {
 
-    private static final String DEFAULT_LOGIN = "johndoe";
-    private static final String UPDATED_LOGIN = "jhipster";
+    private static final String DEFAULT_LOGIN = "johndoe@localhost";
+    private static final String UPDATED_LOGIN = "jhipster@localhost";
 
     private static final Long DEFAULT_ID = 1L;
 
@@ -119,10 +119,11 @@ class UserResourceIT {
      */
     public static User createEntity(EntityManager em) {
         User user = new User();
-        user.setLogin(DEFAULT_LOGIN + RandomStringUtils.randomAlphabetic(5));
+        String randomAlphabetic = RandomStringUtils.randomAlphabetic(5);
+        user.setLogin(randomAlphabetic + DEFAULT_LOGIN);
         user.setPassword(RandomStringUtils.random(60));
         user.setActivated(true);
-        user.setEmail(RandomStringUtils.randomAlphabetic(5) + DEFAULT_EMAIL);
+        user.setEmail(randomAlphabetic + DEFAULT_EMAIL);
         user.setFirstName(DEFAULT_FIRSTNAME);
         user.setLastName(DEFAULT_LASTNAME);
         user.setImageUrl(DEFAULT_IMAGEURL);
@@ -150,7 +151,7 @@ class UserResourceIT {
     void createUser() throws Exception {
         String methodName = "createUser";
         log.info("**** " + methodName + " ****");
-        String testLogin = methodName.toLowerCase();
+        String testLogin = methodName.toLowerCase() + DEFAULT_EMAIL_SUFFIX;
         int databaseSizeBeforeCreate = userRepository.findAll().size();
 
         // Create the User
@@ -159,7 +160,7 @@ class UserResourceIT {
         managedUserVM.setPassword(DEFAULT_PASSWORD);
         managedUserVM.setFirstName(DEFAULT_FIRSTNAME);
         managedUserVM.setLastName(DEFAULT_LASTNAME);
-        managedUserVM.setEmail(testLogin + DEFAULT_EMAIL_SUFFIX);
+        managedUserVM.setEmail(testLogin);
         managedUserVM.setActivated(true);
         managedUserVM.setImageUrl(DEFAULT_IMAGEURL);
         managedUserVM.setLangKey(DEFAULT_LANGKEY);
@@ -178,7 +179,7 @@ class UserResourceIT {
             assertThat(testUser.getLogin()).isEqualTo(testLogin);
             assertThat(testUser.getFirstName()).isEqualTo(DEFAULT_FIRSTNAME);
             assertThat(testUser.getLastName()).isEqualTo(DEFAULT_LASTNAME);
-            assertThat(testUser.getEmail()).isEqualTo(testLogin + DEFAULT_EMAIL_SUFFIX);
+            assertThat(testUser.getEmail()).isEqualTo(testLogin);
             assertThat(testUser.getImageUrl()).isEqualTo(DEFAULT_IMAGEURL);
             assertThat(testUser.getLangKey()).isEqualTo(DEFAULT_LANGKEY);
         });
@@ -212,13 +213,44 @@ class UserResourceIT {
         assertEquals(fhirPatient.getFhirId(), searchResults.getAllResourceIds().get(0));
 
     } 
+
+    @Test
+    @Transactional("jhipsterTransactionManager")
+    void createUserMismatchLoginAndEmail() throws Exception {
+        String methodName = "createUserMismatchLoginAndEmail";
+        log.info("**** " + methodName + " ****");
+        // Initialize the database
+        userRepository.saveAndFlush(user);
+        int databaseSizeBeforeCreate = userRepository.findAll().size();
+
+        ManagedUserVM managedUserVM = new ManagedUserVM();
+        managedUserVM.setLogin(methodName.toLowerCase());
+        managedUserVM.setPassword(DEFAULT_PASSWORD);
+        managedUserVM.setFirstName(DEFAULT_FIRSTNAME);
+        managedUserVM.setLastName(DEFAULT_LASTNAME);
+        managedUserVM.setEmail(methodName.toLowerCase() + DEFAULT_EMAIL_SUFFIX);
+        managedUserVM.setActivated(true);
+        managedUserVM.setImageUrl(DEFAULT_IMAGEURL);
+        managedUserVM.setLangKey(DEFAULT_LANGKEY);
+        managedUserVM.setAuthorities(Collections.singleton(AuthoritiesConstants.USER));
+
+        // Create the User
+        restUserMockMvc
+            .perform(
+                post("/api/admin/users").contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(managedUserVM))
+            )
+            .andExpect(status().isBadRequest());
+
+        // Validate the User in the database
+        assertPersistedUsers(users -> assertThat(users).hasSize(databaseSizeBeforeCreate));
+    }
  
     @Test
     @Transactional("jhipsterTransactionManager")
     void createUserWithExistingId() throws Exception {
         String methodName = "createUserWithExistingId";
         log.info("**** " + methodName + " ****");
-        String testLogin = methodName.toLowerCase();
+        String testLogin = methodName.toLowerCase() + DEFAULT_EMAIL_SUFFIX;
         int databaseSizeBeforeCreate = userRepository.findAll().size();
 
         ManagedUserVM managedUserVM = new ManagedUserVM();
@@ -227,7 +259,7 @@ class UserResourceIT {
         managedUserVM.setPassword(DEFAULT_PASSWORD);
         managedUserVM.setFirstName(DEFAULT_FIRSTNAME);
         managedUserVM.setLastName(DEFAULT_LASTNAME);
-        managedUserVM.setEmail(testLogin + DEFAULT_EMAIL_SUFFIX);
+        managedUserVM.setEmail(testLogin);
         managedUserVM.setActivated(true);
         managedUserVM.setImageUrl(DEFAULT_IMAGEURL);
         managedUserVM.setLangKey(DEFAULT_LANGKEY);
@@ -280,7 +312,7 @@ class UserResourceIT {
     void createUserWithExistingEmail() throws Exception {
         String methodName = "createUserWithExistingEmail";
         log.info("**** " + methodName + " ****");
-        String testLogin = methodName.toLowerCase();
+        String testLogin = methodName.toLowerCase() + DEFAULT_EMAIL_SUFFIX;
         // Initialize the database
         userRepository.saveAndFlush(user);
         int databaseSizeBeforeCreate = userRepository.findAll().size();
@@ -312,7 +344,7 @@ class UserResourceIT {
     void createUserWithFHIRPatientUsername() throws Exception {
         String methodName = "createUserWithFHIRPatientUsername";
         log.info("**** " + methodName + " ****");
-        String testLogin = methodName.toLowerCase();
+        String testLogin = methodName.toLowerCase() + DEFAULT_EMAIL_SUFFIX;
         // Initialize the database
         IFhirResourceDao<Patient> patientDAO = myDaoRegistry.getResourceDao(Patient.class);
         Patient patientFHIR = new Patient();
@@ -343,7 +375,7 @@ class UserResourceIT {
         managedUserVM.setPassword(DEFAULT_PASSWORD);
         managedUserVM.setFirstName(DEFAULT_FIRSTNAME);
         managedUserVM.setLastName(DEFAULT_LASTNAME);
-        managedUserVM.setEmail(testLogin + DEFAULT_EMAIL_SUFFIX);
+        managedUserVM.setEmail(testLogin);
         managedUserVM.setActivated(true);
         managedUserVM.setImageUrl(DEFAULT_IMAGEURL);
         managedUserVM.setLangKey(DEFAULT_LANGKEY);
@@ -441,7 +473,7 @@ class UserResourceIT {
         managedUserVM.setPassword(UPDATED_PASSWORD);
         managedUserVM.setFirstName(UPDATED_FIRSTNAME);
         managedUserVM.setLastName(UPDATED_LASTNAME);
-        managedUserVM.setEmail(UPDATED_EMAIL);
+        managedUserVM.setEmail(DEFAULT_EMAIL); // can't change email since email must equal login
         managedUserVM.setActivated(updatedUser.isActivated());
         managedUserVM.setImageUrl(UPDATED_IMAGEURL);
         managedUserVM.setLangKey(UPDATED_LANGKEY);
@@ -463,9 +495,57 @@ class UserResourceIT {
             User testUser = users.stream().filter(usr -> usr.getId().equals(updatedUser.getId())).findFirst().get();
             assertThat(testUser.getFirstName()).isEqualTo(UPDATED_FIRSTNAME);
             assertThat(testUser.getLastName()).isEqualTo(UPDATED_LASTNAME);
-            assertThat(testUser.getEmail()).isEqualTo(UPDATED_EMAIL);
+            assertThat(testUser.getEmail()).isEqualTo(DEFAULT_EMAIL);
             assertThat(testUser.getImageUrl()).isEqualTo(UPDATED_IMAGEURL);
             assertThat(testUser.getLangKey()).isEqualTo(UPDATED_LANGKEY);
+        });
+    }
+
+    @Test
+    @Transactional("jhipsterTransactionManager")
+    void updateUserAdmin() throws Exception {
+        String methodName = "updateUserAdmin";
+        log.info("**** " + methodName + " ****");
+        
+        int databaseSizeBeforeUpdate = userRepository.findAll().size();
+
+        // Update the user
+        User updatedUser = userRepository.findOneByLogin("admin").get();
+
+        ManagedUserVM managedUserVM = new ManagedUserVM();
+        managedUserVM.setId(updatedUser.getId());
+        managedUserVM.setLogin(updatedUser.getLogin());
+        managedUserVM.setPassword(UPDATED_PASSWORD);
+        managedUserVM.setFirstName(UPDATED_FIRSTNAME);
+        managedUserVM.setLastName(UPDATED_LASTNAME);
+        managedUserVM.setEmail("adminnew@localhost");
+        managedUserVM.setActivated(updatedUser.isActivated());
+        managedUserVM.setImageUrl(UPDATED_IMAGEURL);
+        managedUserVM.setLangKey(UPDATED_LANGKEY);
+        managedUserVM.setCreatedBy(updatedUser.getCreatedBy());
+        managedUserVM.setCreatedDate(updatedUser.getCreatedDate());
+        managedUserVM.setLastModifiedBy(updatedUser.getLastModifiedBy());
+        managedUserVM.setLastModifiedDate(updatedUser.getLastModifiedDate());
+        managedUserVM.setAuthorities(Collections.singleton(AuthoritiesConstants.USER));
+
+        restUserMockMvc
+            .perform(
+                put("/api/admin/users").contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(managedUserVM))
+            )
+            .andExpect(status().isOk());
+
+        // Validate the User in the database
+        assertPersistedUsers(users -> {
+            assertThat(users).hasSize(databaseSizeBeforeUpdate);
+            User testUser = users.stream().filter(usr -> usr.getId().equals(updatedUser.getId())).findFirst().get();
+            assertThat(testUser.getLogin()).isEqualTo("admin");
+            assertThat(testUser.getEmail()).isEqualTo("adminnew@localhost");
+            assertThat(testUser.getFirstName()).isEqualTo(UPDATED_FIRSTNAME);
+            assertThat(testUser.getLastName()).isEqualTo(UPDATED_LASTNAME);
+            assertThat(testUser.getImageUrl()).isEqualTo(UPDATED_IMAGEURL);
+            assertThat(testUser.getLangKey()).isEqualTo(UPDATED_LANGKEY);
+            assertThat(testUser.isActivated()).isFalse();
+            assertThat(testUser.getActivationKey()).isNotNull();
         });
     }
 
@@ -502,19 +582,55 @@ class UserResourceIT {
             .perform(
                 put("/api/admin/users").contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(managedUserVM))
             )
-            .andExpect(status().isBadRequest());
+            .andExpect(status().isOk());
 
-        // Validate no changes to the user
+        // Validate the User in the database
         assertPersistedUsers(users -> {
             assertThat(users).hasSize(databaseSizeBeforeUpdate);
             User testUser = users.stream().filter(usr -> usr.getId().equals(updatedUser.getId())).findFirst().get();
-            assertThat(testUser.getLogin()).isEqualTo(DEFAULT_LOGIN);
-            assertThat(testUser.getFirstName()).isEqualTo(DEFAULT_FIRSTNAME);
-            assertThat(testUser.getLastName()).isEqualTo(DEFAULT_LASTNAME);
-            assertThat(testUser.getEmail()).isEqualTo(DEFAULT_EMAIL);
-            assertThat(testUser.getImageUrl()).isEqualTo(DEFAULT_IMAGEURL);
-            assertThat(testUser.getLangKey()).isEqualTo(DEFAULT_LANGKEY);
+            assertThat(testUser.getLogin()).isEqualTo(UPDATED_LOGIN);
+            assertThat(testUser.getEmail()).isEqualTo(UPDATED_EMAIL);
+            assertThat(testUser.getFirstName()).isEqualTo(UPDATED_FIRSTNAME);
+            assertThat(testUser.getLastName()).isEqualTo(UPDATED_LASTNAME);
+            assertThat(testUser.getImageUrl()).isEqualTo(UPDATED_IMAGEURL);
+            assertThat(testUser.getLangKey()).isEqualTo(UPDATED_LANGKEY);
+            assertThat(testUser.isActivated()).isFalse();
+            assertThat(testUser.getActivationKey()).isNotNull();
         });
+    }
+
+    @Test
+    @Transactional("jhipsterTransactionManager")
+    void updateUserMismatchLoginAndEmail() throws Exception {
+        String methodName = "updateUserMismatchLoginAndEmail";
+        log.info("**** " + methodName + " ****");
+        // Initialize the database with user
+        userRepository.saveAndFlush(user);
+
+        // Update the user
+        User updatedUser = userRepository.findById(user.getId()).get();
+
+        ManagedUserVM managedUserVM = new ManagedUserVM();
+        managedUserVM.setId(updatedUser.getId());
+        managedUserVM.setLogin(updatedUser.getLogin());
+        managedUserVM.setPassword(updatedUser.getPassword());
+        managedUserVM.setFirstName(updatedUser.getFirstName());
+        managedUserVM.setLastName(updatedUser.getLastName());
+        managedUserVM.setEmail("1234" + updatedUser.getEmail());
+        managedUserVM.setActivated(updatedUser.isActivated());
+        managedUserVM.setImageUrl(updatedUser.getImageUrl());
+        managedUserVM.setLangKey(updatedUser.getLangKey());
+        managedUserVM.setCreatedBy(updatedUser.getCreatedBy());
+        managedUserVM.setCreatedDate(updatedUser.getCreatedDate());
+        managedUserVM.setLastModifiedBy(updatedUser.getLastModifiedBy());
+        managedUserVM.setLastModifiedDate(updatedUser.getLastModifiedDate());
+        managedUserVM.setAuthorities(Collections.singleton(AuthoritiesConstants.USER));
+
+        restUserMockMvc
+            .perform(
+                put("/api/admin/users").contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(managedUserVM))
+            )
+            .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -526,7 +642,7 @@ class UserResourceIT {
         userRepository.saveAndFlush(user);
 
         User anotherUser = new User();
-        anotherUser.setLogin("jhipster");
+        anotherUser.setLogin("jhipster@localhost");
         anotherUser.setPassword(RandomStringUtils.random(60));
         anotherUser.setActivated(true);
         anotherUser.setEmail("jhipster@localhost");
@@ -571,10 +687,10 @@ class UserResourceIT {
         userRepository.saveAndFlush(user);
 
         User anotherUser = new User();
-        anotherUser.setLogin("jhipster");
+        anotherUser.setLogin("jhipster123@localhost");
         anotherUser.setPassword(RandomStringUtils.random(60));
         anotherUser.setActivated(true);
-        anotherUser.setEmail("jhipster@localhost");
+        anotherUser.setEmail("jhipster123@localhost");
         anotherUser.setFirstName("java");
         anotherUser.setLastName("hipster");
         anotherUser.setImageUrl("");
@@ -586,7 +702,7 @@ class UserResourceIT {
 
         ManagedUserVM managedUserVM = new ManagedUserVM();
         managedUserVM.setId(updatedUser.getId());
-        managedUserVM.setLogin("jhipster"); // this login should already be used by anotherUser
+        managedUserVM.setLogin("jhipster123@localhost"); // this login should already be used by anotherUser
         managedUserVM.setPassword(updatedUser.getPassword());
         managedUserVM.setFirstName(updatedUser.getFirstName());
         managedUserVM.setLastName(updatedUser.getLastName());
@@ -639,7 +755,7 @@ class UserResourceIT {
     void createAdminUser() throws Exception {
         String methodName = "createUser";
         log.info("**** " + methodName + " ****");
-        String testLogin = methodName.toLowerCase();
+        String testLogin = methodName.toLowerCase() + DEFAULT_EMAIL_SUFFIX;
         int databaseSizeBeforeCreate = userRepository.findAll().size();
 
         // Create the User
@@ -648,7 +764,7 @@ class UserResourceIT {
         managedUserVM.setPassword(DEFAULT_PASSWORD);
         managedUserVM.setFirstName(DEFAULT_FIRSTNAME);
         managedUserVM.setLastName(DEFAULT_LASTNAME);
-        managedUserVM.setEmail(testLogin + DEFAULT_EMAIL_SUFFIX);
+        managedUserVM.setEmail(testLogin);
         managedUserVM.setActivated(true);
         managedUserVM.setImageUrl(DEFAULT_IMAGEURL);
         managedUserVM.setLangKey(DEFAULT_LANGKEY);
@@ -667,7 +783,7 @@ class UserResourceIT {
             assertThat(testUser.getLogin()).isEqualTo(testLogin);
             assertThat(testUser.getFirstName()).isEqualTo(DEFAULT_FIRSTNAME);
             assertThat(testUser.getLastName()).isEqualTo(DEFAULT_LASTNAME);
-            assertThat(testUser.getEmail()).isEqualTo(testLogin + DEFAULT_EMAIL_SUFFIX);
+            assertThat(testUser.getEmail()).isEqualTo(testLogin);
             assertThat(testUser.getImageUrl()).isEqualTo(DEFAULT_IMAGEURL);
             assertThat(testUser.getLangKey()).isEqualTo(DEFAULT_LANGKEY);
         });
