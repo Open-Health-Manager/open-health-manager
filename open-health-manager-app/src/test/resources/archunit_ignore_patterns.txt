@@ -1,0 +1,2 @@
+# There are many known violations where PasswordConstraintClassValidator is involved; we'll ignore them all
+.*PasswordConstraintClassValidator.*

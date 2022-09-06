@@ -1,14 +1,14 @@
 package org.mitre.healthmanager.web.rest.vm;
 
 import org.mitre.healthmanager.service.dto.AdminUserDTO;
-import org.mitre.healthmanager.service.dto.ValidPassword;
+import org.mitre.healthmanager.service.dto.ValidPasswordClass;
 
 /**
  * View Model extending the AdminUserDTO, which is meant to be used in the user management UI.
  */
+@ValidPasswordClass
 public class ManagedUserVM extends AdminUserDTO {
 
-    @ValidPassword
     private String password;
 
     public ManagedUserVM() {

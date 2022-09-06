@@ -1,7 +1,5 @@
 package org.mitre.healthmanager.service.dto;
 
-import static java.lang.annotation.ElementType.ANNOTATION_TYPE;
-import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
@@ -13,10 +11,10 @@ import javax.validation.Constraint;
 import javax.validation.Payload;
 
 @Documented
-@Constraint(validatedBy = PasswordConstraintValidator.class)
-@Target({ TYPE, FIELD, ANNOTATION_TYPE })
+@Constraint(validatedBy = PasswordConstraintClassValidator.class)
+@Target({ TYPE})
 @Retention(RUNTIME)
-public @interface ValidPassword {
+public @interface ValidPasswordClass {
 
     String message() default "Invalid Password";
 
