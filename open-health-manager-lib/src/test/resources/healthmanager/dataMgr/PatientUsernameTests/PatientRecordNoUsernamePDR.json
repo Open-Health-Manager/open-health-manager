@@ -1,0 +1,36 @@
+{
+  "type": "message",
+  "entry": [
+    {
+      "resource": {
+        "extension": [
+          {
+            "url": "https://github.com/Open-Health-Manager/patient-data-receipt-ig/StructureDefinition/AccountExtension",
+            "valueString": "noUsernameOnPt"
+          }
+        ],
+        "eventUri": "urn:mitre:healthmanager:pdr",
+        "source": {
+          "endpoint": "urn:mitre:healthManager:testSource"
+        },
+        "resourceType": "MessageHeader"
+      }
+    },
+    {
+      "resource": {
+        "active": true,
+        "name": [
+          {
+            "text": "NoUsername ptRecord",
+            "family": "ptRecord",
+            "given": [
+              "NoUsername"
+            ]
+          }
+        ],
+        "resourceType": "Patient"
+      }
+    }
+  ],
+  "resourceType": "Bundle"
+}

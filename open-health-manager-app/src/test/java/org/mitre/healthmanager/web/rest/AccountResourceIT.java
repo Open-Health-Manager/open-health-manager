@@ -22,7 +22,6 @@ import org.junit.jupiter.api.Test;
 import org.mitre.healthmanager.IntegrationTest;
 import org.mitre.healthmanager.config.Constants;
 import org.mitre.healthmanager.domain.Authority;
-import org.mitre.healthmanager.domain.FHIRPatient;
 import org.mitre.healthmanager.domain.User;
 import org.mitre.healthmanager.repository.AuthorityRepository;
 import org.mitre.healthmanager.repository.UserRepository;
@@ -30,6 +29,7 @@ import org.mitre.healthmanager.security.AuthoritiesConstants;
 import org.mitre.healthmanager.service.FHIRPatientService;
 import org.mitre.healthmanager.service.UserService;
 import org.mitre.healthmanager.service.dto.AdminUserDTO;
+import org.mitre.healthmanager.service.dto.FHIRPatientDTO;
 import org.mitre.healthmanager.service.dto.UserDUADTO;
 import org.mitre.healthmanager.service.dto.PasswordChangeDTO;
 import org.mitre.healthmanager.service.dto.PasswordConstraintClassValidator;
@@ -783,7 +783,7 @@ class AccountResourceIT {
                 // confirm a linked FHIR patient exists
                 Optional<User> storedUser = userRepository.findOneByLogin("to-re-register@example.com");
                 assertThat(storedUser).isPresent();
-                FHIRPatient fhirPatient = fhirPatientService.findOneForUser(storedUser.get().getId()).orElse(null);
+                FHIRPatientDTO fhirPatient = fhirPatientService.findOneForUser(storedUser.get().getId()).orElse(null);
                 assertNotNull(fhirPatient);
                 IFhirResourceDao<Patient> patientDAO = myDaoRegistry.getResourceDao(Patient.class);
                 SystemRequestDetails searchRequestDetails = SystemRequestDetails.forAllPartition();

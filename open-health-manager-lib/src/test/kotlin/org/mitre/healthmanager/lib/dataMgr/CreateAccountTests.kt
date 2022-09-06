@@ -26,10 +26,19 @@ import org.hl7.fhir.r4.model.Patient
 import org.hl7.fhir.r4.model.StringType
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.api.BeforeEach
 import org.mitre.healthmanager.searchForPatientByUsername
+import org.mitre.healthmanager.getAdminAuthClient
+import org.mitre.healthmanager.TestUtils.mockAdminUser
+import org.mitre.healthmanager.getAdminAuthClient
+import org.mitre.healthmanager.TestUtils.mockAdminUser
 import org.slf4j.LoggerFactory
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.web.server.LocalServerPort
+import org.springframework.security.test.context.support.WithMockUser
+import org.springframework.test.context.ContextConfiguration
+import org.springframework.test.context.junit.jupiter.SpringExtension
 
 @SpringBootTest(
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
@@ -45,6 +54,8 @@ import org.springframework.boot.web.server.LocalServerPort
         "hapi.fhir.fhir_version=r4",
     ]
 )
+@ExtendWith(SpringExtension::class)
+@ContextConfiguration
 class CreateAccountTests {
 
     private val ourLog = LoggerFactory.getLogger(CreateAccountTests::class.java)
@@ -57,11 +68,16 @@ class CreateAccountTests {
     @LocalServerPort
     private var port = 0
 
+    @BeforeEach
+    fun setAdminAuthContext() {
+        mockAdminUser()
+    }
+
     @Test
     fun testCreateSuccess() {
         val methodName = "testCreateSuccess"
         ourLog.info("Entering $methodName()...")
-        val testClient: IGenericClient = ourCtx.newRestfulGenericClient("http://localhost:$port/fhir/")
+        val testClient : IGenericClient = getAdminAuthClient(ourCtx, "http://localhost:$port/fhir/")
 
         // make sure patient doesn't exist
         val results = testClient
@@ -92,7 +108,7 @@ class CreateAccountTests {
     fun testCreateWithSpecificId() {
         val methodName = "testCreateSuccess"
         ourLog.info("Entering $methodName()...")
-        val testClient: IGenericClient = ourCtx.newRestfulGenericClient("http://localhost:$port/fhir/")
+        val testClient : IGenericClient = getAdminAuthClient(ourCtx, "http://localhost:$port/fhir/")
         val testUsername = "createNewWithId"
         val testPatientId = "test-createNewWithId"
 

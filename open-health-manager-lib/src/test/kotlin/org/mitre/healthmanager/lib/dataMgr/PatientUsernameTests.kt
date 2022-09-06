@@ -27,8 +27,11 @@ import org.hl7.fhir.r4.model.Bundle
 import org.hl7.fhir.r4.model.Patient
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.BeforeEach
 import org.mitre.healthmanager.searchForPatientByUsername
 import org.mitre.healthmanager.stringFromResource
+import org.mitre.healthmanager.getAdminAuthClient
+import org.mitre.healthmanager.TestUtils.mockAdminUser
 import org.slf4j.LoggerFactory
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.web.server.LocalServerPort
@@ -60,14 +63,18 @@ class PatientUsernameTests {
     @LocalServerPort
     private var port = 0
 
+    @BeforeEach
+    fun setAdminAuthContext() {
+        mockAdminUser()
+    }
+
     @Test
     fun testCreateWithoutUsername() {
         val methodName = "testCreateWithoutUsername"
         ourLog.info("Entering $methodName()...")
-        val testClient: IGenericClient = ourCtx.newRestfulGenericClient("http://localhost:$port/fhir/")
+        val testClient : IGenericClient = getAdminAuthClient(ourCtx, "http://localhost:$port/fhir/")
 
         val noUsernamePatient = Patient()
-        noUsernamePatient.addIdentifier().setSystem("urn:system").setValue("12345")
         noUsernamePatient.addName().setFamily("Smith").addGiven("John")
 
         val outcome: MethodOutcome? = try {
@@ -87,7 +94,7 @@ class PatientUsernameTests {
     fun testCreateWithoutUsernameOnPatientRecordPDR() {
         val methodName = "testCreateWithoutUsernameOnPatientRecordPDR"
         ourLog.info("Entering $methodName()...")
-        val testClient: IGenericClient = ourCtx.newRestfulGenericClient("http://localhost:$port/fhir/")
+        val testClient : IGenericClient = getAdminAuthClient(ourCtx, "http://localhost:$port/fhir/")
 
         // make sure patient doesn't exist
         val results = testClient
@@ -103,7 +110,7 @@ class PatientUsernameTests {
         val pdrBundle: Bundle = ourCtx.newJsonParser().parseResource<Bundle>(
             Bundle::class.java, stringFromResource("healthmanager/dataMgr/PatientUsernameTests/PatientRecordNoUsernamePDR.json")
         )
-        val response : Bundle = testClient
+        testClient
             .operation()
             .processMessage()
             .setMessageBundle<Bundle>(pdrBundle)
@@ -128,7 +135,7 @@ class PatientUsernameTests {
     fun testUpdateWithoutUsername() {
         val methodName = "testUpdateWithoutUsername"
         ourLog.info("Entering $methodName()...")
-        val testClient: IGenericClient = ourCtx.newRestfulGenericClient("http://localhost:$port/fhir/")
+        val testClient : IGenericClient = getAdminAuthClient(ourCtx, "http://localhost:$port/fhir/")
         val testUsername = "testCreate"
 
         // create
@@ -180,7 +187,7 @@ class PatientUsernameTests {
     fun testUpdateToDifferentUsername() {
         val methodName = "testUpdateToDifferentUsername"
         ourLog.info("Entering $methodName()...")
-        val testClient: IGenericClient = ourCtx.newRestfulGenericClient("http://localhost:$port/fhir/")
+        val testClient : IGenericClient = getAdminAuthClient(ourCtx, "http://localhost:$port/fhir/")
 
         // create
         val usernamePatient = Patient()

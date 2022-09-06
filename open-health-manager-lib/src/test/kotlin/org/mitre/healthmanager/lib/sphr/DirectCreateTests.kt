@@ -24,11 +24,14 @@ import org.hl7.fhir.instance.model.api.IBaseBundle
 import org.hl7.fhir.r4.model.*
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.BeforeEach
 import org.mitre.healthmanager.lib.dataMgr.pdrAccountExtension
 import org.mitre.healthmanager.lib.dataMgr.pdrLinkListExtensionURL
 import org.mitre.healthmanager.lib.dataMgr.usernameSystem
 import org.mitre.healthmanager.searchForPatientByUsername
 import org.mitre.healthmanager.stringFromResource
+import org.mitre.healthmanager.getAdminAuthClient
+import org.mitre.healthmanager.TestUtils.mockAdminUser
 import org.slf4j.LoggerFactory
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.web.server.LocalServerPort
@@ -59,11 +62,16 @@ class DirectCreateTests {
     @LocalServerPort
     private var port = 0
 
+    @BeforeEach
+    fun setAdminAuthContext() {
+        mockAdminUser()
+    }
+
     @Test
     fun testPatientCreate() {
         val methodName = "testPatientCreate"
         ourLog.info("Entering $methodName()...")
-        val testClient : IGenericClient = ourCtx.newRestfulGenericClient("http://localhost:$port/fhir/")
+        val testClient : IGenericClient = getAdminAuthClient(ourCtx, "http://localhost:$port/fhir/")
         val testUsername = "patientDirectCreation"
 
         val createPatient = Patient()
@@ -148,7 +156,7 @@ class DirectCreateTests {
     fun testPatientCreateWithId() {
         val methodName = "testPatientCreateWithId"
         ourLog.info("Entering $methodName()...")
-        val testClient : IGenericClient = ourCtx.newRestfulGenericClient("http://localhost:$port/fhir/")
+        val testClient : IGenericClient = getAdminAuthClient(ourCtx, "http://localhost:$port/fhir/")
         val testUsername = "patientDirectCreationWithId"
         val testPatientId = "test-patientDirectCreationWithId"
 
@@ -177,7 +185,7 @@ class DirectCreateTests {
     fun testUpdateUsernameWithPostFail() {
         val methodName = "testUpdateUsernameWithPostFail"
         ourLog.info("Entering $methodName()...")
-        val testClient : IGenericClient = ourCtx.newRestfulGenericClient("http://localhost:$port/fhir/")
+        val testClient : IGenericClient = getAdminAuthClient(ourCtx, "http://localhost:$port/fhir/")
         val testUsername = "updateUsernameWithPost"
 
         val createPatient = Patient()
@@ -213,7 +221,7 @@ class DirectCreateTests {
     fun testUpdateUsernameWithPutDifferentIdFail() {
         val methodName = "testUpdateUsernameWithPutDifferentIdFail"
         ourLog.info("Entering $methodName()...")
-        val testClient : IGenericClient = ourCtx.newRestfulGenericClient("http://localhost:$port/fhir/")
+        val testClient : IGenericClient = getAdminAuthClient(ourCtx, "http://localhost:$port/fhir/")
         val testUsername = "updateUsernameWithPutDifferentId"
 
         val createPatient = Patient()
@@ -251,7 +259,7 @@ class DirectCreateTests {
     fun testPatientUpdateExistingId() {
         val methodName = "testPatientUpdateExistingId"
         ourLog.info("Entering $methodName()...")
-        val testClient : IGenericClient = ourCtx.newRestfulGenericClient("http://localhost:$port/fhir/")
+        val testClient : IGenericClient = getAdminAuthClient(ourCtx, "http://localhost:$port/fhir/")
         val testUsername = "testPatientUpdateExistingId"
 
         val createPatient = Patient()
@@ -303,7 +311,7 @@ class DirectCreateTests {
     fun testTwoWrites() {
         val methodName = "testTwoWrites"
         ourLog.info("Entering $methodName()...")
-        val testClient : IGenericClient = ourCtx.newRestfulGenericClient("http://localhost:$port/fhir/")
+        val testClient : IGenericClient = getAdminAuthClient(ourCtx, "http://localhost:$port/fhir/")
         val testUsername = "directWriteTwo"
 
         // make sure patient doesn't exist
@@ -436,7 +444,7 @@ class DirectCreateTests {
     fun testInferUsernameFromPatientLinkage() {
         val methodName = "testInferUsernameFromPatientLinkage"
         ourLog.info("Entering $methodName()...")
-        val testClient : IGenericClient = ourCtx.newRestfulGenericClient("http://localhost:$port/fhir/")
+        val testClient : IGenericClient = getAdminAuthClient(ourCtx, "http://localhost:$port/fhir/")
         val testUsername = "inferUsernameViaLink"
 
         // make sure patient doesn't exist
@@ -499,7 +507,7 @@ class DirectCreateTests {
     fun testSharedResourceWrite() {
         val methodName = "testSharedResourceWrite"
         ourLog.info("Entering $methodName()...")
-        val testClient : IGenericClient = ourCtx.newRestfulGenericClient("http://localhost:$port/fhir/")
+        val testClient : IGenericClient = getAdminAuthClient(ourCtx, "http://localhost:$port/fhir/")
         val testUsername = "sharedResourceWrite"
 
         // make sure patient doesn't exist

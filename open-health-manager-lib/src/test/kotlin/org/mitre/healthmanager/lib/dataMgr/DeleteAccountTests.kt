@@ -23,8 +23,11 @@ import org.hl7.fhir.instance.model.api.IBaseBundle
 import org.hl7.fhir.r4.model.*
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.BeforeEach
 import org.mitre.healthmanager.searchForPatientByUsername
 import org.mitre.healthmanager.stringFromResource
+import org.mitre.healthmanager.getAdminAuthClient
+import org.mitre.healthmanager.TestUtils.mockAdminUser
 import org.slf4j.LoggerFactory
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.web.server.LocalServerPort
@@ -54,19 +57,24 @@ class DeleteAccountTests {
 
     @LocalServerPort
     private var port = 0
-
+    
+    @BeforeEach
+    fun setAdminAuthContext() {
+        mockAdminUser()
+    }
+    
     @Test
     fun testOnePDRDelete() {
         val methodName = "testOnePDRDelete"
         ourLog.info("Entering $methodName()...")
-        val testClient: IGenericClient = ourCtx.newRestfulGenericClient("http://localhost:$port/fhir/")
+        val testClient : IGenericClient = getAdminAuthClient(ourCtx, "http://localhost:$port/fhir/")
 
         // file test data
         // has username identifier and first / last name
         val messageBundle: Bundle = ourCtx.newJsonParser().parseResource<Bundle>(
-            Bundle::class.java, stringFromResource("healthmanager/dataMgr/RebuildAccountTests/SinglePDRRebuild.json")
+            Bundle::class.java, stringFromResource("healthmanager/dataMgr/DeleteAccountTests/SinglePDRDelete.json")
         )
-        val response : Bundle = testClient
+        testClient
             .operation()
             .processMessage()
             .setMessageBundle<Bundle>(messageBundle)
@@ -75,7 +83,7 @@ class DeleteAccountTests {
 
         ourLog.info("**** get patient id for username ****")
         // give indexing a few more seconds
-        val patientId: String? = searchForPatientByUsername("rebuildonepdr", testClient, 120)
+        val patientId: String? = searchForPatientByUsername("deleteonepdr", testClient, 120)
 
         Assertions.assertNotNull(patientId)
         val patResource = testClient.read().resource(Patient::class.java).withId(patientId).encodedJson().execute()
@@ -105,7 +113,7 @@ class DeleteAccountTests {
         // trigger rebuild (operation)
         // Create the input parameters to pass to the server
         val inParams = Parameters()
-        inParams.addParameter().setName("username").value = StringType("rebuildonepdr")
+        inParams.addParameter().setName("username").value = StringType("deleteonepdr")
 
         testClient
             .operation()

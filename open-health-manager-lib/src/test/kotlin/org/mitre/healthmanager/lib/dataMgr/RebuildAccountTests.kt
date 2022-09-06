@@ -22,8 +22,11 @@ import ca.uhn.fhir.rest.client.api.ServerValidationModeEnum
 import org.hl7.fhir.r4.model.*
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.BeforeEach
+import org.mitre.healthmanager.TestUtils.mockAdminUser
 import org.mitre.healthmanager.searchForPatientByUsername
 import org.mitre.healthmanager.stringFromResource
+import org.mitre.healthmanager.getAdminAuthClient
 import org.slf4j.LoggerFactory
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.web.server.LocalServerPort
@@ -54,11 +57,16 @@ class RebuildAccountTests {
     @LocalServerPort
     private var port = 0
 
+    @BeforeEach
+    fun setAdminAuthContext() {
+        mockAdminUser()
+    }
+
     @Test
     fun testPatientOnlyRebuild() {
         val methodName = "testPatientOnlyRebuild"
         ourLog.info("Entering $methodName()...")
-        val testClient: IGenericClient = ourCtx.newRestfulGenericClient("http://localhost:$port/fhir/")
+        val testClient : IGenericClient = getAdminAuthClient(ourCtx, "http://localhost:$port/fhir/")
 
         // file test data
         // has username identifier and first / last name
@@ -101,7 +109,7 @@ class RebuildAccountTests {
     fun testOnePDRRebuild() {
         val methodName = "testOnePDRRebuild"
         ourLog.info("Entering $methodName()...")
-        val testClient: IGenericClient = ourCtx.newRestfulGenericClient("http://localhost:$port/fhir/")
+        val testClient : IGenericClient = getAdminAuthClient(ourCtx, "http://localhost:$port/fhir/")
 
         // file test data
         // has username identifier and first / last name
