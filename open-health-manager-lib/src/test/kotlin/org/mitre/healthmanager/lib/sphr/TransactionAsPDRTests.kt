@@ -22,11 +22,14 @@ import ca.uhn.fhir.rest.client.api.ServerValidationModeEnum
 import org.hl7.fhir.r4.model.*
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.BeforeEach
 import org.mitre.healthmanager.lib.dataMgr.getSourceFromMessageHeader
 import org.mitre.healthmanager.lib.dataMgr.pdrLinkExtensionURL
 import org.mitre.healthmanager.lib.dataMgr.pdrLinkListExtensionURL
 import org.mitre.healthmanager.searchForPatientByUsername
 import org.mitre.healthmanager.stringFromResource
+import org.mitre.healthmanager.getAdminAuthClient
+import org.mitre.healthmanager.TestUtils.mockAdminUser
 import org.slf4j.LoggerFactory
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.web.server.LocalServerPort
@@ -57,11 +60,16 @@ class TransactionAsPDRTests {
     @LocalServerPort
     private var port = 0
 
+    @BeforeEach
+    fun setAdminAuthContext() {
+        mockAdminUser()
+    }
+
     @Test
     fun testTransactionAsPDR() {
         val methodName = "testTransactionAsPDR"
         ourLog.info("Entering $methodName()...")
-        val testClient : IGenericClient = ourCtx.newRestfulGenericClient("http://localhost:$port/fhir/")
+        val testClient : IGenericClient = getAdminAuthClient(ourCtx, "http://localhost:$port/fhir/")
         val testUsername = "testTransactionAsPDR"
         val testPatientId = "test-testTransactionAsPDR"
         val tx1Source = "urn:mitre:healthmanager:test:source1"
@@ -304,7 +312,7 @@ class TransactionAsPDRTests {
     fun testUpdatePatientLinksInTx() {
         val methodName = "testUpdatePatientLinksInTx"
         ourLog.info("Entering $methodName()...")
-        val testClient : IGenericClient = ourCtx.newRestfulGenericClient("http://localhost:$port/fhir/")
+        val testClient : IGenericClient = getAdminAuthClient(ourCtx, "http://localhost:$port/fhir/")
         val testUsername = "testUpdatePatientLinksInTx"
 
         val inParams = Parameters()

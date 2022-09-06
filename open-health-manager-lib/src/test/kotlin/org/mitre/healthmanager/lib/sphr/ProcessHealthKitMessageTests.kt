@@ -25,8 +25,11 @@ import org.hl7.fhir.r4.model.MessageHeader
 import org.hl7.fhir.r4.model.Parameters
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.BeforeEach
 import org.mitre.healthmanager.searchForPatientByUsername
 import org.mitre.healthmanager.stringFromResource
+import org.mitre.healthmanager.getAdminAuthClient
+import org.mitre.healthmanager.TestUtils.mockAdminUser
 import org.slf4j.LoggerFactory
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.web.server.LocalServerPort
@@ -57,11 +60,16 @@ class ProcessHealthKitMessageTests {
     @LocalServerPort
     private var port = 0
 
+    @BeforeEach
+    fun setAdminAuthContext() {
+        mockAdminUser()
+    }
+
     @Test
     fun testAppleHealthKitBundleStorage() {
         val methodName = "testAppleHealthKitBundleStorage"
         ourLog.info("Entering $methodName()...")
-        val testClient : IGenericClient = ourCtx.newRestfulGenericClient("http://localhost:$port/fhir/")
+        val testClient : IGenericClient = getAdminAuthClient(ourCtx, "http://localhost:$port/fhir/")
 
         // Submit the bundle
         val messageBundle: Bundle = ourCtx.newJsonParser().parseResource(
@@ -96,7 +104,7 @@ class ProcessHealthKitMessageTests {
         Assertions.assertEquals(1, patientEverythingResult.parameter.size)
         when (val everythingBundle = patientEverythingResult.parameter[0].resource) {
             is Bundle -> {
-                Assertions.assertEquals(15, everythingBundle.entry.size)
+                Assertions.assertEquals(15, everythingBundle.total)
             }
             else -> {
                 Assertions.fail("\$everything didn't return a bundle")

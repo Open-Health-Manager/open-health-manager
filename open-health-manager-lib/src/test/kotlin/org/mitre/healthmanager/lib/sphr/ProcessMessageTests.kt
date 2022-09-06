@@ -25,7 +25,10 @@ import org.hl7.fhir.r4.model.*
 import org.junit.jupiter.api.*
 import org.mitre.healthmanager.lib.dataMgr.pdrAccountExtension
 import org.mitre.healthmanager.lib.dataMgr.pdrLinkListExtensionURL
+import org.mitre.healthmanager.searchForPatientByUsername
 import org.mitre.healthmanager.stringFromResource
+import org.mitre.healthmanager.getAdminAuthClient
+import org.mitre.healthmanager.TestUtils.mockAdminUser
 import org.slf4j.LoggerFactory
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.web.server.LocalServerPort
@@ -60,11 +63,16 @@ class ProcessMessageTests {
     @LocalServerPort
     private var port = 0
 
+    @BeforeEach
+    fun setAdminAuthContext() {
+        mockAdminUser()
+    }
+
     @Test
     fun testSuccessfulBundleStorage() {
         val methodName = "testSuccessfulBundleStorage"
         ourLog.info("Entering $methodName()...")
-        val testClient : IGenericClient = ourCtx.newRestfulGenericClient("http://localhost:$port/fhir/")
+        val testClient : IGenericClient = getAdminAuthClient(ourCtx, "http://localhost:$port/fhir/")
 
         // Submit the bundle
         val messageBundle: Bundle = ourCtx.newJsonParser().parseResource<Bundle>(
@@ -87,81 +95,7 @@ class ProcessMessageTests {
             }
         }
 
-        Thread.sleep(1000) // give indexing a second to occur
-
-        // find the patient id
-        val patientResultsBundle : Bundle = testClient
-            .search<IBaseBundle>()
-            .forResource(Patient::class.java)
-            //.where(Patient.IDENTIFIER.exactly().systemAndIdentifier("urn:mitre:healthmanager:account:username", "aKutch271"))
-            .returnBundle(Bundle::class.java)
-            .execute()
-
-        /* Indexing seems to be taking too long, so don't search on patient id
-        // give indexing a few more seconds
-        if (patientResultsBundle.entry.size == 0) {
-            Awaitility.await().atMost(1, TimeUnit.MINUTES).until {
-                Thread.sleep(5000) // execute below function every 1 second
-                ourLog.info("waiting for indexing")
-                patientResultsBundle = testClient
-                    .search<IBaseBundle>()
-                    .forResource(Patient::class.java)
-                    .where(Patient.IDENTIFIER.exactly().systemAndIdentifier("urn:mitre:healthmanager:account:username", "aKutch271"))
-                    .returnBundle(Bundle::class.java)
-                    .execute()
-                patientResultsBundle?.entry?.size!! > 0
-            }
-        }
-         */
-
-        Assertions.assertEquals(1, patientResultsBundle.entry.size)
-        val patientId = when (val firstResource = patientResultsBundle.entry[0].resource) {
-            is Patient -> {
-                val username = firstResource.identifier.filter { id -> id.system == "urn:mitre:healthmanager:account:username" }
-                Assertions.assertEquals(1, username.size)
-                Assertions.assertEquals("aKutch271", username[0].value)
-                firstResource.idElement.idPart
-            }
-            else -> {
-                Assertions.fail("response didn't return a patient")
-            }
-        }
-
-        // look for the message header
-        val messageHeaderResults : Bundle = testClient
-            .search<IBaseBundle>()
-            .forResource(MessageHeader::class.java)
-            .returnBundle(Bundle::class.java)
-            .execute()
-        Assertions.assertEquals(1, messageHeaderResults.entry.size)
-        when (val messageHeader = messageHeaderResults.entry[0].resource) {
-            is MessageHeader -> {
-                var foundPatient = false
-                var foundBundle = false
-                // 2 focuses: patient and bundle
-                Assertions.assertEquals(2, messageHeader.focus.size)
-                messageHeader.focus.forEach { aFocus ->
-                    when {
-
-                        (aFocus.referenceElement.resourceType == "Patient") -> {
-                            Assertions.assertEquals(patientId, aFocus.referenceElement.idPart)
-                            foundPatient = true
-                        }
-                        (aFocus.referenceElement.resourceType == "Bundle") -> {
-                            foundBundle = true
-                        }
-                        else -> {
-                            Assertions.fail("unexpected focus")
-                        }
-                    }
-                }
-                Assertions.assertTrue(foundBundle)
-                Assertions.assertTrue(foundPatient)
-            }
-            else -> {
-                Assertions.fail("not a message header")
-            }
-        }
+        val patientId = searchForPatientByUsername("aKutch271", testClient, 120)
 
         // check other resources
         val patientEverythingResult : Parameters = testClient
@@ -191,25 +125,46 @@ class ProcessMessageTests {
                         }
                         is MessageHeader -> {
                             foundMessageHeader = true
+                            var foundMHPatient = false
+                            var foundMHBundle = false
+                            // 2 focuses: patient and bundle
+                            Assertions.assertEquals(2, theResource.focus.size)
+                            theResource.focus.forEach { aFocus ->
+                                when {
+
+                                    (aFocus.referenceElement.resourceType == "Patient") -> {
+                                        Assertions.assertEquals(patientId, aFocus.referenceElement.idPart)
+                                        foundMHPatient = true
+                                    }
+                                    (aFocus.referenceElement.resourceType == "Bundle") -> {
+                                        foundMHBundle = true
+                                    }
+                                    else -> {
+                                        Assertions.fail("unexpected focus")
+                                    }
+                                }
+                            }
+                            Assertions.assertTrue(foundMHBundle)
+                            Assertions.assertTrue(foundMHPatient)
                         }
                         is Bundle -> {
                             foundBundle = true
-                            for (entry in theResource.entry) {
-                                when (val entryResource = entry.resource) {
+                            for (bundleEntry in theResource.entry) {
+                                when (bundleEntry.resource) {
                                     is Patient -> {
-                                        Assertions.assertEquals(1, entry.link.size)
+                                        Assertions.assertEquals(1, bundleEntry.link.size)
                                     }
                                     is Encounter -> {
-                                        Assertions.assertEquals(1, entry.link.size)
+                                        Assertions.assertEquals(1, bundleEntry.link.size)
                                     }
                                     is Procedure -> {
-                                        Assertions.assertEquals(1, entry.link.size)
+                                        Assertions.assertEquals(1, bundleEntry.link.size)
                                     }
                                     is Practitioner -> {
-                                        Assertions.assertEquals(0, entry.link.size)
+                                        Assertions.assertEquals(0, bundleEntry.link.size)
                                     }
                                     is MessageHeader -> {
-                                        Assertions.assertEquals(1, entry.link.size)
+                                        Assertions.assertEquals(1, bundleEntry.link.size)
                                     }
                                     else -> {
                                         Assertions.fail("unexpected entry resource type in bundle")

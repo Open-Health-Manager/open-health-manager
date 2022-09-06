@@ -23,6 +23,7 @@ import org.hl7.fhir.instance.model.api.IBaseResource
 import org.hl7.fhir.r4.model.*
 import org.mitre.healthmanager.lib.dataMgr.*
 import org.mitre.healthmanager.lib.dataMgr.resourceTypes.isSharedResource
+import org.mitre.healthmanager.lib.auth.OHMAuthorizationInterceptor
 import java.io.IOException
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
@@ -74,6 +75,12 @@ class RequestInterceptor(private val myPatientDaoR4: IFhirResourceDaoPatient<Pat
             ?: run {
                 // handle the create here since it doesn't appear that we can alter the original request
                 // including all the PDR / MessageHeader stuff as well
+
+                // Check here if allowed to create patient resource instances
+                // by calling auth interceptor, which isn't called since we
+                // don't continue normal processing
+                val authInterceptor = OHMAuthorizationInterceptor()
+                authInterceptor.incomingRequestPreHandled(requestDetails, Pointcut.SERVER_INCOMING_REQUEST_POST_PROCESSED)
 
                 // 0. if id specified, check that it isn't already being used for another username
                 if (theResource.id != null) {
