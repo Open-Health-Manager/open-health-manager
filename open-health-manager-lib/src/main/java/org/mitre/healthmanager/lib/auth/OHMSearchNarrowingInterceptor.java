@@ -3,7 +3,7 @@ package org.mitre.healthmanager.lib.auth;
 import static org.mitre.healthmanager.lib.auth.AuthFetcher.getAuthorization;
 import static org.mitre.healthmanager.lib.auth.AuthFetcher.parseAuthToken;
 
-import org.json.simple.JSONObject;
+import java.util.Map;
 
 import ca.uhn.fhir.rest.api.server.RequestDetails;
 import ca.uhn.fhir.rest.server.interceptor.auth.AuthorizedList;
@@ -18,7 +18,7 @@ public class OHMSearchNarrowingInterceptor extends SearchNarrowingInterceptor {
     protected AuthorizedList buildAuthorizedList(RequestDetails theRequestDetails) {
       
         String token = getAuthorization();
-        JSONObject claimsObject = parseAuthToken(token);
+        Map<String, Object> claimsObject = parseAuthToken(token).getClaims();
 
         Object patientId = claimsObject.get("patient");
         if ((patientId != null) && (patientId instanceof String) && (!((String) patientId).isBlank())){
@@ -28,8 +28,6 @@ public class OHMSearchNarrowingInterceptor extends SearchNarrowingInterceptor {
         } else {
             // no restrictions
             return new AuthorizedList();
-
         }
-
     }
 }

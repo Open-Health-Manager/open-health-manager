@@ -4,10 +4,10 @@ import static org.mitre.healthmanager.lib.auth.AuthFetcher.getAuthorization;
 import static org.mitre.healthmanager.lib.auth.AuthFetcher.parseAuthToken;
 
 import java.util.List;
+import java.util.Map;
 
 import org.hl7.fhir.r4.model.IdType;
 import org.hl7.fhir.r4.model.Patient;
-import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,7 +32,7 @@ public class OHMAuthorizationInterceptor extends AuthorizationInterceptor {
         }
 
         String token = getAuthorization();
-        JSONObject claimsObject = parseAuthToken(token);
+        Map<String, Object> claimsObject = parseAuthToken(token).getClaims();
 
         Object patientId = claimsObject.get("patient");
         Object authorities = claimsObject.get("auth");
@@ -60,6 +60,7 @@ public class OHMAuthorizationInterceptor extends AuthorizationInterceptor {
         IAuthRuleBuilder patientAccessRules = new RuleBuilder()
         .allow("patient compartment read").read().allResources().inCompartment("Patient", userIdPatientId).andThen()
         .allow("update patient record").write().instance(userIdPatientId).andThen()
+        .deny("delete patient record").delete().instance(userIdPatientId).andThen() //disallow patient delete outside of full account deletion
         .deny("no patient resource creation").write().resourcesOfType(Patient.class).withAnyId().andThen()
         .allow("patient compartment write").write().allResources().inCompartment("Patient", userIdPatientId).andThen()
         .allow("transactions").transaction().withAnyOperation().andApplyNormalRules().andThen()
@@ -75,8 +76,7 @@ public class OHMAuthorizationInterceptor extends AuthorizationInterceptor {
             .build();
     }
 
-   private List<IAuthRule> metadataRule() {
-    
+   private List<IAuthRule> metadataRule() {    
         // allow the metadata endpoint for everyone
         return new RuleBuilder()
             .allow("allow metadata")

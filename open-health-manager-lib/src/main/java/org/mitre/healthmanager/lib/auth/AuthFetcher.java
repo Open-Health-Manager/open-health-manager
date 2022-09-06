@@ -1,35 +1,42 @@
 package org.mitre.healthmanager.lib.auth;
 
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.Authentication;
-
 import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
 
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import ca.uhn.fhir.i18n.Msg;
-
 import ca.uhn.fhir.rest.server.exceptions.AuthenticationException;
 
 public class AuthFetcher {
-    public static JSONObject parseAuthToken(String token) {
-        String body = token.split("\\.")[1];
-        String jsonBody = new String(Base64.getUrlDecoder().decode(body));
-        JSONObject claimsObject = null;
-        JSONParser parser = new JSONParser();
+	private static ObjectMapper objectMapper = new ObjectMapper();
+	
+    public static Jwt parseAuthToken(String token) {
+    	String[] chunks = token.split("\\.");
+        Base64.Decoder decoder = Base64.getUrlDecoder();
+        String header = new String(decoder.decode(chunks[0]));
+        String payload = new String(decoder.decode(chunks[1]));       
+
         try {
-            Object parsedBody = parser.parse(jsonBody);
-            if (parsedBody instanceof JSONObject) {
-                claimsObject = (JSONObject) parsedBody;
-            }
-            else {
-                throw new AuthenticationException(Msg.code(644) + "jwt body not a json object");
-            }
-        } catch (ParseException e) {
-            throw new AuthenticationException(Msg.code(644) + "invalid jwt body");
-        }
-        return claimsObject;
+            @SuppressWarnings("unchecked")
+			Map<String, Object> headers =
+            		objectMapper.readValue(header, HashMap.class);
+            @SuppressWarnings("unchecked")
+			Map<String, Object> claims =
+            		objectMapper.readValue(payload, HashMap.class);            
+            return new Jwt(token, null, null, headers, claims);                                    
+        } catch (JsonMappingException e) {
+        	throw new AuthenticationException(Msg.code(644) + "jwt body not a json object");
+		} catch (JsonProcessingException e) {
+			throw new AuthenticationException(Msg.code(644) + "invalid jwt body");
+		}
     }
 
     public static String getAuthorization() {
