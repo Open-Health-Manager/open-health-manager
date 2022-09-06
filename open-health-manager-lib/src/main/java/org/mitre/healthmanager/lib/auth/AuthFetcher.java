@@ -20,6 +20,10 @@ public class AuthFetcher {
 	
     public static Jwt parseAuthToken(String token) {
     	String[] chunks = token.split("\\.");
+    	if(chunks.length < 3) {
+    		throw new AuthenticationException(Msg.code(644) + "invalid jwt");
+    	}
+    	
         Base64.Decoder decoder = Base64.getUrlDecoder();
         String header = new String(decoder.decode(chunks[0]));
         String payload = new String(decoder.decode(chunks[1]));       

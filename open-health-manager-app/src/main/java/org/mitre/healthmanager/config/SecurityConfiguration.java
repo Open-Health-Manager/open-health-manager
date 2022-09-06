@@ -96,6 +96,8 @@ public class SecurityConfiguration {
             .antMatchers("/api/admin/**").hasAuthority(AuthoritiesConstants.ADMIN)
             .antMatchers("/api/**").authenticated()
             .antMatchers("/fhir/metadata").permitAll()
+            .antMatchers("/fhir/api-docs").permitAll()
+            .antMatchers("/fhir/swagger-ui/**").permitAll()
             .antMatchers("/fhir/**").authenticated()
             .antMatchers("/management/health").permitAll()
             .antMatchers("/management/health/**").permitAll()

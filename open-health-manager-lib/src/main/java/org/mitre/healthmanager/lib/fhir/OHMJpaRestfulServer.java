@@ -8,12 +8,14 @@ import ca.uhn.fhir.jpa.api.dao.IFhirResourceDaoPatient;
 import ca.uhn.fhir.jpa.dao.TransactionProcessor;
 import ca.uhn.fhir.jpa.starter.AppProperties;
 import ca.uhn.fhir.jpa.starter.BaseJpaRestfulServer;
+import ca.uhn.fhir.rest.openapi.OpenApiInterceptor;
 
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.MessageHeader;
 import org.hl7.fhir.r4.model.Patient;
 import org.mitre.healthmanager.lib.auth.OHMAuthorizationInterceptor;
 import org.mitre.healthmanager.lib.auth.OHMSearchNarrowingInterceptor;
+import org.mitre.healthmanager.lib.config.OHMOpenApiInterceptor;
 import org.mitre.healthmanager.lib.dataMgr.AccountInterceptor;
 import org.mitre.healthmanager.lib.dataMgr.AccountProvider;
 import org.mitre.healthmanager.lib.sphr.RequestInterceptor;
@@ -50,6 +52,9 @@ public class OHMJpaRestfulServer extends BaseJpaRestfulServer {
 		registerInterceptor(new RequestInterceptor(myPatientDao, myBundleDao, myMessageHeaderDao, myTransactionProcessor, myDaoRegistry));
 		registerInterceptor(new OHMAuthorizationInterceptor());
 		registerInterceptor(new OHMSearchNarrowingInterceptor());
+		
+		getInterceptorService().unregisterInterceptorsIf(t -> t instanceof OpenApiInterceptor);
+		registerInterceptor(new OHMOpenApiInterceptor());
   }
 
 }
