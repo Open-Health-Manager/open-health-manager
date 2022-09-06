@@ -1,4 +1,4 @@
-package org.mitre.healthmanager.lib.config;
+package org.mitre.healthmanager.lib.fhir;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;

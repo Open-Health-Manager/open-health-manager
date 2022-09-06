@@ -15,7 +15,6 @@ import org.hl7.fhir.r4.model.MessageHeader;
 import org.hl7.fhir.r4.model.Patient;
 import org.mitre.healthmanager.lib.auth.OHMAuthorizationInterceptor;
 import org.mitre.healthmanager.lib.auth.OHMSearchNarrowingInterceptor;
-import org.mitre.healthmanager.lib.config.OHMOpenApiInterceptor;
 import org.mitre.healthmanager.lib.dataMgr.AccountInterceptor;
 import org.mitre.healthmanager.lib.dataMgr.AccountProvider;
 import org.mitre.healthmanager.lib.sphr.RequestInterceptor;
