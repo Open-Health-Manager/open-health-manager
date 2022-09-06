@@ -27,7 +27,7 @@ public class OHMAuthorizationInterceptor extends AuthorizationInterceptor {
         log.debug("building rule for request {}", theRequestDetails.getRequestPath());
         String requestPath = theRequestDetails.getRequestPath();
         
-        if (requestPath.equals("metadata")) {
+        if (requestPath.equals("metadata") || requestPath.equals("api-docs") || requestPath.equals("swagger-ui/")) {
             return metadataRule();
         }
 
