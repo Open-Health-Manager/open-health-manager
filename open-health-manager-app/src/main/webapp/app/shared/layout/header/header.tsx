@@ -43,10 +43,12 @@ const Header = (props: IHeaderProps) => {
 
   const toggleMenu = () => setMenuOpen(!menuOpen);
 
+  const noHeaderPaths = ["/public/account/activate", "/public/account/reset/request", "/public/account/reset/finish"]
+
   /* jhipster-needle-add-element-to-menu - JHipster will add new menu items here */
 
   return (
-      location.pathname !== "/public/account/activate" ? 
+      !noHeaderPaths.includes(location.pathname)?
       <div id="app-header">
         {renderDevRibbon()}
         <LoadingBar className="loading-bar" />

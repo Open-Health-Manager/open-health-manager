@@ -5,6 +5,8 @@ import javax.servlet.ServletException;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.ListResource;
 import org.hl7.fhir.r4.model.Patient;
+import org.mitre.healthmanager.lib.auth.OHMAuthorizationInterceptor;
+import org.mitre.healthmanager.lib.auth.OHMSearchNarrowingInterceptor;
 import org.mitre.healthmanager.lib.sphr.RequestInterceptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -17,6 +19,7 @@ import ca.uhn.fhir.jpa.api.dao.IFhirResourceDaoPatient;
 import ca.uhn.fhir.jpa.dao.TransactionProcessor;
 import ca.uhn.fhir.jpa.starter.AppProperties;
 import ca.uhn.fhir.jpa.starter.BaseJpaRestfulServer;
+import ca.uhn.fhir.rest.openapi.OpenApiInterceptor;
 import ca.uhn.fhir.rest.server.exceptions.InternalErrorException;
 import ca.uhn.fhir.rest.server.interceptor.ExceptionHandlingInterceptor;
 
@@ -58,6 +61,10 @@ public class OHMJpaRestfulServer extends BaseJpaRestfulServer {
 		// Return the stack trace to the client for the following exception types
 		interceptor.setReturnStackTracesForExceptionTypes(InternalErrorException.class, NullPointerException.class);
 
-	}
-
+		registerInterceptor(new OHMAuthorizationInterceptor());
+		registerInterceptor(new OHMSearchNarrowingInterceptor());
+		
+		getInterceptorService().unregisterInterceptorsIf(t -> t instanceof OpenApiInterceptor);
+		registerInterceptor(new OHMOpenApiInterceptor());
+  }
 }

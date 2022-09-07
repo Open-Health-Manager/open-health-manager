@@ -5,6 +5,7 @@ import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 
+import org.apache.commons.text.StringEscapeUtils;
 import org.mitre.healthmanager.domain.User;
 import org.mitre.healthmanager.repository.UserRepository;
 import org.mitre.healthmanager.security.SecurityUtils;
@@ -52,6 +53,7 @@ public class AccountResource {
     private final UserService userService;
 
     private final MailService mailService;
+
 
     public AccountResource(UserRepository userRepository, UserService userService, MailService mailService) {
         this.userRepository = userRepository;
@@ -105,7 +107,7 @@ public class AccountResource {
     @GetMapping("/authenticate")
     public String isAuthenticated(HttpServletRequest request) {
         log.debug("REST request to check if the current user is authenticated");
-        return request.getRemoteUser();
+        return StringEscapeUtils.escapeHtml4(request.getRemoteUser());
     }
 
     /**
@@ -134,6 +136,7 @@ public class AccountResource {
         String userLogin = SecurityUtils
             .getCurrentUserLogin()
             .orElseThrow(() -> new AccountResourceException("Current user login not found"));
+
         Optional<User> existingUser = userRepository.findOneByEmailIgnoreCase(userDTO.getEmail());
         if (existingUser.isPresent() && (!existingUser.get().getLogin().equalsIgnoreCase(userLogin))) {
             throw new EmailAlreadyUsedException();
@@ -142,13 +145,19 @@ public class AccountResource {
         if (!user.isPresent()) {
             throw new AccountResourceException("User could not be found");
         }
-        userService.updateUser(
+
+        Optional<User> newUser = userService.updateUser(
             userDTO.getFirstName(),
             userDTO.getLastName(),
             userDTO.getEmail(),
+            userDTO.getLogin(),
             userDTO.getLangKey(),
             userDTO.getImageUrl()
         );
+
+        if (newUser.isPresent() && !newUser.get().isActivated()) {
+            mailService.sendActivationEmail(newUser.get());
+        }
     }
 
     /**

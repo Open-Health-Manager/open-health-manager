@@ -2,6 +2,7 @@ package org.mitre.healthmanager.fhir.config;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.commons.text.StringEscapeUtils;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,7 +25,8 @@ public class TesterOverlayForwardingController {
         if (queryString == null) {
             return requestURL.append(path).toString();
         } else {
-            return requestURL.append(path).append('?').append(queryString).toString();
+            return requestURL.append(path).append('?')
+            	.append(StringEscapeUtils.escapeHtml4(queryString)).toString();
         }
     }
     

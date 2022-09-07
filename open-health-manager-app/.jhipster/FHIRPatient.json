@@ -1,7 +1,7 @@
 {
   "applications": ["OpenHealthManagerApp"],
   "changelogDate": "20220603163044",
-  "dto": "no",
+  "dto": "mapstruct",
   "embedded": false,
   "entityTableName": "fhir_patient",
   "fields": [

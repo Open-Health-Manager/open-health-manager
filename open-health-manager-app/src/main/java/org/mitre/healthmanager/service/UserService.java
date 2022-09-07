@@ -11,7 +11,6 @@ import java.util.stream.Collectors;
 
 import org.mitre.healthmanager.config.Constants;
 import org.mitre.healthmanager.domain.Authority;
-import org.mitre.healthmanager.domain.FHIRPatient;
 import org.mitre.healthmanager.domain.User;
 import org.mitre.healthmanager.service.dto.UserDUADTO;
 import org.mitre.healthmanager.service.mapper.UserMapper;
@@ -20,6 +19,7 @@ import org.mitre.healthmanager.repository.UserRepository;
 import org.mitre.healthmanager.security.AuthoritiesConstants;
 import org.mitre.healthmanager.security.SecurityUtils;
 import org.mitre.healthmanager.service.dto.AdminUserDTO;
+import org.mitre.healthmanager.service.dto.FHIRPatientDTO;
 import org.mitre.healthmanager.service.dto.UserDTO;
 
 
@@ -118,6 +118,7 @@ public class UserService {
     }
 
     public User registerUser(AdminUserDTO userDTO, String password, UserDUADTO userDUADTO) {
+        
         userRepository
             .findOneByLogin(userDTO.getLogin().toLowerCase())
             .ifPresent(existingUser -> {
@@ -224,7 +225,7 @@ public class UserService {
     }
 
     private void deleteFHIRPatient(User user) {
-        Optional<FHIRPatient> linkedFHIRPatient = fhirPatientService.findOneForUser(user.getId());
+        Optional<FHIRPatientDTO> linkedFHIRPatient = fhirPatientService.findOneForUser(user.getId());
         if (linkedFHIRPatient.isPresent()) {
         	fhirPatientService.delete(linkedFHIRPatient.get().getId());
         }
@@ -236,26 +237,27 @@ public class UserService {
      * @param userDTO user to update.
      * @return updated user.
      */
-    public Optional<AdminUserDTO> updateUser(AdminUserDTO userDTO) {
+    public Optional<User> updateUser(AdminUserDTO userDTO) {
         return Optional
             .of(userRepository.findById(userDTO.getId()))
             .filter(Optional::isPresent)
             .map(Optional::get)
             .map(user -> {
                 this.clearUserCaches(user);
-                String newLogin = userDTO.getLogin().toLowerCase();
-                if (!newLogin.equals(user.getLogin())) {
-                    throw new UsernameChangeException();
-                }
                 
-                user.setLogin(userDTO.getLogin().toLowerCase());
                 user.setFirstName(userDTO.getFirstName());
                 user.setLastName(userDTO.getLastName());
                 if (userDTO.getEmail() != null) {
+                    if (!userDTO.getEmail().equalsIgnoreCase(user.getEmail())) {
+                        user.setActivated(false);
+                        user.setActivationKey(RandomUtil.generateActivationKey());
+                    } else {
+                        user.setActivated(userDTO.isActivated());
+                    }
                     user.setEmail(userDTO.getEmail().toLowerCase());
+                    user.setLogin(userDTO.getLogin().toLowerCase());
                 }
                 user.setImageUrl(userDTO.getImageUrl());
-                user.setActivated(userDTO.isActivated());
                 user.setLangKey(userDTO.getLangKey());
                 Set<Authority> managedAuthorities = user.getAuthorities();
                 managedAuthorities.clear();
@@ -273,8 +275,7 @@ public class UserService {
                 fhirPatientService.createFHIRPatientForUser(user);
 
                 return user;
-            })
-            .map(AdminUserDTO::new);
+            });
     }
 
     public void deleteUser(String login) {
@@ -289,28 +290,37 @@ public class UserService {
     }
 
     /**
-     * Update basic information (first name, last name, email, language) for the current user.
+     * Update basic information (first name, last name, email, login, language) for the current user.
      *
      * @param firstName first name of user.
      * @param lastName  last name of user.
      * @param email     email id of user.
+     * @param login     login of the user.
      * @param langKey   language key.
      * @param imageUrl  image URL of user.
      */
-    public void updateUser(String firstName, String lastName, String email, String langKey, String imageUrl) {
-        SecurityUtils
+    public Optional<User> updateUser(String firstName, String lastName, String email, String login, String langKey, String imageUrl) {
+        return SecurityUtils
             .getCurrentUserLogin()
-            .flatMap(userRepository::findOneByLogin)
-            .ifPresent(user -> {
+            .map(userRepository::findOneByLogin)
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .map(user -> {
                 user.setFirstName(firstName);
                 user.setLastName(lastName);
                 if (email != null) {
+                    if (!user.getEmail().equalsIgnoreCase(email)) {
+                        user.setActivated(false);
+                        user.setActivationKey(RandomUtil.generateActivationKey());
+                    }
                     user.setEmail(email.toLowerCase());
+                    user.setLogin(login.toLowerCase());
                 }
                 user.setLangKey(langKey);
                 user.setImageUrl(imageUrl);
                 this.clearUserCaches(user);
                 log.debug("Changed Information for User: {}", user);
+                return user;
             });
     }
 

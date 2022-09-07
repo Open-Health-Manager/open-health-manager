@@ -25,6 +25,8 @@ import org.mitre.healthmanager.repository.AuthorityRepository;
 import org.mitre.healthmanager.security.AuthoritiesConstants;
 import org.mitre.healthmanager.domain.Authority;
 import org.mitre.healthmanager.service.FHIRPatientService;
+import org.mitre.healthmanager.service.dto.FHIRPatientDTO;
+import org.mitre.healthmanager.service.mapper.FHIRPatientMapper;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -80,6 +82,9 @@ class FHIRPatientResourceIT {
 
     @Mock
     private FHIRPatientRepository fHIRPatientRepositoryMock;
+
+    @Autowired
+    private FHIRPatientMapper fHIRPatientMapper;
 
     @Mock
     private FHIRPatientService fHIRPatientServiceMock;
@@ -185,9 +190,10 @@ class FHIRPatientResourceIT {
                 SampleDataConfiguration.loadFhirResources(files, myDaoRegistry);
 
                 // Create the FHIRPatient
+                FHIRPatientDTO fHIRPatientDTO = fHIRPatientMapper.toDto(fHIRPatient);
                 try {
                     restFHIRPatientMockMvc
-                        .perform(post(ENTITY_API_URL).contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(fHIRPatient)))
+                        .perform(post(ENTITY_API_URL).contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(fHIRPatientDTO)))
                         .andExpect(status().isCreated());
                 } catch(Exception e) {
                     throw new RuntimeException(e);
@@ -216,10 +222,12 @@ class FHIRPatientResourceIT {
 
                 int databaseSizeBeforeCreate = fHIRPatientRepository.findAll().size();
 
+                FHIRPatientDTO fHIRPatientDTO = fHIRPatientMapper.toDto(fHIRPatient);
+                
                 // An entity with an existing ID cannot be created, so this API call must fail
                 try {
                     restFHIRPatientMockMvc
-                        .perform(post(ENTITY_API_URL).contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(fHIRPatient)))
+                        .perform(post(ENTITY_API_URL).contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(fHIRPatientDTO)))
                         .andExpect(status().isBadRequest());
                 } catch(Exception e) {
                     throw new RuntimeException(e);
@@ -247,10 +255,10 @@ class FHIRPatientResourceIT {
                 fHIRPatient.setFhirId(null);
 
                 // Create the FHIRPatient, which fails.
-
+                FHIRPatientDTO fHIRPatientDTO = fHIRPatientMapper.toDto(fHIRPatient);
                 try {
                     restFHIRPatientMockMvc
-                        .perform(post(ENTITY_API_URL).contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(fHIRPatient)))
+                        .perform(post(ENTITY_API_URL).contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(fHIRPatientDTO)))
                         .andExpect(status().isBadRequest());
                 } catch(Exception e) {
                     throw new RuntimeException(e);
@@ -402,11 +410,12 @@ class FHIRPatientResourceIT {
                 createFHIRPatientResource(updatedFHIRPatient);
 
                 try {
+                	FHIRPatientDTO updatedFHIRPatientDTO = fHIRPatientMapper.toDto(updatedFHIRPatient);
                     restFHIRPatientMockMvc
                         .perform(
                             put(ENTITY_API_URL_ID, updatedFHIRPatient.getId())
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content(TestUtil.convertObjectToJsonBytes(updatedFHIRPatient))
+                                .content(TestUtil.convertObjectToJsonBytes(updatedFHIRPatientDTO))
                         )
                         .andExpect(status().isOk());
                 } catch (Exception e) {
@@ -434,13 +443,15 @@ class FHIRPatientResourceIT {
                 SampleDataConfiguration.loadFhirResources(files, myDaoRegistry);
                 fHIRPatient.setId(count.incrementAndGet());
 
+                FHIRPatientDTO fHIRPatientDTO = fHIRPatientMapper.toDto(fHIRPatient);
+                
                 // If the entity doesn't have an ID, it will throw BadRequestAlertException
                 try {
                     restFHIRPatientMockMvc
                         .perform(
                             put(ENTITY_API_URL_ID, fHIRPatient.getId())
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content(TestUtil.convertObjectToJsonBytes(fHIRPatient))
+                                .content(TestUtil.convertObjectToJsonBytes(fHIRPatientDTO))
                         )
                         .andExpect(status().isBadRequest());
                 } catch (Exception e) {
@@ -466,13 +477,15 @@ class FHIRPatientResourceIT {
                 SampleDataConfiguration.loadFhirResources(files, myDaoRegistry);
                 fHIRPatient.setId(count.incrementAndGet());
 
+                FHIRPatientDTO fHIRPatientDTO = fHIRPatientMapper.toDto(fHIRPatient);
+                
                 // If url ID doesn't match entity ID, it will throw BadRequestAlertException
                 try {
                     restFHIRPatientMockMvc
                         .perform(
                             put(ENTITY_API_URL_ID, count.incrementAndGet())
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content(TestUtil.convertObjectToJsonBytes(fHIRPatient))
+                                .content(TestUtil.convertObjectToJsonBytes(fHIRPatientDTO))
                         )
                         .andExpect(status().isBadRequest());
                 } catch (Exception e) {
@@ -498,10 +511,12 @@ class FHIRPatientResourceIT {
                 SampleDataConfiguration.loadFhirResources(files, myDaoRegistry);
                 fHIRPatient.setId(count.incrementAndGet());
 
+                FHIRPatientDTO fHIRPatientDTO = fHIRPatientMapper.toDto(fHIRPatient);
+                
                 // If url ID doesn't match entity ID, it will throw BadRequestAlertException
                 try {
                     restFHIRPatientMockMvc
-                        .perform(put(ENTITY_API_URL).contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(fHIRPatient)))
+                        .perform(put(ENTITY_API_URL).contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(fHIRPatientDTO)))
                         .andExpect(status().isMethodNotAllowed());
                 } catch (Exception e) {
 					throw new RuntimeException(e);
@@ -532,12 +547,13 @@ class FHIRPatientResourceIT {
                 FHIRPatient partialUpdatedFHIRPatient = new FHIRPatient();
                 partialUpdatedFHIRPatient.setId(fHIRPatient.getId());
 
+                FHIRPatientDTO partialUpdatedFHIRPatientDTO = fHIRPatientMapper.toDto(partialUpdatedFHIRPatient);
                 try {
                     restFHIRPatientMockMvc
                         .perform(
                             patch(ENTITY_API_URL_ID, partialUpdatedFHIRPatient.getId())
                                 .contentType("application/merge-patch+json")
-                                .content(TestUtil.convertObjectToJsonBytes(partialUpdatedFHIRPatient))
+                                .content(TestUtil.convertObjectToJsonBytes(partialUpdatedFHIRPatientDTO))
                         )
                         .andExpect(status().isOk());
                 } catch (Exception e) {
@@ -573,12 +589,13 @@ class FHIRPatientResourceIT {
 
                 partialUpdatedFHIRPatient.fhirId(UPDATED_FHIR_ID);
 
+                FHIRPatientDTO partialUpdatedFHIRPatientDTO = fHIRPatientMapper.toDto(partialUpdatedFHIRPatient);
                 try {
                     restFHIRPatientMockMvc
                         .perform(
                             patch(ENTITY_API_URL_ID, partialUpdatedFHIRPatient.getId())
                                 .contentType("application/merge-patch+json")
-                                .content(TestUtil.convertObjectToJsonBytes(partialUpdatedFHIRPatient))
+                                .content(TestUtil.convertObjectToJsonBytes(partialUpdatedFHIRPatientDTO))
                         )
                         .andExpect(status().isOk());
                 } catch (Exception e) {
@@ -606,13 +623,15 @@ class FHIRPatientResourceIT {
                 int databaseSizeBeforeUpdate = fHIRPatientRepository.findAll().size();
                 fHIRPatient.setId(count.incrementAndGet());
 
+                FHIRPatientDTO fHIRPatientDTO = fHIRPatientMapper.toDto(fHIRPatient);
+                
                 // If the entity doesn't have an ID, it will throw BadRequestAlertException
                 try {
                     restFHIRPatientMockMvc
                         .perform(
                             patch(ENTITY_API_URL_ID, fHIRPatient.getId())
                                 .contentType("application/merge-patch+json")
-                                .content(TestUtil.convertObjectToJsonBytes(fHIRPatient))
+                                .content(TestUtil.convertObjectToJsonBytes(fHIRPatientDTO))
                         )
                         .andExpect(status().isBadRequest());
                 } catch (Exception e) {
@@ -638,13 +657,16 @@ class FHIRPatientResourceIT {
                 int databaseSizeBeforeUpdate = fHIRPatientRepository.findAll().size();
                 fHIRPatient.setId(count.incrementAndGet());
 
+                // Create the FHIRPatient
+                FHIRPatientDTO fHIRPatientDTO = fHIRPatientMapper.toDto(fHIRPatient);
+                
                 // If url ID doesn't match entity ID, it will throw BadRequestAlertException
                 try {
                     restFHIRPatientMockMvc
                         .perform(
                             patch(ENTITY_API_URL_ID, count.incrementAndGet())
                                 .contentType("application/merge-patch+json")
-                                .content(TestUtil.convertObjectToJsonBytes(fHIRPatient))
+                                .content(TestUtil.convertObjectToJsonBytes(fHIRPatientDTO))
                         )
                         .andExpect(status().isBadRequest());
                 } catch (Exception e) {
@@ -670,11 +692,14 @@ class FHIRPatientResourceIT {
                 int databaseSizeBeforeUpdate = fHIRPatientRepository.findAll().size();
                 fHIRPatient.setId(count.incrementAndGet());
 
+                // Create the FHIRPatient
+                FHIRPatientDTO fHIRPatientDTO = fHIRPatientMapper.toDto(fHIRPatient);
+                
                 // If url ID doesn't match entity ID, it will throw BadRequestAlertException
                 try {
                     restFHIRPatientMockMvc
                         .perform(
-                            patch(ENTITY_API_URL).contentType("application/merge-patch+json").content(TestUtil.convertObjectToJsonBytes(fHIRPatient))
+                            patch(ENTITY_API_URL).contentType("application/merge-patch+json").content(TestUtil.convertObjectToJsonBytes(fHIRPatientDTO))
                         )
                         .andExpect(status().isMethodNotAllowed());
                 } catch (Exception e) {

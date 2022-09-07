@@ -116,6 +116,20 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
     }
 
     @ExceptionHandler
+    public ResponseEntity<Problem> handleLoginMatchEmailException(
+        org.mitre.healthmanager.service.LoginMatchEmailException ex,
+        NativeWebRequest request
+    ) {
+        LoginMatchEmailException problem = new LoginMatchEmailException();
+        return create(
+            problem,
+            request,
+            HeaderUtil.createFailureAlert(applicationName, true, problem.getEntityName(), problem.getErrorKey(), problem.getMessage())
+        );
+    }
+
+
+    @ExceptionHandler
     public ResponseEntity<Problem> handleEmailAlreadyUsedException(
         org.mitre.healthmanager.service.EmailAlreadyUsedException ex,
         NativeWebRequest request
