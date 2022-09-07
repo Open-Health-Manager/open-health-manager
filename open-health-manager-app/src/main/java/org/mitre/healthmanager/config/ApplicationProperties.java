@@ -28,68 +28,68 @@ public class ApplicationProperties {
 
     public static class Cors {
     
-        public List<String> getAllowed_origins() {
+        public List<String> getAllowedOrigins() {
           return allowed_origins;
         }
     
-        public void setAllowed_origins(List<String> allowed_origins) {
+        public void setAllowedOrigins(List<String> allowed_origins) {
           this.allowed_origins = allowed_origins;
         }
 
-        public List<String> getAllowed_origin_patterns() {
+        public List<String> getAllowedOriginPatterns() {
             return allowed_origin_patterns;
         }
     
-        public void setAllowed_origin_patterns(List<String> allowed_origin_patterns) {
+        public void setAllowedOriginPatterns(List<String> allowed_origin_patterns) {
             this.allowed_origin_patterns = allowed_origin_patterns;
         }
 
 
-        public List<String> getAllowed_methods() {
+        public List<String> getAllowedMethods() {
             return allowed_methods;
         }
     
-        public void setAllowed_methods(List<String> allowed_methods) {
+        public void setAllowedMethods(List<String> allowed_methods) {
             this.allowed_methods = allowed_methods;
         }
 
-        public List<String> getAllowed_headers() {
+        public List<String> getAllowedHeaders() {
             return allowed_headers;
         }
     
-        public void setAllowed_headers(List<String> allowed_headers) {
+        public void setAllowedHeaders(List<String> allowed_headers) {
             this.allowed_headers = allowed_headers;
         }
 
-        public List<String> getExposed_headers() {
+        public List<String> getExposedHeaders() {
             return exposed_headers;
         }
     
-        public void setExposed_headers(List<String> exposed_headers) {
+        public void setExposedHeaders(List<String> exposed_headers) {
             this.exposed_headers = exposed_headers;
         }
 
-        public List<String> getAllowed_origin() {
+        public List<String> getAllowedOrigin() {
             return allowed_origin;
         }
     
-        public void setAllowed_origin(List<String> allowed_origin) {
+        public void setAllowedOrigin(List<String> allowed_origin) {
             this.allowed_origin = allowed_origin;
         }
 
-        public Boolean getAllow_Credentials() {
+        public Boolean getAllowCredentials() {
           return allow_credentials;
         }
     
-        public void setAllow_Credentials(Boolean allow_Credentials) {
+        public void setAllowCredentials(Boolean allow_Credentials) {
           this.allow_credentials = allow_Credentials;
         }
 
-        public Boolean getMax_age() {
+        public Boolean getMaxAge() {
             return max_age;
           }
       
-          public void setMax_age(Boolean max_age) {
+          public void setMaxAge(Boolean max_age) {
             this.max_age = max_age;
           }
 
