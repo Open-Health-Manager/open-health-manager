@@ -20,8 +20,6 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 import org.springframework.web.util.UrlPathHelper;
-import org.mitre.healthmanager.config.ApplicationProperties;
-
 import tech.jhipster.config.JHipsterConstants;
 import tech.jhipster.config.JHipsterProperties;
 import tech.jhipster.config.h2.H2ConfigurationHelper;
@@ -106,8 +104,8 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
             source.registerCorsConfiguration("/swagger-ui/**", config);
         }
         if (!CollectionUtils.isEmpty(configRosie.getAllowedOrigins()) || !CollectionUtils.isEmpty(configRosie.getAllowedOriginPatterns())) {
-            log.debug("Registering CORS filter");
-            source.registerCorsConfiguration("/api/{path:^(?!(admin)$).*$}/**", configRosie);
+            log.debug("Registering Application CORS filter");
+            source.registerCorsConfiguration("/api/**", configRosie);
             source.registerCorsConfiguration("/fhir/**", configRosie);
         }
         

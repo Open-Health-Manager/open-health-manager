@@ -1,9 +1,6 @@
 package org.mitre.healthmanager.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.context.annotation.Configuration;
-import java.util.List;
 import org.springframework.web.cors.CorsConfiguration;
 
 /**
@@ -13,10 +10,8 @@ import org.springframework.web.cors.CorsConfiguration;
  * See {@link tech.jhipster.config.JHipsterProperties} for a good example.
  */
 @ConfigurationProperties(prefix = "application", ignoreUnknownFields = true)
-@Configuration
-@EnableConfigurationProperties
 public class ApplicationProperties {
-    private CorsConfiguration cors = null;
+    private CorsConfiguration cors = new CorsConfiguration();
 
     public CorsConfiguration getCors() {
         return cors;
