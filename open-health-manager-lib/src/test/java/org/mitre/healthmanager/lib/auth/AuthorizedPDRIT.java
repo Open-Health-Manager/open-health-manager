@@ -6,7 +6,6 @@ import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Patient;
 import org.junit.jupiter.api.Test;
 import org.mitre.healthmanager.TestApplication;
-import org.mitre.healthmanager.lib.AuthorizationUtils;
 import org.mitre.healthmanager.lib.TestCaseRoot;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.web.server.LocalServerPort;
@@ -31,9 +30,9 @@ import ca.uhn.fhir.rest.client.api.ServerValidationModeEnum;
     }
 )
 @ContextConfiguration
-public class AuthorizedPDRTests extends TestCaseRoot {
+public class AuthorizedPDRIT extends TestCaseRoot {
 
-    public AuthorizedPDRTests() {
+    public AuthorizedPDRIT() {
         IRestfulClientFactory factory = ourCtx.getRestfulClientFactory();
         factory.setServerValidationMode(ServerValidationModeEnum.NEVER);
         factory.setSocketTimeout(1200 * 1000);
@@ -47,14 +46,12 @@ public class AuthorizedPDRTests extends TestCaseRoot {
     public void allowUserPostPatientDataReceipt() {
         IGenericClient theClient = getClient(port);
 
-        // create patient (as admin)
-        AuthorizationUtils.mockAdminUser();
         Patient patientCreate = new Patient();
         patientCreate.addIdentifier().setSystem("urn:mitre:healthmanager:account:username").setValue("allowUserPostPatientDataReceipt");
         patientCreate.addName().setFamily("allowUserPostPatientDataReceipt").addGiven("test");
         patientCreate.setId("test-allowUserPostPatientDataReceipt");
 
-        AuthorizationUtils.mockPatientUser("test-allowUserPostPatientDataReceipt");
+        TestAuthConfig.testAuthAdminFilter.doMockUserOnce("test-allowUserPostPatientDataReceipt");
         Bundle pdrBundle = getBundle("healthmanager/lib/auth/AuthorizedPDRTests/allowUserPostPatientDataReceipt/Bundle_PDR.json");
         Bundle responseBundle = theClient
             .operation()

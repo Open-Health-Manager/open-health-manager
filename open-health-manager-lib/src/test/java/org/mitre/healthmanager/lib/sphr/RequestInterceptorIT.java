@@ -7,9 +7,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mitre.healthmanager.TestApplication;
+import org.mitre.healthmanager.lib.TestAuthorizationFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.web.server.LocalServerPort;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
+import org.springframework.context.annotation.Bean;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,6 +39,7 @@ import ca.uhn.fhir.rest.server.exceptions.UnprocessableEntityException;
 		// when running in a spring boot environment
 		"spring.main.allow-bean-definition-overriding=true",
 		"hapi.fhir.allow_external_references=true"})
+@ContextConfiguration(classes={org.mitre.healthmanager.lib.sphr.RequestInterceptorIT.TestAuthConfig.class})
 @Transactional
 class RequestInterceptorIT {
 	@Autowired
@@ -76,4 +82,21 @@ class RequestInterceptorIT {
 		Assertions.assertThat(updated.getIdentifier().get(0).getSystem()).isEqualTo(RequestInterceptor.FHIR_LOGIN_SYSTEM);
 		Assertions.assertThat(updated.getIdentifier().get(0).getValue()).isEqualTo("testidentifier");
 	}
+	
+    @TestConfiguration(proxyBeanMethods = false)
+    protected static class TestAuthConfig {
+		public static TestAuthorizationFilter testAuthAdminFilter;
+		
+        @Bean
+        public FilterRegistrationBean<TestAuthorizationFilter> authAdminFilter()
+        {
+            FilterRegistrationBean<TestAuthorizationFilter> filterBean 
+            	= new FilterRegistrationBean<>();
+            testAuthAdminFilter = new TestAuthorizationFilter();
+            filterBean.setFilter(testAuthAdminFilter);
+            filterBean.addUrlPatterns("/*");
+            filterBean.setOrder(1);
+            return filterBean;    
+        }
+    }
 }

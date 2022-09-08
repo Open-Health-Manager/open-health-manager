@@ -11,7 +11,6 @@ import org.hl7.fhir.r4.model.Practitioner;
 import org.hl7.fhir.r4.model.Reference;
 import org.junit.jupiter.api.Test;
 import org.mitre.healthmanager.TestApplication;
-import org.mitre.healthmanager.lib.AuthorizationUtils;
 import org.mitre.healthmanager.lib.TestCaseRoot;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.web.server.LocalServerPort;
@@ -38,9 +37,9 @@ import ca.uhn.fhir.rest.server.exceptions.ForbiddenOperationException;
     }
 )
 @ContextConfiguration
-public class AuthorizedWriteTests extends TestCaseRoot {
+public class AuthorizedWriteIT extends TestCaseRoot {
 
-    public AuthorizedWriteTests() {
+    public AuthorizedWriteIT() {
         IRestfulClientFactory factory = ourCtx.getRestfulClientFactory();
         factory.setServerValidationMode(ServerValidationModeEnum.NEVER);
         factory.setSocketTimeout(1200 * 1000);
@@ -54,7 +53,8 @@ public class AuthorizedWriteTests extends TestCaseRoot {
         IGenericClient theClient = getClient(port);
         
         // create the user's patient as user - should suceed
-        AuthorizationUtils.mockPatientUser("test-allowUserDirectTheirPatientCreateViaPUT");
+        TestAuthConfig.testAuthAdminFilter.doMockUserOnce("test-allowUserDirectTheirPatientCreateViaPUT");
+        TestAuthConfig.testAuthAdminFilter.doMockUserOnce("test-allowUserDirectTheirPatientCreateViaPUT");
         Patient patientCreate = new Patient();
         patientCreate.addIdentifier().setSystem("urn:mitre:healthmanager:account:username").setValue("allowUserDirectTheirPatientCreateViaPUT");
         patientCreate.addName().setFamily("allowUserDirectTheirPatientCreateViaPUT").addGiven("test");
@@ -74,7 +74,7 @@ public class AuthorizedWriteTests extends TestCaseRoot {
         IGenericClient theClient = getClient(port);
         
         // create the user's patient as user - should suceed
-        AuthorizationUtils.mockPatientUser("test-rejectUserDirectDifferentPatientCreateViaPUT");
+        TestAuthConfig.testAuthAdminFilter.doMockUserOnce("test-rejectUserDirectDifferentPatientCreateViaPUT");
     
         // create a different patient as user - should fail
         Patient differentPatientCreate = new Patient();
@@ -96,8 +96,6 @@ public class AuthorizedWriteTests extends TestCaseRoot {
     public void allowUserDirectWriteInPatientCompartment() {
         IGenericClient theClient = getClient(port);
         
-        // create patient (as admin)
-        AuthorizationUtils.mockAdminUser();
         Patient patientCreate = new Patient();
         patientCreate.addIdentifier().setSystem("urn:mitre:healthmanager:account:username").setValue("allowUserDirectWriteInPatientCompartment");
         patientCreate.addName().setFamily("allowUserDirectWriteInPatientCompartment").addGiven("test");
@@ -113,7 +111,7 @@ public class AuthorizedWriteTests extends TestCaseRoot {
         
         // create non-patient resource in the patient compartment
         // use Encounter as an example
-        AuthorizationUtils.mockPatientUser("test-allowUserDirectWriteInPatientCompartment");
+        TestAuthConfig.testAuthAdminFilter.doMockUserOnce("test-allowUserDirectWriteInPatientCompartment");
         Encounter encounterCreate = new Encounter();
         encounterCreate.setSubject(new Reference("Patient/test-allowUserDirectWriteInPatientCompartment"));
 
@@ -146,8 +144,6 @@ public class AuthorizedWriteTests extends TestCaseRoot {
     public void rejectUserDirectWriteOutsidePatientCompartment() {
         IGenericClient theClient = getClient(port);
         
-        // create patient (as admin)
-        AuthorizationUtils.mockAdminUser();
         Patient patientCreate = new Patient();
         patientCreate.addIdentifier().setSystem("urn:mitre:healthmanager:account:username").setValue("rejectUserDirectWriteOutsidePatientCompartment");
         patientCreate.addName().setFamily("rejectUserDirectWriteOutsidePatientCompartment").addGiven("test");
@@ -163,7 +159,7 @@ public class AuthorizedWriteTests extends TestCaseRoot {
 
         // create non-patient resource outside the patient compartment
         // use Practitioner as an example
-        AuthorizationUtils.mockPatientUser("test-rejectUserDirectWriteOutsidePatientCompartment");
+        TestAuthConfig.testAuthAdminFilter.doMockUserOnce("test-rejectUserDirectWriteOutsidePatientCompartment");
         Practitioner practitionerCreate = new Practitioner();
         practitionerCreate.addName().setFamily("rejectUserDirectWriteOutsidePatientCompartment").addGiven("test");
 
@@ -179,8 +175,6 @@ public class AuthorizedWriteTests extends TestCaseRoot {
         // update non-patient resource outside the patient compartment
         // use Practitioner as an example
 
-        // create as admin
-        AuthorizationUtils.mockAdminUser();
         MethodOutcome practitionerCreateOutcome = theClient.create()
             .resource(practitionerCreate)
             .prettyPrint()
@@ -189,7 +183,7 @@ public class AuthorizedWriteTests extends TestCaseRoot {
         assertNotNull(practitionerCreateOutcome);
         assertTrue(practitionerCreateOutcome.getResource() instanceof Practitioner);
 
-        AuthorizationUtils.mockPatientUser("test-rejectUserDirectWriteOutsidePatientCompartment");
+        TestAuthConfig.testAuthAdminFilter.doMockUserOnce("test-rejectUserDirectWriteOutsidePatientCompartment");
         Practitioner practitionerUpdate = (Practitioner) practitionerCreateOutcome.getResource();
         practitionerUpdate.setActive(true);
 
@@ -208,8 +202,6 @@ public class AuthorizedWriteTests extends TestCaseRoot {
     public void rejectUserDirectWriteInAnotherPatientCompartment() {
         IGenericClient theClient = getClient(port);
         
-        // create patient (as admin)
-        AuthorizationUtils.mockAdminUser();
         Patient patientCreate = new Patient();
         patientCreate.addIdentifier().setSystem("urn:mitre:healthmanager:account:username").setValue("rejectUserDirectWriteInAnotherPatientCompartment");
         patientCreate.addName().setFamily("rejectUserDirectWriteInAnotherPatientCompartment").addGiven("test");
@@ -225,7 +217,7 @@ public class AuthorizedWriteTests extends TestCaseRoot {
         
         // create non-patient resource in a different patient's compartment
         // use Encounter as an example
-        AuthorizationUtils.mockPatientUser("different-rejectUserDirectWriteInAnotherPatientCompartment");
+        TestAuthConfig.testAuthAdminFilter.doMockUserOnce("different-rejectUserDirectWriteInAnotherPatientCompartment");
         Encounter encounterCreate = new Encounter();
         encounterCreate.setSubject(new Reference("Patient/test-rejectUserDirectWriteInAnotherPatientCompartment"));
 
@@ -241,8 +233,6 @@ public class AuthorizedWriteTests extends TestCaseRoot {
         // update non-patient resource in a different patient's compartment
         // use Encounter as an example
         
-        // first create as admin
-        AuthorizationUtils.mockAdminUser();
         MethodOutcome encounterCreateOutcome = theClient.create()
             .resource(encounterCreate)
             .prettyPrint()
@@ -252,7 +242,7 @@ public class AuthorizedWriteTests extends TestCaseRoot {
         assertTrue(encounterCreateOutcome.getResource() instanceof Encounter);
 
         // update as different user
-        AuthorizationUtils.mockPatientUser("different-rejectUserDirectWriteInAnotherPatientCompartment");
+        TestAuthConfig.testAuthAdminFilter.doMockUserOnce("different-rejectUserDirectWriteInAnotherPatientCompartment");
         Encounter encounterUpdate = (Encounter) encounterCreateOutcome.getResource();
         encounterUpdate.setStatus(Encounter.EncounterStatus.FINISHED);
 
@@ -270,8 +260,6 @@ public class AuthorizedWriteTests extends TestCaseRoot {
     public void allowAdminAnyWrite() {
         IGenericClient theClient = getClient(port);
         
-        // create patient (as admin)
-        AuthorizationUtils.mockAdminUser();
         Patient patientCreate = new Patient();
         patientCreate.addIdentifier().setSystem("urn:mitre:healthmanager:account:username").setValue("allowAdminAnyWrite");
         patientCreate.addName().setFamily("allowAdminAnyWrite").addGiven("test");
