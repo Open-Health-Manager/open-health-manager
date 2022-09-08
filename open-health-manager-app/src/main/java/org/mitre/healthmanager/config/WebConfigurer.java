@@ -105,7 +105,7 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
         }
         if (!CollectionUtils.isEmpty(configRosie.getAllowedOrigins()) || !CollectionUtils.isEmpty(configRosie.getAllowedOriginPatterns())) {
             log.debug("Registering Application CORS filter");
-            source.registerCorsConfiguration("/api/**", configRosie);
+            source.registerCorsConfiguration("/api/{path:^(?!(admin)$).*$}/**", configRosie);
             source.registerCorsConfiguration("/fhir/**", configRosie);
         }
         
