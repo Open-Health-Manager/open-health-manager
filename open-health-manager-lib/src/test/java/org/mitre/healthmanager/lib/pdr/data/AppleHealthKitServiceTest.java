@@ -31,5 +31,6 @@ class AppleHealthKitServiceTest {
 		Assertions.assertEquals(result.getResource().getResourceType().name(), "Condition");
 		Condition condition = (Condition) result.getResource();
 		Assertions.assertEquals(condition.getSubject().getReferenceElement().getIdPart(), "user-2");
+		Assertions.assertNull(condition.getAsserter().getReferenceElement().getValue());
 	}
 }

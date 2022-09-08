@@ -6,6 +6,7 @@ import javax.validation.constraints.NotNull;
 
 import org.hl7.fhir.convertors.factory.VersionConvertorFactory_10_40;
 import org.hl7.fhir.r4.model.AllergyIntolerance;
+import org.hl7.fhir.r4.model.Base;
 import org.hl7.fhir.r4.model.Binary;
 import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.r4.model.CodeableConcept;
@@ -17,6 +18,7 @@ import org.hl7.fhir.r4.model.Immunization;
 import org.hl7.fhir.r4.model.Observation;
 import org.hl7.fhir.r4.model.Period;
 import org.hl7.fhir.r4.model.Procedure;
+import org.hl7.fhir.r4.model.Property;
 import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
 import org.springframework.integration.annotation.Transformer;
@@ -109,6 +111,25 @@ public class AppleHealthKitService extends DataTransformer {
 	}
 	
 	private void fixReferences(Resource resource, String internalPatientId) {
+		for(Property child : resource.children()) {
+			if(child.getTypeCode().startsWith("Reference")) {
+				for(Base value : child.getValues()) {
+					Reference reference = (Reference) value;
+					if(isPatientReference(child)) {
+						if(child.getName().equals("patient") || child.getName().equals("subject")) {
+							reference.setReference("Patient/" + internalPatientId);
+						}
+						else if(reference.getReferenceElement() != null
+								&& reference.getReferenceElement().getResourceType() != null
+								&& reference.getReferenceElement().getResourceType().equals("Patient")) {
+							// clear performer, asserter, etc
+							reference.setReference(null);
+						}							
+					}
+				}
+			}
+		}
+				
         if (resource instanceof Observation) {
         	((Observation)resource).getSubject().setReference("Patient/" + internalPatientId);
            ((Observation)resource).setEncounter((Reference)null);
@@ -126,5 +147,21 @@ public class AppleHealthKitService extends DataTransformer {
            ((Immunization)resource).setEncounter((Reference)null);
            ((Immunization)resource).getPerformer().clear();
         }
+	}
+	
+	private boolean isPatientReference(Property child) {
+		if(!child.getTypeCode().startsWith("Reference(")) {
+			return false;
+		}
+		
+		if(child.getTypeCode().equals("Reference(Patient)")) {
+			return true;
+		} else if(child.getTypeCode().contains("(Patient|")
+				|| child.getTypeCode().contains("|Patient|")
+				|| child.getTypeCode().contains("|Patient)")) {
+			return true;			
+		}
+		
+		return false;
 	}
 }
