@@ -1,0 +1,22 @@
+{
+  "resourceType": "Bundle",
+  "type": "message",
+  "entry": [
+    {
+      "resource": {
+        "resourceType": "MessageHeader",
+        "id": "BundleMessage_AppleHealthKit_pregnancy",
+        "eventUri": "urn:mitre:healthmanager:pdr",
+        "source": { "endpoint": "urn:apple:health-kit" },
+        "focus": [{ "reference": "Patient/user-2" }]
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Binary",
+        "contentType": "application/json",
+        "data": "eyJ1dWlkIjoiMjQ4MjdERjEtQkIwMS00RDM5LUEzQzUtM0YyOUE0QzhGQzVCIiwidmFsdWUiOiJub3RBcHBsaWNhYmxlIiwic3RhcnREYXRlIjoiMjAyMi0wOS0wMyIsImVuZERhdGUiOiI0MDAwLTEyLTMxIiwic2FtcGxlVHlwZSI6IkhLQ2F0ZWdvcnlUeXBlSWRlbnRpZmllclByZWduYW5jeSJ9"
+      }
+    }
+  ]
+}

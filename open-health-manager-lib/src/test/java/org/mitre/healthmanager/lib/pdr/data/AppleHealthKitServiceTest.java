@@ -25,7 +25,7 @@ class AppleHealthKitServiceTest {
 		Bundle.BundleEntryComponent entry = new Bundle.BundleEntryComponent();
 		entry.setResource(binary);
 		
-		Bundle.BundleEntryComponent result = ahk.transform(entry, "user-2");
+		Bundle.BundleEntryComponent result = ahk.transformBundleEntry(entry, "user-2");
 		
 		Assertions.assertNotNull(result);
 		Assertions.assertEquals(result.getResource().getResourceType().name(), "Condition");

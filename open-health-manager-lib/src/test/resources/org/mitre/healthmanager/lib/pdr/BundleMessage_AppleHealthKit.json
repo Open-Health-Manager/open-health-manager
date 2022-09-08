@@ -5,6 +5,7 @@
     {
       "resource": {
         "resourceType": "MessageHeader",
+        "id": "BundleMessage_AppleHealthKit",
         "eventUri": "urn:mitre:healthmanager:pdr",
         "source": {
           "endpoint": "urn:apple:health-kit"

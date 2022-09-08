@@ -41,8 +41,12 @@ public class AppleHealthKitService extends DataTransformer {
 	
 	private static final FhirContext fhirContextforDstu2Hl7Org = FhirContext.forDstu2Hl7Org();
 	
+	public BundleEntryComponent transformBundleEntry(BundleEntryComponent entry, String internalPatientId) {
+		return transform(entry, internalPatientId);
+	}
+	
 	@Transformer(inputChannel = "healthKitChannel")
-	public BundleEntryComponent transform(BundleEntryComponent entry, @Header("internalPatientId") @NotNull String internalPatientId) {
+	BundleEntryComponent transform(BundleEntryComponent entry, @Header("internalPatientId") @NotNull String internalPatientId) {
 		Resource resource = entry.getResource();
         if (resource instanceof Binary) {
         	resource = convertBinary((Binary)resource, internalPatientId);
