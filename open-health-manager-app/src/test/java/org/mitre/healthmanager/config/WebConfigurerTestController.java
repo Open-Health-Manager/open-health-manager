@@ -11,4 +11,10 @@ public class WebConfigurerTestController {
 
     @GetMapping("/test/test-cors")
     public void testCorsOnOtherPath() {}
+    
+    @GetMapping("/api/admin/test-cors")
+    public void testCorsOnApiAdminPath() {}
+    
+    @GetMapping("/fhir/test-cors")
+    public void testCorsOnFhirPath() {}
 }

@@ -4,15 +4,28 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.File;
-import java.util.*;
-import javax.servlet.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+
+import javax.servlet.Filter;
+import javax.servlet.FilterRegistration;
+import javax.servlet.Servlet;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRegistration;
+
 import org.h2.server.web.WebServlet;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,6 +35,7 @@ import org.springframework.mock.env.MockEnvironment;
 import org.springframework.mock.web.MockServletContext;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+
 import tech.jhipster.config.JHipsterConstants;
 import tech.jhipster.config.JHipsterProperties;
 
@@ -38,6 +52,8 @@ class WebConfigurerTest {
 
     private JHipsterProperties props;
 
+    private ApplicationProperties applicationProperties;
+
     @BeforeEach
     public void setup() {
         servletContext = spy(new MockServletContext());
@@ -46,8 +62,9 @@ class WebConfigurerTest {
 
         env = new MockEnvironment();
         props = new JHipsterProperties();
+        applicationProperties = new ApplicationProperties();
 
-        webConfigurer = new WebConfigurer(env, props);
+        webConfigurer = new WebConfigurer(env, props, applicationProperties);
     }
 
     @Test
@@ -81,11 +98,12 @@ class WebConfigurerTest {
 
     @Test
     void shouldCorsFilterOnApiPath() throws Exception {
-        props.getCors().setAllowedOrigins(Collections.singletonList("other.domain.com"));
-        props.getCors().setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE"));
-        props.getCors().setAllowedHeaders(Collections.singletonList("*"));
-        props.getCors().setMaxAge(1800L);
-        props.getCors().setAllowCredentials(true);
+    	props.getCors().setAllowedOrigins(null);
+    	applicationProperties.getCors().setAllowedOrigins(Collections.singletonList("other.domain.com"));
+    	applicationProperties.getCors().setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE"));
+    	applicationProperties.getCors().setAllowedHeaders(Collections.singletonList("*"));
+    	applicationProperties.getCors().setMaxAge(1800L);
+    	applicationProperties.getCors().setAllowCredentials(true);
 
         MockMvc mockMvc = MockMvcBuilders.standaloneSetup(new WebConfigurerTestController()).addFilters(webConfigurer.corsFilter()).build();
 
@@ -104,6 +122,65 @@ class WebConfigurerTest {
 
         mockMvc
             .perform(get("/api/test-cors").header(HttpHeaders.ORIGIN, "other.domain.com"))
+            .andExpect(status().isOk())
+            .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "other.domain.com"));
+    }
+
+    @Test
+    void shouldCorsFilterOnAdminApiPath() throws Exception {
+        props.getCors().setAllowedOrigins(Collections.singletonList("other.domain.com"));
+        props.getCors().setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE"));
+        props.getCors().setAllowedHeaders(Collections.singletonList("*"));
+        props.getCors().setMaxAge(1800L);
+        props.getCors().setAllowCredentials(true);
+
+        MockMvc mockMvc = MockMvcBuilders.standaloneSetup(new WebConfigurerTestController()).addFilters(webConfigurer.corsFilter()).build();
+
+        mockMvc
+            .perform(
+                options("/api/admin/test-cors")
+                    .header(HttpHeaders.ORIGIN, "other.domain.com")
+                    .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "POST")
+            )
+            .andExpect(status().isOk())
+            .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "other.domain.com"))
+            .andExpect(header().string(HttpHeaders.VARY, "Origin"))
+            .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS, "GET,POST,PUT,DELETE"))
+            .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS, "true"))
+            .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_MAX_AGE, "1800"));
+
+        mockMvc
+            .perform(get("/api/admin/test-cors").header(HttpHeaders.ORIGIN, "other.domain.com"))
+            .andExpect(status().isOk())
+            .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "other.domain.com"));
+    }
+    
+    @Test
+    void shouldCorsFilterOnFhirPath() throws Exception {
+    	props.getCors().setAllowedOrigins(null);
+    	applicationProperties.getCors().setAllowedOrigins(Collections.singletonList("other.domain.com"));
+    	applicationProperties.getCors().setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE"));
+    	applicationProperties.getCors().setAllowedHeaders(Collections.singletonList("*"));
+    	applicationProperties.getCors().setMaxAge(1800L);
+    	applicationProperties.getCors().setAllowCredentials(true);
+
+        MockMvc mockMvc = MockMvcBuilders.standaloneSetup(new WebConfigurerTestController()).addFilters(webConfigurer.corsFilter()).build();
+
+        mockMvc
+            .perform(
+                options("/fhir/test-cors")
+                    .header(HttpHeaders.ORIGIN, "other.domain.com")
+                    .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "POST")
+            )
+            .andExpect(status().isOk())
+            .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "other.domain.com"))
+            .andExpect(header().string(HttpHeaders.VARY, "Origin"))
+            .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS, "GET,POST,PUT,DELETE"))
+            .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS, "true"))
+            .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_MAX_AGE, "1800"));
+
+        mockMvc
+            .perform(get("/fhir/test-cors").header(HttpHeaders.ORIGIN, "other.domain.com"))
             .andExpect(status().isOk())
             .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "other.domain.com"));
     }

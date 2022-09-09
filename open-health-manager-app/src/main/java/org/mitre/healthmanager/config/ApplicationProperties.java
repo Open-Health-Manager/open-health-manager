@@ -1,6 +1,7 @@
 package org.mitre.healthmanager.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.web.cors.CorsConfiguration;
 
 /**
  * Properties specific to Open Health Manager App.
@@ -9,4 +10,14 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * See {@link tech.jhipster.config.JHipsterProperties} for a good example.
  */
 @ConfigurationProperties(prefix = "application", ignoreUnknownFields = true)
-public class ApplicationProperties {}
+public class ApplicationProperties {
+    private CorsConfiguration cors = new CorsConfiguration();
+
+    public CorsConfiguration getCors() {
+        return cors;
+    }
+
+    public void setCors(CorsConfiguration cors) {
+        this.cors = cors;
+    }
+}
