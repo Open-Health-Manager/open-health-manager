@@ -1,33 +1,25 @@
 package org.mitre.healthmanager.lib;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.context.SecurityContextHolderStrategy;
+import static org.junit.jupiter.api.Assertions.fail;
 
-import ca.uhn.fhir.context.FhirContext;
-import ca.uhn.fhir.rest.client.api.IGenericClient;
-
-import org.apache.commons.io.IOUtils;
-import org.hl7.fhir.r4.model.Bundle;
-import org.springframework.core.io.DefaultResourceLoader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import static org.junit.jupiter.api.Assertions.fail;
 
+import org.apache.commons.io.IOUtils;
+import org.hl7.fhir.r4.model.Bundle;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
+import org.springframework.context.annotation.Bean;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.test.context.ContextConfiguration;
+
+import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.rest.client.api.IGenericClient;
+
+@ContextConfiguration(classes={org.mitre.healthmanager.lib.TestCaseRoot.TestAuthConfig.class})
 public abstract class TestCaseRoot {
-
-    @BeforeEach
-    public void cacheAndSetSecurityContextStrategy() {
-        cacheModeAndMakeGlobal();
-    }
-
-    @AfterEach
-    public void restoreSecurityContextStrategy() {
-        restoreMode();
-    }
 
     private static final String fhirBaseTemplate = "http://localhost:$port/fhir/";
 
@@ -63,7 +55,6 @@ public abstract class TestCaseRoot {
     }
 
     protected Bundle submitTransactionAsAdmin(Bundle txBundle, IGenericClient client) {
-        AuthorizationUtils.mockAdminUser();
         return submitTransaction(txBundle, client);
     }
 
@@ -76,20 +67,21 @@ public abstract class TestCaseRoot {
         }
     }
 
-    private SecurityContextHolderStrategy originalMode;
-
-    public void cacheModeAndMakeGlobal() {
-        cacheMode();
-        SecurityContextHolder.setStrategyName(SecurityContextHolder.MODE_GLOBAL);
+    @TestConfiguration(proxyBeanMethods = false)
+    protected static class TestAuthConfig {
+    	// only works in sequential mode, will fail if concurrent tests
+		public static TestAuthorizationFilter testAuthAdminFilter;
+		
+        @Bean
+        public FilterRegistrationBean<TestAuthorizationFilter> authAdminFilter()
+        {
+            FilterRegistrationBean<TestAuthorizationFilter> filterBean 
+            	= new FilterRegistrationBean<>();
+            testAuthAdminFilter = new TestAuthorizationFilter();
+            filterBean.setFilter(testAuthAdminFilter);
+            filterBean.addUrlPatterns("/*");
+            filterBean.setOrder(1);
+            return filterBean;    
+        }
     }
-
-    public void cacheMode() {
-        originalMode = SecurityContextHolder.getContextHolderStrategy();
-    }
-
-    public void restoreMode() {
-        SecurityContextHolder.setContextHolderStrategy(originalMode);
-    }
-
-
 }

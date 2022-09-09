@@ -156,6 +156,7 @@ application:
       
 hapi:
   fhir:
+    server_address: http://localhost:8080/fhir
     tester:
       home:
         name: Local Tester

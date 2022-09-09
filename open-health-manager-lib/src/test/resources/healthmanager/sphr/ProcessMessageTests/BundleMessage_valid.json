@@ -11,12 +11,11 @@
         "source": {
           "endpoint": "http://example.org/"
         },
-        "extension": [
-          {
-            "url": "https://github.com/Open-Health-Manager/patient-data-receipt-ig/StructureDefinition/AccountExtension",
-            "valueString": "aKutch271"
-          }
-        ]
+		"focus": [
+    		{
+      			"reference": "Patient/user-2"
+    		}
+  		]
       }
     },
     {

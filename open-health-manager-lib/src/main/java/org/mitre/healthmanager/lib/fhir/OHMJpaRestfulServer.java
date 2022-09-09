@@ -2,6 +2,17 @@ package org.mitre.healthmanager.lib.fhir;
 
 import javax.servlet.ServletException;
 
+import org.hl7.fhir.r4.model.Bundle;
+import org.hl7.fhir.r4.model.ListResource;
+import org.hl7.fhir.r4.model.Patient;
+import org.mitre.healthmanager.lib.auth.OHMAuthorizationInterceptor;
+import org.mitre.healthmanager.lib.auth.OHMSearchNarrowingInterceptor;
+import org.mitre.healthmanager.lib.sphr.RequestInterceptor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Import;
+
+import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.jpa.api.dao.DaoRegistry;
 import ca.uhn.fhir.jpa.api.dao.IFhirResourceDao;
 import ca.uhn.fhir.jpa.api.dao.IFhirResourceDaoPatient;
@@ -9,21 +20,16 @@ import ca.uhn.fhir.jpa.dao.TransactionProcessor;
 import ca.uhn.fhir.jpa.starter.AppProperties;
 import ca.uhn.fhir.jpa.starter.BaseJpaRestfulServer;
 import ca.uhn.fhir.rest.openapi.OpenApiInterceptor;
-
-import org.hl7.fhir.r4.model.Bundle;
-import org.hl7.fhir.r4.model.MessageHeader;
-import org.hl7.fhir.r4.model.Patient;
-import org.mitre.healthmanager.lib.auth.OHMAuthorizationInterceptor;
-import org.mitre.healthmanager.lib.auth.OHMSearchNarrowingInterceptor;
-import org.mitre.healthmanager.lib.dataMgr.AccountInterceptor;
-import org.mitre.healthmanager.lib.dataMgr.AccountProvider;
-import org.mitre.healthmanager.lib.sphr.RequestInterceptor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.annotation.Import;
+import ca.uhn.fhir.rest.server.exceptions.InternalErrorException;
+import ca.uhn.fhir.rest.server.interceptor.ExceptionHandlingInterceptor;
 
 @Import(AppProperties.class)
 public class OHMJpaRestfulServer extends BaseJpaRestfulServer {
+	private static final long serialVersionUID = 1L;
+	
+	@Autowired
+	FhirContext theCtx;
+
 	@Autowired
 	@Qualifier("myPatientDaoR4")
 	protected IFhirResourceDaoPatient<Patient> myPatientDao;
@@ -31,29 +37,34 @@ public class OHMJpaRestfulServer extends BaseJpaRestfulServer {
 	@Qualifier("myBundleDaoR4")
 	protected IFhirResourceDao<Bundle> myBundleDao;
 	@Autowired
-	@Qualifier("myMessageHeaderDaoR4")
-	protected IFhirResourceDao<MessageHeader> myMessageHeaderDao;
+	@Qualifier("myListDaoR4")
+	protected IFhirResourceDao<ListResource> myListDaoR4;
 	@Autowired
 	private TransactionProcessor myTransactionProcessor;
 	@Autowired
 	private DaoRegistry myDaoRegistry;
-	
+	   
 	public OHMJpaRestfulServer() {
-	    super();
-	  }
-	
-  	@Override
-  	protected void initialize() throws ServletException {
+		super();
+	}
+
+	@Override
+	protected void initialize() throws ServletException {									
 		super.initialize();
 
-		registerProvider(new AccountProvider(myPatientDao, myBundleDao, myMessageHeaderDao, myTransactionProcessor, myDaoRegistry));
-		registerInterceptor(new AccountInterceptor());
-		registerInterceptor(new RequestInterceptor(myPatientDao, myBundleDao, myMessageHeaderDao, myTransactionProcessor, myDaoRegistry));
+		theCtx.getParserOptions().getDontStripVersionsFromReferencesAtPaths().add("List.entry.item");
+		
+		registerInterceptor(new RequestInterceptor(myPatientDao, myBundleDao, myListDaoR4, myTransactionProcessor, myDaoRegistry));
+
+		ExceptionHandlingInterceptor interceptor = new ExceptionHandlingInterceptor();
+		registerInterceptor(interceptor);
+		// Return the stack trace to the client for the following exception types
+		interceptor.setReturnStackTracesForExceptionTypes(InternalErrorException.class, NullPointerException.class);
+
 		registerInterceptor(new OHMAuthorizationInterceptor());
 		registerInterceptor(new OHMSearchNarrowingInterceptor());
 		
 		getInterceptorService().unregisterInterceptorsIf(t -> t instanceof OpenApiInterceptor);
 		registerInterceptor(new OHMOpenApiInterceptor());
   }
-
 }
