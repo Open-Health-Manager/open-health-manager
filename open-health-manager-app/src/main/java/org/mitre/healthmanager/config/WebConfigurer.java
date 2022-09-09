@@ -20,7 +20,6 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 import org.springframework.web.util.UrlPathHelper;
-
 import tech.jhipster.config.JHipsterConstants;
 import tech.jhipster.config.JHipsterProperties;
 import tech.jhipster.config.h2.H2ConfigurationHelper;
@@ -37,9 +36,12 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
 
     private final JHipsterProperties jHipsterProperties;
 
-    public WebConfigurer(Environment env, JHipsterProperties jHipsterProperties) {
+    private final ApplicationProperties applicationProperties;
+
+    public WebConfigurer(Environment env, JHipsterProperties jHipsterProperties, ApplicationProperties applicationProperties) {
         this.env = env;
         this.jHipsterProperties = jHipsterProperties;
+        this.applicationProperties = applicationProperties;
     }
 
     @Override
@@ -93,13 +95,18 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
     public CorsFilter corsFilter() {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = jHipsterProperties.getCors();
+        CorsConfiguration configRosie = applicationProperties.getCors();
         if (!CollectionUtils.isEmpty(config.getAllowedOrigins()) || !CollectionUtils.isEmpty(config.getAllowedOriginPatterns())) {
             log.debug("Registering CORS filter");
-            source.registerCorsConfiguration("/api/**", config);
+            source.registerCorsConfiguration("/api/admin/**", config);
             source.registerCorsConfiguration("/management/**", config);
             source.registerCorsConfiguration("/v3/api-docs", config);
             source.registerCorsConfiguration("/swagger-ui/**", config);
-            source.registerCorsConfiguration("/fhir/**", config);
+        }
+        if (!CollectionUtils.isEmpty(configRosie.getAllowedOrigins()) || !CollectionUtils.isEmpty(configRosie.getAllowedOriginPatterns())) {
+            log.debug("Registering Application CORS filter");
+            source.registerCorsConfiguration("/api/{path:^(?!(admin)$).*$}/**", configRosie);
+            source.registerCorsConfiguration("/fhir/**", configRosie);
         }
         
         // force the identification logic to use the full path within the application
