@@ -179,6 +179,8 @@ public class FHIRPatientService {
 
     	// do not create FHIR Patient if user not activated or not ROLE_USER
     	if(!user.isActivated() || 
+                user.getAuthorities().stream().map(Authority::getName)
+                .anyMatch(authority -> authority.equals(AuthoritiesConstants.ADMIN)) ||
     			user.getAuthorities().stream().map(Authority::getName)
     			.noneMatch(authority -> authority.equals(AuthoritiesConstants.USER))) {
     		return null;
