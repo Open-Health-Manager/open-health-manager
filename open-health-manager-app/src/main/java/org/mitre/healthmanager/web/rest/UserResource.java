@@ -13,6 +13,7 @@ import org.mitre.healthmanager.security.AuthoritiesConstants;
 import org.mitre.healthmanager.service.MailService;
 import org.mitre.healthmanager.service.UserService;
 import org.mitre.healthmanager.service.dto.AdminUserDTO;
+import org.mitre.healthmanager.service.dto.UserDTO;
 import org.mitre.healthmanager.web.rest.errors.BadRequestAlertException;
 import org.mitre.healthmanager.web.rest.errors.EmailAlreadyUsedException;
 import org.mitre.healthmanager.web.rest.errors.LoginAlreadyUsedException;
@@ -32,6 +33,7 @@ import tech.jhipster.web.util.HeaderUtil;
 import tech.jhipster.web.util.PaginationUtil;
 import tech.jhipster.web.util.ResponseUtil;
 import org.mitre.healthmanager.service.mapper.UserMapper;
+import org.apache.commons.text.StringEscapeUtils;
 
 /**
  * REST controller for managing users.
@@ -113,7 +115,7 @@ public class UserResource {
     @PreAuthorize("hasAuthority(\"" + AuthoritiesConstants.ADMIN + "\")")
     public ResponseEntity<User> createUser(@Valid @RequestBody AdminUserDTO userDTO) throws URISyntaxException {
         log.debug("REST request to save User : {}", userDTO);
-
+        userDTO = sanitizeUserDTOInput(userDTO);
         if (userDTO.getId() != null) {
             throw new BadRequestAlertException("A new user cannot already have an ID", "userManagement", "idexists");
             // Lowercase the user login before comparing with database
@@ -129,6 +131,16 @@ public class UserResource {
                 .headers(HeaderUtil.createAlert(applicationName, "userManagement.created", newUser.getLogin()))
                 .body(newUser);
         }
+    }
+
+    private AdminUserDTO sanitizeUserDTOInput(AdminUserDTO userDTO) {
+        
+        userDTO.setFirstName(StringEscapeUtils.escapeHtml4(userDTO.getFirstName()));
+        userDTO.setLastName(StringEscapeUtils.escapeHtml4(userDTO.getLastName()));
+        userDTO.setLogin(StringEscapeUtils.escapeHtml4(userDTO.getLogin()));
+        userDTO.setEmail(StringEscapeUtils.escapeHtml4(userDTO.getEmail()));
+
+        return userDTO;
     }
 
     /**
