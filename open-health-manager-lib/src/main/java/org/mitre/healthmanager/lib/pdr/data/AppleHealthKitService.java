@@ -118,40 +118,8 @@ public class AppleHealthKitService extends DataTransformer {
 		DateTimeType dateTimeEffective = new DateTimeType(effectiveDateString);
 		observation.setEffective(dateTimeEffective);
 
-		ObservationComponentComponent systolicComponent = new ObservationComponentComponent()
-		.setCode(new CodeableConcept().addCoding(SYSTOLIC_BLOOD_PRESSURE_CODING));
-		if(!StringUtils.isNullOrEmpty(bloodPressureSystolic)) {
-			Quantity systolicQuantity = new Quantity();
-
-			systolicQuantity.setValue(BigDecimal.valueOf(Double.parseDouble(bloodPressureSystolic)));
-			systolicQuantity.setUnit("mmHg");
-			systolicQuantity.setCode("mm[Hg]");
-			systolicQuantity.setSystem("http://unitsofmeasure.org");
-
-			systolicComponent.setValue(systolicQuantity);
-		} else {
-			CodeableConcept dataAbsent = new CodeableConcept().addCoding(new Coding().setSystem("http://hl7.org/fhir/ValueSet/data-absent-reason").setCode("unknown"));
-			systolicComponent.setDataAbsentReason(dataAbsent);
-		}
-
-		ObservationComponentComponent diastolicComponent = new ObservationComponentComponent()
-		.setCode(new CodeableConcept().addCoding(DIASTOLIC_BLOOD_PRESSURE_CODING));
-		if (!StringUtils.isNullOrEmpty(bloodPressureDiastolic)) {
-			Quantity diastolicQuantity = new Quantity();
-			
-			diastolicQuantity.setValue(BigDecimal.valueOf(Double.parseDouble(bloodPressureDiastolic)));
-			diastolicQuantity.setUnit("mmHg");
-			diastolicQuantity.setCode("mm[Hg]");
-			diastolicQuantity.setSystem("http://unitsofmeasure.org");
-
-			diastolicComponent.setValue(diastolicQuantity);
-		}  else {
-			CodeableConcept dataAbsent = new CodeableConcept().addCoding(new Coding().setSystem("http://hl7.org/fhir/ValueSet/data-absent-reason").setCode("unknown"));
-			diastolicComponent.setDataAbsentReason(dataAbsent);
-		}
-
-		observation.addComponent(systolicComponent);
-		observation.addComponent(diastolicComponent);
+		observation.addComponent(createBloodPressureComponent(SYSTOLIC_BLOOD_PRESSURE_CODING, bloodPressureSystolic));
+		observation.addComponent(createBloodPressureComponent(DIASTOLIC_BLOOD_PRESSURE_CODING, bloodPressureDiastolic));
 
 		return observation;
 	}
@@ -246,5 +214,25 @@ public class AppleHealthKitService extends DataTransformer {
 		}
 		
 		return false;
+	}
+	
+	private ObservationComponentComponent createBloodPressureComponent(Coding coding, String value) {
+		ObservationComponentComponent component = new ObservationComponentComponent()
+				.setCode(new CodeableConcept().addCoding(coding));
+		if (!StringUtils.isNullOrEmpty(value)) {
+			Quantity quantity = new Quantity();
+			
+			quantity.setValue(BigDecimal.valueOf(Double.parseDouble(value)));
+			quantity.setUnit("mmHg");
+			quantity.setCode("mm[Hg]");
+			quantity.setSystem("http://unitsofmeasure.org");
+
+			component.setValue(quantity);
+		}  else {
+			CodeableConcept dataAbsent = new CodeableConcept().addCoding(new Coding().setSystem("http://hl7.org/fhir/ValueSet/data-absent-reason").setCode("unknown"));
+			component.setDataAbsentReason(dataAbsent);
+		}
+		
+		return component;
 	}
 }
