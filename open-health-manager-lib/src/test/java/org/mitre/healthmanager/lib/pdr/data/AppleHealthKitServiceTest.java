@@ -2,6 +2,7 @@ package org.mitre.healthmanager.lib.pdr.data;
 
 import java.io.IOException;
 import java.util.Base64;
+import java.util.List;
 
 import org.hl7.fhir.r4.model.Binary;
 import org.hl7.fhir.r4.model.Bundle;
@@ -25,12 +26,14 @@ class AppleHealthKitServiceTest {
 		Bundle.BundleEntryComponent entry = new Bundle.BundleEntryComponent();
 		entry.setResource(binary);
 		
-		Bundle.BundleEntryComponent result = ahk.transformBundleEntry(entry, "user-2");
+		List<Bundle.BundleEntryComponent> resultList = ahk.transformBundleEntry(entry, "user-2");
 		
-		Assertions.assertNotNull(result);
-		Assertions.assertEquals(result.getResource().getResourceType().name(), "Condition");
-		Condition condition = (Condition) result.getResource();
-		Assertions.assertEquals(condition.getSubject().getReferenceElement().getIdPart(), "user-2");
-		Assertions.assertNull(condition.getAsserter().getReferenceElement().getValue());
+		for (Bundle.BundleEntryComponent result : resultList) {
+			Assertions.assertNotNull(result);
+			Assertions.assertEquals(result.getResource().getResourceType().name(), "Condition");
+			Condition condition = (Condition) result.getResource();
+			Assertions.assertEquals(condition.getSubject().getReferenceElement().getIdPart(), "user-2");
+			Assertions.assertNull(condition.getAsserter().getReferenceElement().getValue());
+		}
 	}
 }
