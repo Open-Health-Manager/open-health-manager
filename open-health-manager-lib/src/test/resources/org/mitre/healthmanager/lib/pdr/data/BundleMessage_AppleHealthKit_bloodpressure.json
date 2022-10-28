@@ -1,0 +1,35 @@
+{
+  "resourceType": "Bundle",
+  "type": "message",
+  "entry": [
+    {
+      "resource": {
+        "resourceType": "MessageHeader",
+        "id": "BundleMessage_AppleHealthKit_bloodpressure",
+        "eventUri": "urn:mitre:healthmanager:pdr",
+        "source": {
+          "endpoint": "urn:apple:health-kit"
+        },
+        "focus": [
+          {
+            "reference": "Patient/user-2"
+          }
+        ]
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Binary",
+        "contentType": "application/json",
+        "data": "eyJzeXN0b2xpY1ZhbHVlIjoiMTQwLjAwMDAwMCIsImRpYXN0b2xpY1ZhbHVlIjoiOTAuMDAwMDAwIiwiZWZmZWN0aXZlRGF0ZSI6IjIwMjItMTAtMjgiLCJ1dWlkIjoiRTY1MzdGQzYtNjNGRi00RERBLUI2MzMtNzMxQjQxN0Y0NUYzIiwic2FtcGxlVHlwZSI6IkhLQ29ycmVsYXRpb25UeXBlSWRlbnRpZmllckJsb29kUHJlc3N1cmUifQ=="
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Binary",
+        "contentType": "application/json",
+        "data": "eyJ1dWlkIjoiRjIwRTUzMzQtNTZERi00QkZCLUI2OEYtRjJFRTk5NUQyRDkxIiwic3lzdG9saWNWYWx1ZSI6IjEyMC4wMDAwMDAiLCJzYW1wbGVUeXBlIjoiSEtDb3JyZWxhdGlvblR5cGVJZGVudGlmaWVyQmxvb2RQcmVzc3VyZSIsImVmZmVjdGl2ZURhdGUiOiIyMDIyLTEwLTI4IiwiZGlhc3RvbGljVmFsdWUiOiI4MC4wMDAwMDAifQ=="
+      }
+    }
+  ]
+}
