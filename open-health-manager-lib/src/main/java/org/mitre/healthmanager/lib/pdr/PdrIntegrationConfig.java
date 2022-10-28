@@ -1,5 +1,6 @@
 package org.mitre.healthmanager.lib.pdr;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -155,18 +156,28 @@ public class PdrIntegrationConfig {
 	}
 	
 	@Aggregator
-	public Bundle aggregatingMethod(List<BundleEntryComponent> items) {
+	public Bundle aggregatingMethod(List<List<BundleEntryComponent>> items) {
 	    Bundle result = new Bundle();
-		for(BundleEntryComponent item: items) {
-			result.addEntry(item);
-	    }
+		for (List<BundleEntryComponent> bundleEntryList : items) {
+			for(BundleEntryComponent item: bundleEntryList) {
+				result.addEntry(item);
+			}
+		}
 		return result;
 	}
 	
 	@ServiceActivator
-	public BundleEntryComponent recordMatch(@Payload BundleEntryComponent entry, @Header("messageHeader") MessageHeader messageHeader,
+	public List<BundleEntryComponent> recordMatch(@Payload List<BundleEntryComponent> bundle, @Header("messageHeader") MessageHeader messageHeader,
 			@Header("internalPatientId") @NotNull String internalPatientId) {
-		return recordMatchService.recordMatch(entry, internalPatientId, messageHeader, daoRegistry);		
+		
+		List<BundleEntryComponent> bundleEntryList = new ArrayList<BundleEntryComponent>();
+		
+		for (BundleEntryComponent entry : bundle) {
+			BundleEntryComponent recordMatch =  recordMatchService.recordMatch(entry, internalPatientId, messageHeader, daoRegistry);
+			bundleEntryList.add(recordMatch);
+		}	
+
+		return bundleEntryList;
 	}
 		
 	@ServiceActivator
