@@ -1,32 +1,32 @@
 package org.mitre.healthmanager.lib.pdr.data;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
 
 import javax.validation.constraints.NotNull;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.hl7.fhir.convertors.factory.VersionConvertorFactory_10_40;
-import org.hl7.fhir.r4.model.DateTimeType;
 import org.hl7.fhir.r4.model.AllergyIntolerance;
 import org.hl7.fhir.r4.model.Base;
 import org.hl7.fhir.r4.model.Binary;
 import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
-import org.hl7.fhir.r4.model.Observation.ObservationComponentComponent;
 import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Condition;
-import org.hl7.fhir.r4.model.DateType;
+import org.hl7.fhir.r4.model.DateTimeType;
 import org.hl7.fhir.r4.model.IdType;
 import org.hl7.fhir.r4.model.Immunization;
 import org.hl7.fhir.r4.model.Observation;
-import org.hl7.fhir.r4.model.Period;
+import org.hl7.fhir.r4.model.Observation.ObservationComponentComponent;
 import org.hl7.fhir.r4.model.Procedure;
 import org.hl7.fhir.r4.model.Property;
 import org.hl7.fhir.r4.model.Quantity;
 import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.integration.annotation.Transformer;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Service;
@@ -43,36 +43,46 @@ import ca.uhn.fhir.rest.server.exceptions.UnprocessableEntityException;
 
 @Service
 public class AppleHealthKitService extends DataTransformer {
-	public static final Coding PREGNANCY_CODING = new Coding().setCode("77386006").setSystem("http://snomed.info/sct");
+	public static final Coding PREGNANT_STATUS_CODING = new Coding().setCode("77386006").setSystem("http://snomed.info/sct");
+	public static final Coding NOT_PREGNANT_STATUS_CODING = new Coding().setCode("60001007").setSystem("http://snomed.info/sct");
+	public static final Coding PREGNANCY_CODING = new Coding().setCode("82810-3").setSystem("http://loinc.org");
+	public static final Coding PREGNANCY_SOCIAL_HISTORY_CODING = new Coding().setCode("social-history").setSystem("http://terminology.hl7.org/CodeSystem/observation-category");
 
 	public static final Coding OBSERVATION_VITAL_SIGNS_CODING = new Coding().setCode("vital-signs").setSystem("http://terminology.hl7.org/CodeSystem/observation-category");
-	
 	public static final Coding OBSERVATION_BLOOD_PRESSURE_CODING = new Coding().setCode("85354-9").setSystem("http://loinc.org");
-
 	public static final Coding SYSTOLIC_BLOOD_PRESSURE_CODING = new Coding().setCode("8480-6").setSystem("http://loinc.org");
-
 	public static final Coding DIASTOLIC_BLOOD_PRESSURE_CODING = new Coding().setCode("8462-4").setSystem("http://loinc.org");
 	
 	private static final FhirContext fhirContextforDstu2Hl7Org = FhirContext.forDstu2Hl7Org();
 
 	private static final Logger log = LoggerFactory.getLogger(AppleHealthKitService.class);
 	
-	public BundleEntryComponent transformBundleEntry(BundleEntryComponent entry, String internalPatientId) {
+	public List<BundleEntryComponent> transformBundleEntry(BundleEntryComponent entry, String internalPatientId) {
 		return transform(entry, internalPatientId);
 	}
 	
 	@Transformer(inputChannel = "healthKitChannel")
-	BundleEntryComponent transform(BundleEntryComponent entry, @Header("internalPatientId") @NotNull String internalPatientId) {
-		Resource resource = entry.getResource();
-        if (resource instanceof Binary) {
-        	resource = convertBinary((Binary)resource, internalPatientId);
-        }
-        fixReferences(resource, internalPatientId);
-        entry.setResource(resource);
-		return entry;
+	List<BundleEntryComponent> transform(BundleEntryComponent entry, @Header("internalPatientId") @NotNull String internalPatientId) {
+		List<BundleEntryComponent> entryList = new ArrayList<BundleEntryComponent>();
+		List<Resource> resourceList = new ArrayList<Resource>();
+		
+		Resource resourceEntry = entry.getResource();
+        if (resourceEntry instanceof Binary) {
+        	resourceList = convertBinary((Binary)resourceEntry, internalPatientId);
+        } else {
+			resourceList.add(resourceEntry);
+		}
+
+		for (Resource resource : resourceList) {
+			BundleEntryComponent newEntry = new BundleEntryComponent();
+			fixReferences(resource, internalPatientId);
+			newEntry.setResource(resource);
+			entryList.add(newEntry);
+		}
+        return entryList;
 	}
 	
-	private Resource convertBinary(Binary binary, String internalPatientId) {
+	private List<Resource> convertBinary(Binary binary, String internalPatientId) {
 		if(binary.getContentType().equals(MimeType.APPLICATION_JSON)) {
 			String jsonStringBase64 = binary.getDataElement().getValueAsString();
 			String jsonString = new String(Base64.getDecoder().decode(jsonStringBase64));
@@ -99,7 +109,9 @@ public class AppleHealthKitService extends DataTransformer {
 		throw new UnprocessableEntityException("Unprocessable binary resource content type.");	
 	}
 	
-	private Observation convertBloodPressure(JsonNode node) {
+	private List<Resource> convertBloodPressure(JsonNode node) {
+		List<Resource> observationList = new ArrayList<Resource>();
+		
 		String uuid = node.get("uuid").asText();
 		String effectiveDateString = node.get("effectiveDate").asText();
 
@@ -121,42 +133,69 @@ public class AppleHealthKitService extends DataTransformer {
 		observation.addComponent(createBloodPressureComponent(SYSTOLIC_BLOOD_PRESSURE_CODING, bloodPressureSystolic));
 		observation.addComponent(createBloodPressureComponent(DIASTOLIC_BLOOD_PRESSURE_CODING, bloodPressureDiastolic));
 
-		return observation;
+		observationList.add(observation);
+		return observationList;
 	}
 
-	private Condition convertPregnancy(JsonNode node) {
+	private List<Resource> convertPregnancy(JsonNode node) {
 		String uuid = node.get("uuid").asText();
-		String startDateString = node.get("startDate").asText();
-		String endDateString = node.get("endDate").asText();
-		
-		Condition condition = new Condition();
-		condition.setId(new IdType("HKCategoryTypeIdentifierPregnancy", uuid));
-		condition.setCode(new CodeableConcept()
-				.addCoding(PREGNANCY_CODING));
-		
-		Period onset = new Period();
-		condition.setOnset(onset);		
-		if(!StringUtils.isNullOrEmpty(startDateString)) {
-			DateType startDate = new DateType(startDateString);
-			onset.setStart(startDate.getValue());
-		}
 
-		if(!StringUtils.isNullOrEmpty(endDateString) && !endDateString.equals("4000-12-31")) {
-			DateType endDate = new DateType(endDateString);
-			onset.setEnd(endDate.getValue());		
+		List<String> dateArray = new ArrayList<String>();
+		dateArray.add(node.get("startDate").asText());
+		dateArray.add(node.get("endDate").asText());
+
+		List<Resource> observationList = new ArrayList<Resource>();
+
+		int index = 0;
+		for (String dateString : dateArray ) {
+
+			if(!StringUtils.isNullOrEmpty(dateString) && !dateString.equals("4000-12-31")) {
+				Observation observation = new Observation();
+				
+				observation.setId(new IdType("HKCategoryTypeIdentifierPregnancy", uuid + "-" + index));
+				
+				observation.setCode(new CodeableConcept()
+					.addCoding(PREGNANCY_CODING));
+
+				observation.addCategory(new CodeableConcept()
+					.addCoding(PREGNANCY_SOCIAL_HISTORY_CODING));
+
+				if (index == 0) {
+					observation.setValue(new CodeableConcept()
+						.addCoding(PREGNANT_STATUS_CODING));
+				} else {
+					observation.setValue(new CodeableConcept()
+						.addCoding(NOT_PREGNANT_STATUS_CODING));
+				}
+				index++;
+					
+				DateTimeType dateTimeEffective = new DateTimeType(dateString);
+				observation.setEffective(dateTimeEffective);
+
+				observationList.add(observation);
+			}
+		}
+		
+		if(observationList.isEmpty()) {
+			// bad data - sample entry should at least include startDate
+			throw new UnprocessableEntityException("Unprocessable sample type: HKCategoryTypeIdentifierPregnancy");		
 		}
 			
-		return condition;
+		return observationList;
 	}
 	
-	private Resource convertDstu2(Binary binary) {				
+	private List<Resource> convertDstu2(Binary binary) {				
 		String jsonStringBase64 = binary.getDataElement().getValueAsString();
 		String jsonString = new String(Base64.getDecoder().decode(jsonStringBase64));
+
+		List<Resource> resourceList = new ArrayList<Resource>();
+
 		org.hl7.fhir.dstu2.model.Resource input = 
 				(org.hl7.fhir.dstu2.model.Resource) fhirContextforDstu2Hl7Org.newJsonParser().parseResource(jsonString);
 		
 		if(VersionConvertorFactory_10_40.convertsResource(input.getResourceType().name())) {
-			return VersionConvertorFactory_10_40.convertResource(input);
+			resourceList.add(VersionConvertorFactory_10_40.convertResource(input));
+			return resourceList;
 		}
 		throw new UnprocessableEntityException("Unprocessable binary resource fhir type: " + input.getResourceType().name());			
 	}
