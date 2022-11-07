@@ -167,12 +167,12 @@ public class PdrIntegrationConfig {
 	}
 	
 	@ServiceActivator
-	public List<BundleEntryComponent> recordMatch(@Payload List<BundleEntryComponent> bundle, @Header("messageHeader") MessageHeader messageHeader,
+	public List<BundleEntryComponent> recordMatch(@Payload List<BundleEntryComponent> entries, @Header("messageHeader") MessageHeader messageHeader,
 			@Header("internalPatientId") @NotNull String internalPatientId) {
 		
 		List<BundleEntryComponent> bundleEntryList = new ArrayList<BundleEntryComponent>();
 		
-		for (BundleEntryComponent entry : bundle) {
+		for (BundleEntryComponent entry : entries) {
 			BundleEntryComponent recordMatch =  recordMatchService.recordMatch(entry, internalPatientId, messageHeader, daoRegistry);
 			bundleEntryList.add(recordMatch);
 		}	

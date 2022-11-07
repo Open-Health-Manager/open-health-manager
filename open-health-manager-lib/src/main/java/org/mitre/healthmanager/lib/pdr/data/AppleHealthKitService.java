@@ -1,10 +1,7 @@
 package org.mitre.healthmanager.lib.pdr.data;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Base64;
-import java.util.Date;
 import java.util.List;
 
 import javax.validation.constraints.NotNull;
@@ -18,11 +15,9 @@ import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Condition;
 import org.hl7.fhir.r4.model.DateTimeType;
-import org.hl7.fhir.r4.model.DateType;
 import org.hl7.fhir.r4.model.IdType;
 import org.hl7.fhir.r4.model.Immunization;
 import org.hl7.fhir.r4.model.Observation;
-import org.hl7.fhir.r4.model.Period;
 import org.hl7.fhir.r4.model.Procedure;
 import org.hl7.fhir.r4.model.Property;
 import org.hl7.fhir.r4.model.Reference;
@@ -133,6 +128,11 @@ public class AppleHealthKitService extends DataTransformer {
 
 				observationList.add(observation);
 			}
+		}
+		
+		if(observationList.isEmpty()) {
+			// bad data - sample entry should at least include startDate
+			throw new UnprocessableEntityException("Unprocessable sample type: HKCategoryTypeIdentifierPregnancy");		
 		}
 			
 		return observationList;
