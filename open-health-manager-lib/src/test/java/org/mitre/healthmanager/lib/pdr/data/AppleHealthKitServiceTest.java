@@ -6,10 +6,13 @@ import java.util.List;
 
 import org.hl7.fhir.r4.model.Binary;
 import org.hl7.fhir.r4.model.Bundle;
+import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.r4.model.Condition;
 import org.hl7.fhir.r4.model.Observation;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+
+import com.gargoylesoftware.htmlunit.util.MimeType;
 
 import ca.uhn.fhir.rest.api.Constants;
 import ca.uhn.fhir.rest.server.exceptions.UnprocessableEntityException;
@@ -96,5 +99,26 @@ class AppleHealthKitServiceTest {
 		Bundle.BundleEntryComponent entry = new Bundle.BundleEntryComponent().setResource(pregnancyResource);
 
 		Assertions.assertThrows(UnprocessableEntityException.class, () -> ahk.transformBundleEntry(entry, "user-2"));
+	}
+	
+	@Test
+	void testTransformBloodPressureToR4() throws IOException {
+		byte[] bytes = this.getClass().getResourceAsStream("HKCorrelationTypeIdentifierBloodPressure.json").readAllBytes();
+		
+		Binary binary = new Binary();
+		binary.setContentType(MimeType.APPLICATION_JSON);
+		binary.setContentAsBase64(Base64.getEncoder().encodeToString(bytes));
+		
+		Bundle.BundleEntryComponent entry = new Bundle.BundleEntryComponent();
+		entry.setResource(binary);
+		
+		List<BundleEntryComponent> resultList = ahk.transformBundleEntry(entry, "user-2");
+		
+		Assertions.assertNotNull(resultList);
+		Assertions.assertEquals(1, resultList.size());
+		Bundle.BundleEntryComponent result = resultList.get(0);
+		Assertions.assertEquals(result.getResource().getResourceType().name(), "Observation");
+		Observation observation = (Observation) result.getResource();
+		Assertions.assertEquals(observation.getSubject().getReferenceElement().getIdPart(), "user-2");
 	}
 }

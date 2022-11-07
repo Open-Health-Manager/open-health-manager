@@ -1,5 +1,6 @@
 package org.mitre.healthmanager.lib.pdr.data;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -18,10 +19,14 @@ import org.hl7.fhir.r4.model.DateTimeType;
 import org.hl7.fhir.r4.model.IdType;
 import org.hl7.fhir.r4.model.Immunization;
 import org.hl7.fhir.r4.model.Observation;
+import org.hl7.fhir.r4.model.Observation.ObservationComponentComponent;
 import org.hl7.fhir.r4.model.Procedure;
 import org.hl7.fhir.r4.model.Property;
+import org.hl7.fhir.r4.model.Quantity;
 import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.integration.annotation.Transformer;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Service;
@@ -42,8 +47,15 @@ public class AppleHealthKitService extends DataTransformer {
 	public static final Coding NOT_PREGNANT_STATUS_CODING = new Coding().setCode("60001007").setSystem("http://snomed.info/sct");
 	public static final Coding PREGNANCY_CODING = new Coding().setCode("82810-3").setSystem("http://loinc.org");
 	public static final Coding PREGNANCY_SOCIAL_HISTORY_CODING = new Coding().setCode("social-history").setSystem("http://terminology.hl7.org/CodeSystem/observation-category");
+
+	public static final Coding OBSERVATION_VITAL_SIGNS_CODING = new Coding().setCode("vital-signs").setSystem("http://terminology.hl7.org/CodeSystem/observation-category");
+	public static final Coding OBSERVATION_BLOOD_PRESSURE_CODING = new Coding().setCode("85354-9").setSystem("http://loinc.org");
+	public static final Coding SYSTOLIC_BLOOD_PRESSURE_CODING = new Coding().setCode("8480-6").setSystem("http://loinc.org");
+	public static final Coding DIASTOLIC_BLOOD_PRESSURE_CODING = new Coding().setCode("8462-4").setSystem("http://loinc.org");
 	
 	private static final FhirContext fhirContextforDstu2Hl7Org = FhirContext.forDstu2Hl7Org();
+
+	private static final Logger log = LoggerFactory.getLogger(AppleHealthKitService.class);
 	
 	public List<BundleEntryComponent> transformBundleEntry(BundleEntryComponent entry, String internalPatientId) {
 		return transform(entry, internalPatientId);
@@ -82,15 +94,49 @@ public class AppleHealthKitService extends DataTransformer {
 				throw new UnprocessableEntityException("Unprocessable binary resource data.");
 			}
 			String sampleType = node.get("sampleType").asText();
+			
 			if(sampleType.equals("HKCategoryTypeIdentifierPregnancy")){
 				return convertPregnancy(node);
 			}
+			
+			if(sampleType.equals("HKCorrelationTypeIdentifierBloodPressure")){
+				return convertBloodPressure(node);
+			}
+
 		} else if(binary.getContentType().equals(Constants.CT_FHIR_JSON_NEW)){
 			return convertDstu2(binary);
 		}
 		throw new UnprocessableEntityException("Unprocessable binary resource content type.");	
 	}
 	
+	private List<Resource> convertBloodPressure(JsonNode node) {
+		List<Resource> observationList = new ArrayList<Resource>();
+		
+		String uuid = node.get("uuid").asText();
+		String effectiveDateString = node.get("effectiveDate").asText();
+
+		String bloodPressureSystolic = node.get("systolicValue").asText();
+		String bloodPressureDiastolic = node.get("diastolicValue").asText();
+
+		Observation observation = new Observation();
+		observation.setId(new IdType("HKCorrelationTypeIdentifierBloodPressure", uuid));
+
+		observation.setStatus(Observation.ObservationStatus.UNKNOWN);
+
+		observation.addCategory(new CodeableConcept().addCoding(OBSERVATION_VITAL_SIGNS_CODING));
+
+		observation.setCode(new CodeableConcept().addCoding(OBSERVATION_BLOOD_PRESSURE_CODING));	
+
+		DateTimeType dateTimeEffective = new DateTimeType(effectiveDateString);
+		observation.setEffective(dateTimeEffective);
+
+		observation.addComponent(createBloodPressureComponent(SYSTOLIC_BLOOD_PRESSURE_CODING, bloodPressureSystolic));
+		observation.addComponent(createBloodPressureComponent(DIASTOLIC_BLOOD_PRESSURE_CODING, bloodPressureDiastolic));
+
+		observationList.add(observation);
+		return observationList;
+	}
+
 	private List<Resource> convertPregnancy(JsonNode node) {
 		String uuid = node.get("uuid").asText();
 
@@ -207,5 +253,25 @@ public class AppleHealthKitService extends DataTransformer {
 		}
 		
 		return false;
+	}
+	
+	private ObservationComponentComponent createBloodPressureComponent(Coding coding, String value) {
+		ObservationComponentComponent component = new ObservationComponentComponent()
+				.setCode(new CodeableConcept().addCoding(coding));
+		if (!StringUtils.isNullOrEmpty(value)) {
+			Quantity quantity = new Quantity();
+			
+			quantity.setValue(BigDecimal.valueOf(Double.parseDouble(value)));
+			quantity.setUnit("mmHg");
+			quantity.setCode("mm[Hg]");
+			quantity.setSystem("http://unitsofmeasure.org");
+
+			component.setValue(quantity);
+		}  else {
+			CodeableConcept dataAbsent = new CodeableConcept().addCoding(new Coding().setSystem("http://hl7.org/fhir/ValueSet/data-absent-reason").setCode("unknown"));
+			component.setDataAbsentReason(dataAbsent);
+		}
+		
+		return component;
 	}
 }

@@ -64,6 +64,19 @@ class AppleHealthKitServiceIT extends BasePdrIT {
 	
 	@Test
 	@Transactional
+	void testProcessHealthKitBloodPressureMessage() {
+		Bundle testMessage = ourCtx.newJsonParser().parseResource(
+				Bundle.class, this.getClass().getResourceAsStream("BundleMessage_AppleHealthKit_bloodpressure.json")
+        );
+		
+		TestAuthConfig.testAuthAdminFilter.doMockUserOnce("user-2");
+		Bundle response = processMessage(testMessage);
+		assertSuccessResponse(response);
+		assertExistsList(testMessage, response);
+	}
+	
+	@Test
+	@Transactional
 	void testProcessHealthKitDstu2Message() {
 		Bundle testMessage = ourCtx.newJsonParser().parseResource(
 				Bundle.class, this.getClass().getResourceAsStream("BundleMessage_AppleHealthKit_dstu2.json")

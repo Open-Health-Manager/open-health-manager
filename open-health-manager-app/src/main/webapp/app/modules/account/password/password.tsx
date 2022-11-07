@@ -36,7 +36,7 @@ export const PasswordPage = () => {
     } else if (errorMessage) {
       toast.error(translate(errorMessage));
     }
-    dispatch(reset()); //reset in case use saves twice in a row
+    dispatch(reset()); // reset in case use saves twice in a row
   }, [successMessage, errorMessage]);
 
   return (
