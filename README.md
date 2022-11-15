@@ -1,6 +1,20 @@
-# open-health-manager
+# Open Health Manager™
 
-## Building and running
+## About
+
+Open Health Manager™ is the reference implementation for the MITRE Health Manager Lab under the Living Health Lab 
+initiative. This project aims to radically flip the locus of health data from organizations
+to individuals, promoting individual agency in personal health through primary self-care and 
+engagement with their care team. 
+
+A core component needed to effect that flip and enable individual action is a health manager that serves as the
+repository for an individual's health data, collecting, combining, and making sense of health data as it is collected
+and making it available for the individual to share. The Health Manager lab is working with the HL7™ community
+to develop open standards for the collection, representation, and access of health data within a health manager.
+Open Health Manager™ is a reference implementation of these standards and a demonstration platform for
+what these standards and a patient-controlled health record can enable.
+
+## Quickstart
 
 ### check out and build
 ```shell
@@ -25,6 +39,30 @@ cd [base directory]/open-health-manager-app/
 ./mvnw -Pprod -DskipTests verify jib:dockerBuild # Run this command to build the docker image of the application, -DskipTests is optional
 docker-compose -f src/main/docker/app.yml -p open-health-manager up -d # Run this once the image is built to run the application using Docker
 ```
+
+## FHIR Implementation Guides
+
+Open Health Manager™ implements the following FHIR IGs
+- [Patient Data Receipt](https://open-health-manager.github.io/patient-data-receipt-ig/) (under development)
+- [Standard Patient Health Record](https://open-health-manager.github.io/standard-patient-health-record-ig/) (under development)
+
+## Contributing
+
+We love your input! We want to make contributing to this project as easy and transparent as possible, whether it's:
+
+* Reporting a bug
+* Discussing the current state of the code
+* Submitting a fix
+* Proposing new features
+* Becoming a maintainer
+
+### We Develop with GitHub
+
+We use GitHub to host code, to track issues and feature requests, as well as accept pull requests.
+
+### Report bugs using GitHub's issues
+
+We use GitHub issues to track public bugs.
 
 ## License
 
