@@ -25,6 +25,7 @@ import org.hl7.fhir.r4.model.Observation;
 import org.hl7.fhir.r4.model.Observation.ObservationComponentComponent;
 import org.hl7.fhir.r5.context.IWorkerContext;
 import org.hl7.fhir.r5.context.SimpleWorkerContext;
+import org.hl7.fhir.r5.elementmodel.Element;
 import org.hl7.fhir.r5.elementmodel.Manager;
 import org.hl7.fhir.r5.elementmodel.Manager.FhirFormat;
 import org.hl7.fhir.r5.model.StructureDefinition;
@@ -49,6 +50,7 @@ import com.gargoylesoftware.htmlunit.util.MimeType;
 import com.mysql.cj.util.StringUtils;
 
 import ca.uhn.fhir.context.FhirContext;
+import org.hl7.fhir.r5.context.BaseWorkerContext;
 import ca.uhn.fhir.jpa.api.dao.DaoRegistry;
 import ca.uhn.fhir.jpa.api.dao.IFhirResourceDao;
 import ca.uhn.fhir.rest.api.Constants;
@@ -313,8 +315,8 @@ public class AppleHealthKitService extends DataTransformer {
 		}
 
 		//StructureMapUtilities scu = new StructureMapUtilities((IWorkerContext) context); // Not sure if this is correct, they set up the Structure Map Utilities differently- tried autowiring above
-		org.hl7.fhir.r5.elementmodel.Element src = Manager.parseSingle((IWorkerContext) context, new ByteArrayInputStream(node.binaryValue()), FhirFormat.JSON);
-		org.hl7.fhir.r5.elementmodel.Element resource = getTargetResourceFromStructureMap(structureMapFHIR, (IWorkerContext)context);
+		Element src = Manager.parseSingle((IWorkerContext) context, new ByteArrayInputStream(node.binaryValue()), FhirFormat.JSON);
+		Element resource = getTargetResourceFromStructureMap(structureMapFHIR, (IWorkerContext)context);
 
 		scu.transform(null, src, structureMapFHIR, resource);
 		resource.populatePaths(null); // Need to see if this is necessary, probably need to bring in manually if so
@@ -332,7 +334,7 @@ public class AppleHealthKitService extends DataTransformer {
 
 	}
 
-	private org.hl7.fhir.r5.elementmodel.Element getTargetResourceFromStructureMap(StructureMap map, IWorkerContext context) {
+	private Element getTargetResourceFromStructureMap(StructureMap map, IWorkerContext context) {
 		String targetTypeUrl = null;
 		for (StructureMap.StructureMapStructureComponent component : map.getStructure()) {
 		  if (component.getMode() == StructureMap.StructureMapModelMode.TARGET) {
@@ -344,7 +346,7 @@ public class AppleHealthKitService extends DataTransformer {
 		if (targetTypeUrl == null) throw new FHIRException("Unable to determine resource URL for target type");
 	
 		StructureDefinition structureDefinition = null;
-		for (StructureDefinition sd : context.fetchResourcesByType(StructureDefinition.class)) { // Looking at the code, it seems like something of this type should be calling this: <T extends Resource> List<T>
+		for (StructureDefinition sd : this.context.fetchResourcesByType(StructureDefinition.class)) { // Looking at the code, it seems like something of this type should be calling this: <T extends Resource> List<T>
 		  if (sd.getUrl().equalsIgnoreCase(targetTypeUrl)) {
 			structureDefinition = sd;
 			break;
@@ -353,6 +355,6 @@ public class AppleHealthKitService extends DataTransformer {
 	
 		if (structureDefinition == null) throw new FHIRException("Unable to find StructureDefinition for target type ('" + targetTypeUrl + "')");
 	
-		return Manager.build(getContext(), structureDefinition); // Not sure what the getContext function is, need to look into this more as well
+		return Manager.build(context, structureDefinition); // Not sure what the getContext function is, need to look into this more as well
 	}
 }
