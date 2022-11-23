@@ -24,6 +24,7 @@ import org.hl7.fhir.r5.model.StructureMap;
 import org.hl7.fhir.r5.model.StructureMap.StructureMapStructureComponent;
 import org.hl7.fhir.r5.utils.structuremap.StructureMapUtilities;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -36,6 +37,7 @@ import ca.uhn.fhir.jpa.api.dao.IFhirResourceDao;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 import ca.uhn.fhir.rest.server.exceptions.UnprocessableEntityException;
 
+@Service
 public class StructureMapTransformer extends DataTransformer {
 	@Autowired
 	private FhirContext fhirContext;
@@ -43,8 +45,8 @@ public class StructureMapTransformer extends DataTransformer {
 	@Autowired
 	private DaoRegistry myDaoRegistry;
 
-	@Autowired
-	SimpleWorkerContext context;
+	//@Autowired
+	//SimpleWorkerContext context;
 
 	private static final FhirContext fhirContextforR5 = FhirContext.forR5();
 
@@ -90,7 +92,8 @@ public class StructureMapTransformer extends DataTransformer {
 	}
 
 	private List<Resource> transformStructureMap(JsonNode node, String sampleType) throws FHIRException, IOException {
-		SimpleWorkerContext simpleWorkerContext = context; //new SimpleWorkerContext();
+		SimpleWorkerContext workerContext = new SimpleWorkerContext();
+		//IWorkerContext workerContext = new org.hl7.fhir.r5.hapi.ctx.HapiWorkerContext(fhirContextforR5, fhirContextforR5.getValidationSupport());
 		
 		String structureMapID = sampleType;		
 		IFhirResourceDao<org.hl7.fhir.r4.model.StructureMap> structureMapDAO = myDaoRegistry
@@ -104,13 +107,13 @@ public class StructureMapTransformer extends DataTransformer {
 			throw new ResourceNotFoundException("Structure Map resource does not exist.");
 		}
 
-		StructureMapUtilities scu = new StructureMapUtilities(simpleWorkerContext); // Not sure if this is correct, they set up the
+		StructureMapUtilities scu = new StructureMapUtilities(workerContext); // Not sure if this is correct, they set up the
 																		// Structure Map Utilities differently- tried
 																		// autowiring above
-		org.hl7.fhir.r5.elementmodel.Element src = Manager.parseSingle(simpleWorkerContext,
+		org.hl7.fhir.r5.elementmodel.Element src = Manager.parseSingle(workerContext,
 				new ByteArrayInputStream(node.binaryValue()), FhirFormat.JSON);
 		org.hl7.fhir.r5.elementmodel.Element resource = getTargetResourceFromStructureMap(structureMap,
-				(IWorkerContext) simpleWorkerContext);
+				(IWorkerContext) workerContext);
 
 		scu.transform(null, src, structureMap, resource);
 
