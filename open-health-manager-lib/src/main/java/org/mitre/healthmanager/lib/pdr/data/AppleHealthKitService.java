@@ -1,7 +1,5 @@
 package org.mitre.healthmanager.lib.pdr.data;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -10,7 +8,6 @@ import java.util.List;
 import javax.validation.constraints.NotNull;
 
 import org.hl7.fhir.convertors.factory.VersionConvertorFactory_10_40;
-import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.r4.model.AllergyIntolerance;
 import org.hl7.fhir.r4.model.Base;
 import org.hl7.fhir.r4.model.Binary;
@@ -23,22 +20,13 @@ import org.hl7.fhir.r4.model.IdType;
 import org.hl7.fhir.r4.model.Immunization;
 import org.hl7.fhir.r4.model.Observation;
 import org.hl7.fhir.r4.model.Observation.ObservationComponentComponent;
-import org.hl7.fhir.r5.context.IWorkerContext;
-import org.hl7.fhir.r5.context.SimpleWorkerContext;
-import org.hl7.fhir.r5.elementmodel.Element;
-import org.hl7.fhir.r5.elementmodel.Manager;
-import org.hl7.fhir.r5.elementmodel.Manager.FhirFormat;
-import org.hl7.fhir.r5.model.StructureDefinition;
-import org.hl7.fhir.r5.utils.structuremap.StructureMapUtilities;
 import org.hl7.fhir.r4.model.Procedure;
 import org.hl7.fhir.r4.model.Property;
 import org.hl7.fhir.r4.model.Quantity;
 import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
-import org.hl7.fhir.r5.model.StructureMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.integration.annotation.Transformer;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Service;
@@ -50,11 +38,7 @@ import com.gargoylesoftware.htmlunit.util.MimeType;
 import com.mysql.cj.util.StringUtils;
 
 import ca.uhn.fhir.context.FhirContext;
-import org.hl7.fhir.r5.context.BaseWorkerContext;
-import ca.uhn.fhir.jpa.api.dao.DaoRegistry;
-import ca.uhn.fhir.jpa.api.dao.IFhirResourceDao;
 import ca.uhn.fhir.rest.api.Constants;
-import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 import ca.uhn.fhir.rest.server.exceptions.UnprocessableEntityException;
 
 @Service
@@ -72,15 +56,6 @@ public class AppleHealthKitService extends DataTransformer {
 	private static final FhirContext fhirContextforDstu2Hl7Org = FhirContext.forDstu2Hl7Org();
 
 	private static final Logger log = LoggerFactory.getLogger(AppleHealthKitService.class);
-
-	@Autowired
-	private DaoRegistry myDaoRegistry;
-
-	@Autowired
-	private SimpleWorkerContext context;
-
-	@Autowired
-	private StructureMapUtilities scu;
 	
 	public List<BundleEntryComponent> transformBundleEntry(BundleEntryComponent entry, String internalPatientId) {
 		return transform(entry, internalPatientId);
@@ -299,62 +274,5 @@ public class AppleHealthKitService extends DataTransformer {
 		}
 		
 		return component;
-	}
-
-	private List<Resource> transformStructureMap(JsonNode node) throws FHIRException, IOException {
-
-		String structureMapID = node.get("structureMapID").asText();
-
-		IFhirResourceDao<StructureMap> structureMapDAO = myDaoRegistry.getResourceDao(StructureMap.class);
-		
-		StructureMap structureMapFHIR = null;
-    	try {
-    		structureMapFHIR = structureMapDAO.read(new IdType(structureMapID));
-    	} catch(ResourceNotFoundException rnfe) {    		
-			throw new ResourceNotFoundException("Structure Map resource does not exist.");
-		}
-
-		//StructureMapUtilities scu = new StructureMapUtilities((IWorkerContext) context); // Not sure if this is correct, they set up the Structure Map Utilities differently- tried autowiring above
-		Element src = Manager.parseSingle((IWorkerContext) context, new ByteArrayInputStream(node.binaryValue()), FhirFormat.JSON);
-		Element resource = getTargetResourceFromStructureMap(structureMapFHIR, (IWorkerContext)context);
-
-		scu.transform(null, src, structureMapFHIR, resource);
-		resource.populatePaths(null); // Need to see if this is necessary, probably need to bring in manually if so
-
-		List<Resource> resourceList = new ArrayList<Resource>();
-
-		org.hl7.fhir.dstu2.model.Resource newResource = 
-		(org.hl7.fhir.dstu2.model.Resource) fhirContextforDstu2Hl7Org.newJsonParser().parseResource(resource.toString());
-
-		if(VersionConvertorFactory_10_40.convertsResource(newResource.getResourceType().name())) {
-			resourceList.add(VersionConvertorFactory_10_40.convertResource(newResource));
-			return resourceList;
-		}
-		throw new UnprocessableEntityException("Unprocessable binary resource fhir type: " + newResource.getResourceType().name());
-
-	}
-
-	private Element getTargetResourceFromStructureMap(StructureMap map, IWorkerContext context) {
-		String targetTypeUrl = null;
-		for (StructureMap.StructureMapStructureComponent component : map.getStructure()) {
-		  if (component.getMode() == StructureMap.StructureMapModelMode.TARGET) {
-			targetTypeUrl = component.getUrl();
-			break;
-		  }
-		}
-	
-		if (targetTypeUrl == null) throw new FHIRException("Unable to determine resource URL for target type");
-	
-		StructureDefinition structureDefinition = null;
-		for (StructureDefinition sd : this.context.fetchResourcesByType(StructureDefinition.class)) { // Looking at the code, it seems like something of this type should be calling this: <T extends Resource> List<T>
-		  if (sd.getUrl().equalsIgnoreCase(targetTypeUrl)) {
-			structureDefinition = sd;
-			break;
-		  }
-		}
-	
-		if (structureDefinition == null) throw new FHIRException("Unable to find StructureDefinition for target type ('" + targetTypeUrl + "')");
-	
-		return Manager.build(context, structureDefinition); // Not sure what the getContext function is, need to look into this more as well
 	}
 }
