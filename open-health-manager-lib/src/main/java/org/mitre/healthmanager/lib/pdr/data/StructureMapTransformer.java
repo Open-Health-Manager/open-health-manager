@@ -39,16 +39,18 @@ import ca.uhn.fhir.rest.server.exceptions.UnprocessableEntityException;
 
 @Service
 public class StructureMapTransformer extends DataTransformer {
-	@Autowired
-	private FhirContext fhirContext;
+	// @Autowired
+	// private FhirContext fhirContext;
 
 	@Autowired
 	private DaoRegistry myDaoRegistry;
 
-	//@Autowired
-	//SimpleWorkerContext context;
-
 	private static final FhirContext fhirContextforR5 = FhirContext.forR5();
+	private static final FhirContext fhirContextforR4 = FhirContext.forR4();
+
+	// public StructureMapTransformer(DaoRegistry myDaoRegistry) {
+    //     this.myDaoRegistry = myDaoRegistry;
+    // }
 
 	@Override
 	List<BundleEntryComponent> transform(BundleEntryComponent entry, @NotNull String internalPatientId) {
@@ -60,10 +62,10 @@ public class StructureMapTransformer extends DataTransformer {
 			try {
 				resourceList = convertBinary((Binary) resourceEntry, internalPatientId);
 			} catch (FHIRException | IOException e) {
-				throw new UnprocessableEntityException("Unprocessable binary resource content type.");
+				throw new UnprocessableEntityException(e.getMessage());
 			}
 		} else {
-			throw new UnprocessableEntityException("Unprocessable binary resource content type.");
+			throw new UnprocessableEntityException("2Unprocessable binary resource content type.");
 		}
 
 		for (Resource resource : resourceList) {
@@ -85,10 +87,12 @@ public class StructureMapTransformer extends DataTransformer {
 			} catch (JsonProcessingException e) {
 				throw new UnprocessableEntityException("Unprocessable binary resource data.");
 			}
+			System.out.println(node.toString());
 			String sampleType = node.get("sampleType").asText();
+			System.out.println(sampleType);
 			return transformStructureMap(node, sampleType);
 		}
-		throw new UnprocessableEntityException("Unprocessable binary resource content type.");
+		throw new UnprocessableEntityException("3Unprocessable binary resource content type.");
 	}
 
 	private List<Resource> transformStructureMap(JsonNode node, String sampleType) throws FHIRException, IOException {
@@ -120,7 +124,7 @@ public class StructureMapTransformer extends DataTransformer {
 		List<Resource> resourceList = new ArrayList<Resource>();
 
 		String resourceR5 = fhirContextforR5.newJsonParser().encodeResourceToString((IBaseResource) resource);
-		Resource newResource = (Resource) fhirContext.newJsonParser().parseResource(resourceR5); 		
+		Resource newResource = (Resource) fhirContextforR4.newJsonParser().parseResource(resourceR5); 		
 
 		resourceList.add(newResource);
 		return resourceList;
