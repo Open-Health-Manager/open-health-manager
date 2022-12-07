@@ -11,7 +11,7 @@ import java.util.Base64;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
-import org.hl7.fhir.dstu2.model.IdType;
+import org.hl7.fhir.r4.model.IdType;
 import org.hl7.fhir.r4.model.Binary;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
@@ -59,7 +59,7 @@ class StructureMapTransformerTest {
 		
 		StructureMap structureMap = fhirContextforR4.newJsonParser().parseResource(StructureMap.class, this.getClass().getResourceAsStream("StructureMap_PregnancyObservation.json"));
 
-		when(structureMapDAO.read(any(IdType.class))).thenReturn(structureMap);	
+		when(structureMapDAO.read(new IdType("HKCategoryTypeIdentifierPregnancy"))).thenReturn(structureMap);	
 		when(myDaoRegistry.getResourceDao(StructureMap.class)).thenReturn(structureMapDAO);
 		
 		DaoMethodOutcome resp = new DaoMethodOutcome();
